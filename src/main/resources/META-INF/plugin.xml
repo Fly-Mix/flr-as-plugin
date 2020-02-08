@@ -1,0 +1,39 @@
+<idea-plugin>
+    <id>com.fly-mix.flr-as-plugin</id>
+    <name>Flr</name>
+    <vendor email="yorkzhang520@gmail.com" url="https://github.com/Fly-Mix">York@Fly-Mix</vendor>
+
+    <description>Flutter Resource Manager Android Studio Plugin</description>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <!-- 添加当前插件所依赖的其他插件-->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>Dart</depends>
+    <depends>io.flutter</depends>
+
+    <project-components>
+        <component>
+            <implementation-class>com.flr.FlrProjectComponent</implementation-class>
+        </component>
+    </project-components>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+<!--        <toolWindow id="FLrInspector" anchor="right"-->
+<!--                    factoryClass="com.flr.FlrViewFactory"/>-->
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+        <group id="FlrToolsActionGroup" text="Flr" description="Flutter Resource Manager Android Studio Plugin" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="flr.init" class="com.flr.FlrInitAction" text="Init" description="init Flutter project"/>
+            <action id="flr.generate" class="com.flr.FlrGenerateAction" text="Generate"
+                    description="Scan assets, specify scanned assets in pubspec.yaml, generate r.g.dart"/>
+            <action id="flr.monitor" class="com.flr.FlrMonitorAction" text="Start Monitor"
+                    description="start a monitoring service"/>
+        </group>
+
+    </actions>
+</idea-plugin>

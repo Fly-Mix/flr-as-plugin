@@ -1,0 +1,49 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.4.16'
+}
+
+group 'com.fly-mix'
+version '0.1.0'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'org.snakeyaml', name: 'snakeyaml-engine', version: '2.1'
+}
+
+// See https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
+intellij {
+    version '2019.1.4'
+    plugins 'Dart:191.8593', 'io.flutter:43.0.1'
+
+    /*
+    * Use this property if you want to test your plugin in any non-IDEA JetBrains IDE such as WebStorm or Android Studio.
+    *
+    * See https://github.com/JetBrains/gradle-intellij-plugin#rundebug-ide-properties
+    * */
+    //alternativeIdePath '/Applications/Android Studio.app'
+}
+
+// See https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
+patchPluginXml {
+    version = project.version
+
+    /*
+    * 插件兼容IDEA的最小版本号
+    * 详细可参考：
+    * - https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
+    * - http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
+    * */
+    sinceBuild = '191'
+
+    changeNotes = """
+      <ul>
+      <li><b>0.1.0</b> Release 2020.2 and earlier.</li>
+      </ul>"""
+}
