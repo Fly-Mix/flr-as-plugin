@@ -396,9 +396,5 @@ public class FlrUtil {
 
         return assetResourceCode;
     }
-
-//    private static void displayDebugLog(String debugMessage) {
-//        Notification notification = new Notification(FlrConstant.flrDisplayName, "Flr Debug", debugMessage, NotificationType.INFORMATION);
-//        Notifications.Bus.notify(notification, null);
-//    }
+    
 }

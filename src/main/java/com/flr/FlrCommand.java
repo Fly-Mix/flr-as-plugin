@@ -594,7 +594,7 @@ public class FlrCommand implements Disposable {
         }
 
         if(warningCount > 0) {
-            String warningMessage = String.format("<p>[!]: have %d warnings, you can get more details from Flr ToolWindow</p>", warningCount);
+            String warningMessage = String.format("<p>[!]: have %d warnings, you can get the details from Flr ToolWindow</p>", warningCount);
             cmdResultMessage += warningMessage;
             displayWarningLog(cmdResultMessage);
         } else {
@@ -933,8 +933,4 @@ public class FlrCommand implements Disposable {
         Notifications.Bus.notify(notification, curProject);
     }
 
-    private void displayDebugLog(String debugMessage) {
-        Notification notification = new Notification(FlrConstant.flrDisplayName, "Flr Debug", debugMessage, NotificationType.INFORMATION);
-        Notifications.Bus.notify(notification, curProject);
-    }
 }
