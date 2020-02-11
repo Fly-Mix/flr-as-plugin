@@ -1,5 +1,6 @@
 package com.flr;
 
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,9 +57,10 @@ public class FlrLogConsole {
                                 break;
                         }
                         curConsoleView.print( text + "\n", contentType);
-                        int height =  curConsoleView.getContentSize();
-                        System.out.println("getContentSize: " + height);
-                        curConsoleView.scrollTo(height);
+                        ConsoleViewImpl consoleViewImpl = (ConsoleViewImpl)curConsoleView;
+                        if(consoleViewImpl != null) {
+                            consoleViewImpl.scrollToEnd();
+                        }
                     }
                 });
             }
