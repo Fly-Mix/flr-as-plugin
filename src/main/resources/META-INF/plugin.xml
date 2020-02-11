@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.fly-mix.flr-as-plugin</id>
     <name>Flr</name>
-    <vendor email="yorkzhang520@gmail.com" url="https://github.com/Fly-Mix">York@Fly-Mix</vendor>
+    <vendor email="yorkzhang520@gmail.com" url="https://github.com/Fly-Mix/flr-as-plugin">Fly-Mix</vendor>
 
     <description>Flutter Resource Manager Android Studio Plugin</description>
 
@@ -20,13 +20,12 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
-<!--        <toolWindow id="FLrInspector" anchor="right"-->
-<!--                    factoryClass="com.flr.FlrViewFactory"/>-->
+        <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.FlrLogConsoleFactory"/>
     </extensions>
 
     <actions>
         <!-- Add your actions here -->
-        <group id="FlrToolsActionGroup" text="Flr" description="Flutter Resource Manager Android Studio Plugin" popup="true">
+        <group id="FlrToolsActionGroup" text="Flr" description="Flutter Resource Manager Android Studio Plugin" icon="/icons/flr_16.png" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <action id="flr.init" class="com.flr.FlrInitAction" text="Init" description="init Flutter project"/>
             <action id="flr.generate" class="com.flr.FlrGenerateAction" text="Generate"

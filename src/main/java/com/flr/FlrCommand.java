@@ -1,24 +1,24 @@
 package com.flr;
 
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import io.flutter.actions.FlutterPackagesGetAction;
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import io.flutter.sdk.*;
+
 
 // 处理泛型对象时，若不做检查，就进行类型强制转换（如 (Map<String, Object>)map.get("key")），
 // 编译器会报警告：com.fly_mix.flr.FlrCommand.java使用了未经检查或不安全的操作。
@@ -31,6 +31,8 @@ public class FlrCommand implements Disposable {
     private final Project curProject;
 
     private FlrListener curFlrListener;
+
+    private FlrLogConsole.LogType titleLogType = FlrLogConsole.LogType.tips;
 
     public FlrCommand(Project project) {
         curProject = project;
@@ -52,38 +54,47 @@ public class FlrCommand implements Disposable {
     * 2. 添加Flr配置到pubspec.yaml
     * 3. 添加依赖包`r_dart_library`(https://github.com/YK-Unit/r_dart_library)的声明到pubspec.yaml
     *  */
-    public void init(@NotNull ProgressIndicator indicator, AnActionEvent actionEvent) {
-        String indicatorMessage = "";
+    public void init(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+        String indicatorMessage = "[Flr Init]";
+        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
+        flrLogConsole.println(indicatorMessage, titleLogType);
 
         String pubspecFilePath = getPubspecFilePath();
         File pubspecFile = new File(pubspecFilePath);
 
         if(pubspecFile.exists() == false) {
+            flrLogConsole.println(String.format("[x]: %s not found", pubspecFilePath), FlrLogConsole.LogType.error);
+            flrLogConsole.println("[*]: please make sure current directory is a flutter project directory", FlrLogConsole.LogType.tips);
+
             String message = String.format(
-                    "[x]: %s not found\n" +
-                    "[*]: please make sure current directory is a flutter project directory",
+                    "<p>[x]: %s not found</p>" +
+                    "<p>[*]: please make sure current directory is a flutter project directory</p>",
                     pubspecFilePath
             );
+            FlrException exception = new FlrException(message);
+            handleFlrException(exception);
+            return;
+        }
+
+        // 读取pubspec.yaml，然后添加相关配置
+        Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFilePath);
+        if(pubspecMap == null) {
+            flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
+            flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
+
+            String message = String.format(
+                    "[x]: %s is a bad YAML file\n" +
+                    "[*]: please make sure the pubspec.yaml is right",
+                    pubspecFilePath
+            );
+            flrLogConsole.println(message, FlrLogConsole.LogType.error);
             FlrException exception = new FlrException(message);
             handleFlrException(exception);
             return;
         }
 
         indicatorMessage = String.format("init %s now ...", curProject.getBasePath());
-        indicator.setText(indicatorMessage);
-
-        // 读取pubspec.yaml，然后添加相关配置
-        Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFilePath);
-        if(pubspecMap == null) {
-            String message = String.format(
-                    "[x]: %s is a bad YAML file\n" +
-                    "[*]: please make sure the pubspec.yaml is right",
-                    pubspecFilePath
-            );
-            FlrException exception = new FlrException(message);
-            handleFlrException(exception);
-            return;
-        }
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // 添加Flr的配置到pubspec.yaml
         // Flr的配置:
@@ -100,7 +111,7 @@ public class FlrCommand implements Disposable {
         pubspecMap.put("flr", flrMap);
 
         indicatorMessage = "add flr configuration into pubspec.yaml done!";
-        indicator.setText(indicatorMessage);
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // 添加依赖包`r_dart_library`(https://github.com/YK-Unit/r_dart_library)的声明到pubspec.yaml
         String rDartLibraryVersion = getRDartLibraryVersion();
@@ -115,7 +126,7 @@ public class FlrCommand implements Disposable {
         pubspecMap.put("dependencies", dependenciesMap);
 
         indicatorMessage = "add dependency \"r_dart_library\"(https://github.com/YK-Unit/r_dart_library) into pubspec.yaml done!";
-        indicator.setText(indicatorMessage);
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // 保存pubspec.yaml
         // 更新并刷新 pubspec.yaml
@@ -123,31 +134,28 @@ public class FlrCommand implements Disposable {
         VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
         pubspecVirtualFile.refresh(false, false);
 
-        indicatorMessage = "get dependency \"r_dart_library\" via execute \"flutter pub get\" now ...";
-        indicator.setText(indicatorMessage);
-
-        // 在当前Flutter工程目录下执行 flutter pub get
-//        String shStr = String.format("cd %s; flutter pub get", curProject.getBasePath());
-//        FlrUtil.execShell(shStr);
+        indicatorMessage = "get dependency \"r_dart_library\" via running \"Flutter Packages Get\" action now ...";
+        flrLogConsole.println(indicatorMessage, indicatorType);
         FlrUtil.runFlutterPubGet(actionEvent);
-
         indicatorMessage = "get dependency \"r_dart_library\" done!";
-        indicator.setText(indicatorMessage);
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
-        indicatorMessage = String.format("init %s done!", curProject.getBasePath());
-        indicator.setText(indicatorMessage);
+        indicatorMessage = "[√]: init done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         String cmdResultMessage = "<p>[√]: init done !!!</p>";
         cmdResultMessage += "<p>\u202D</p>";
         displayInfoLog(cmdResultMessage);
     }
 
-    public void generate(@NotNull ProgressIndicator indicator, AnActionEvent actionEvent) {
-        String indicatorMessage = "";
+    public void generate(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+        String indicatorMessage = "[Flr Generate]";
+        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
+        flrLogConsole.println(indicatorMessage, titleLogType);
 
         List<String> allValidAssetDirPaths = null;
         try {
-            allValidAssetDirPaths = checkBeforeGenerate();
+            allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
         } catch (FlrException e) {
             handleFlrException(e);
             return;
@@ -157,11 +165,17 @@ public class FlrCommand implements Disposable {
         Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFilePath);
 
         if(pubspecMap == null) {
+            flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
+            flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
+
             String message = String.format(
-                    "<p>[x]: %s is a bad yaml file</p>",
+                    "[x]: %s is a bad YAML file\n" +
+                    "[*]: please make sure the pubspec.yaml is right",
                     pubspecFilePath
             );
-            displayErrorLog(message);
+            flrLogConsole.println(message, FlrLogConsole.LogType.error);
+            FlrException exception = new FlrException(message);
+            handleFlrException(exception);
             return;
         }
 
@@ -169,7 +183,7 @@ public class FlrCommand implements Disposable {
         String flrVersion = (String) flrMap.get("version");
 
         indicatorMessage = "scan assets now ...";
-        indicator.setText(indicatorMessage);
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // 需要过滤的资源类型
         // .DS_Store 是 macOS 下文件夹里默认自带的的隐藏文件
@@ -191,12 +205,12 @@ public class FlrCommand implements Disposable {
 
         }
 
-        indicatorMessage = "scan assets done!";
-        indicator.setText(indicatorMessage);
+        indicatorMessage = "scan assets done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // 添加资源声明到 `pubspec.yaml`
         indicatorMessage = "specify scanned assets in pubspec.yaml now ...";
-        indicator.setText(indicatorMessage);
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         Map<String, Object> flutterMap = (Map<String, Object>)pubspecMap.get("flutter");
         flutterMap.put("assets", legalAssetList);
@@ -208,12 +222,12 @@ public class FlrCommand implements Disposable {
         VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
         pubspecVirtualFile.refresh(false, false);
 
-        indicatorMessage = "specify scanned assets in pubspec.yaml done!";
-        indicator.setText(indicatorMessage);
+        indicatorMessage = "specify scanned assets in pubspec.yaml done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // 创建生成 `r.g.dart`
         indicatorMessage = "generate \"r.g.dart\" now ...";
-        indicator.setText(indicatorMessage);
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         String rDartContent = "";
 
@@ -532,59 +546,56 @@ public class FlrCommand implements Disposable {
             return;
         }
 
-        // TODO: 在Android Studio下，脚本没有成功运行，原因未明；后续考虑通过调用dart插件的格式化功能达到格式化的目的
-        // 格式化 r.g.dart
-        String flutterFormatSh = String.format("flutter format %s", rDartFilePath);
-        indicatorMessage = String.format("execute \"%s\" now ...", flutterFormatSh);
-        indicator.setText(indicatorMessage);
-        FlrUtil.execShell(flutterFormatSh);
-        indicatorMessage = String.format("execute \"%s\" done!", flutterFormatSh);
-        indicator.setText(indicatorMessage);
-
-        // 刷新 r.g.dart
         File rDartFile = new File(rDartFilePath);
         VirtualFile rDartVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(rDartFile);
         rDartVirtualFile.refresh(false, false);
 
-//        // 在当前Flutter工程目录下执行 flutter pub get
-        String flutterPubGetSh = String.format("cd %s; flutter pub get", curProject.getBasePath());
-        indicatorMessage = String.format("execute \"%s\" now ...", flutterPubGetSh);
-        indicator.setText(indicatorMessage);
-//        FlrUtil.execShell(flutterPubGetSh);
-        FlrUtil.runFlutterPubGet(actionEvent);
-        indicatorMessage = String.format("execute \"%s\" done!", flutterPubGetSh);
-        indicator.setText(indicatorMessage);
-
-
         indicatorMessage = String.format("generate for %s done!", curProject.getBasePath());
-        indicator.setText(indicatorMessage);
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        // 格式化 r.g.dart
+        indicatorMessage = "format r.g.dart now ...";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        FlrUtil.formatDartFile(curProject, rDartVirtualFile);
+        indicatorMessage = "format r.g.dart done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        // 刷新 r.g.dart
+
+        // 执行 "Flutter Packages Get" action
+        indicatorMessage = "running \"Flutter Packages Get\" action now ...";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        FlrUtil.runFlutterPubGet(actionEvent);
+        indicatorMessage = "running \"Flutter Packages Get\" action done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // ----- r.g.dart End -----
 
+        indicatorMessage = "[√]: generate done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
         String cmdResultMessage = "<p>[√]: generate done !!!</p>";
-        Boolean hasWarning = false;
+        int warningCount = 0;
 
         String usedFlrVersion = FlrConstant.flrVersion;
         if(flrVersion.equals(usedFlrVersion) == false) {
-            String versionWarningMessage = String.format("<p>\u202D</p>" +
-                    "<p>[!]: warning, the configured Flr version is %s, while the currently used Flr version is %s</p>" +
-                    "<p>[*]: to fix it, you should make sure that both versions are the same</p>",
-                    flrVersion, usedFlrVersion);
-            cmdResultMessage += versionWarningMessage;
-            hasWarning = true;
+            flrLogConsole.println(String.format("[!]: warning, the configured Flr version is %s, while the currently used Flr version is %s", flrVersion, usedFlrVersion), FlrLogConsole.LogType.warning);
+            flrLogConsole.println("[*]: to fix it, you should make sure that both versions are the same", FlrLogConsole.LogType.tips);
+            warningCount += 1;
         }
 
         if(illegalAssetList.isEmpty() == false) {
-            String illegalAssetMessage = "<p>\u202D</p>" + "<p>[!]: warning, find illegal assets who's file basename contains illegal characters: </p>";
+            flrLogConsole.println("[!]: warning, find illegal assets who's file basename contains illegal characters:", FlrLogConsole.LogType.warning);
             for(String illegalAsset: illegalAssetList) {
-                illegalAssetMessage += String.format("<p>\u202D   - %s</p>", illegalAsset);
+                flrLogConsole.println(String.format("   - %s", illegalAsset), FlrLogConsole.LogType.warning);
             }
-            illegalAssetMessage += "<p>[*]: to fix it, you should only use letters (a-z, A-Z), numbers (0-9), and the other legal characters ('_', '+', '-', '.', '·', '!', '@', '&', '$', '￥') to name the asset</p>";
-            cmdResultMessage += illegalAssetMessage;
-            hasWarning = true;
+            flrLogConsole.println("[*]: to fix it, you should only use letters (a-z, A-Z), numbers (0-9), and the other legal characters ('_', '+', '-', '.', '·', '!', '@', '&', '$', '￥') to name the asset", FlrLogConsole.LogType.tips);
+            warningCount += 1;
         }
 
-        if(hasWarning) {
+        if(warningCount > 0) {
+            String warningMessage = String.format("<p>[!]: have %d warnings, you can get more details from Flr ToolWindow</p>", warningCount);
+            cmdResultMessage += warningMessage;
             displayWarningLog(cmdResultMessage);
         } else {
             displayInfoLog(cmdResultMessage);
@@ -592,29 +603,45 @@ public class FlrCommand implements Disposable {
 
     }
 
-    public Boolean startAssertMonitor(@NotNull ProgressIndicator indicator, AnActionEvent actionEvent) {
-        String indicatorMessage = "";
+    public Boolean startAssertMonitor(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+        String indicatorMessage = "[Flr Start Monitor]";
+        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
+        flrLogConsole.println(indicatorMessage, titleLogType);
 
         List<String> allValidAssetDirPaths = null;
         try {
-            allValidAssetDirPaths = checkBeforeGenerate();
+            allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
         } catch (FlrException e) {
             handleFlrException(e);
             return false;
         }
 
         if(curFlrListener != null) {
-            stopAssertMonitor(indicator);
+            stopAssertMonitor(actionEvent, flrLogConsole);
         }
 
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+        String nowStr = df.format(new Date());// new Date()为获取当前系统时间，也可使用当前时间戳
+        indicatorMessage = String.format("--------------------------- %s ---------------------------", nowStr);
+        flrLogConsole.println(indicatorMessage, indicatorType);
         indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" now ...";
-        indicator.setText(indicatorMessage);
-        generate(indicator, actionEvent);
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        flrLogConsole.println("", indicatorType);
+        generate(actionEvent, flrLogConsole);
+        flrLogConsole.println("", indicatorType);
         indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" done!";
-        indicator.setText(indicatorMessage);
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        indicatorMessage = "---------------------------------------------------------------------------------";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        flrLogConsole.println("", indicatorType);
 
+        nowStr = df.format(new Date());
+        indicatorMessage = String.format("--------------------------- %s ---------------------------", nowStr);
+        flrLogConsole.println(indicatorMessage, indicatorType);
         indicatorMessage = "launch a monitoring service now ...";
-        indicator.setText(indicatorMessage);
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        indicatorMessage = "launching ...";
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         String terminateTipsMessage =
                 "<p>[*]: the monitoring service is monitoring the asset changes, and then auto scan assets, specifies assets and generates \"r.g.dart\" ...</p>" +
@@ -626,11 +653,29 @@ public class FlrCommand implements Disposable {
                 String assetChangesEventMessage = "<p>detect some asset changes, run Flr-Generate Action now ...</p>";
                 displayInfoLog(assetChangesEventMessage);
 
-                String indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" now ...";
-                indicator.setText(indicatorMessage);
-                generate(indicator, actionEvent);
+                String indicatorMessage = "";
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String nowStr = df.format(new Date());
+
+                indicatorMessage = String.format("--------------------------- %s ---------------------------", nowStr);
+                flrLogConsole.println(indicatorMessage, indicatorType);
+                indicatorMessage = "detect some asset changes, run Flr-Generate Action now";
+                flrLogConsole.println(indicatorMessage, indicatorType);
+                indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" now ...";
+                flrLogConsole.println(indicatorMessage, indicatorType);
+                flrLogConsole.println("", indicatorType);
+                generate(actionEvent, flrLogConsole);
+                flrLogConsole.println("", indicatorType);
                 indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" done!";
-                indicator.setText(indicatorMessage);
+                flrLogConsole.println(indicatorMessage, indicatorType);
+                indicatorMessage = "---------------------------------------------------------------------------------";
+                flrLogConsole.println(indicatorMessage, indicatorType);
+                flrLogConsole.println("", indicatorType);
+
+                indicatorMessage =
+                        "[*]: the monitoring service is monitoring the asset changes, and then auto scan assets, specifies assets and generates \"r.g.dart\" ...\n" +
+                                "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
+                flrLogConsole.println(indicatorMessage, indicatorType);
 
                 String cmdResultMessage = "<p>[√]: generate done !!!</p>";
                 cmdResultMessage += "<p>\u202D</p>";
@@ -641,14 +686,27 @@ public class FlrCommand implements Disposable {
         curFlrListener = new FlrListener(curProject, allValidAssetDirPaths, assetChangesEventCallback);
         isMonitoringAssets = true;
 
-        indicatorMessage = "launch a monitoring service done!";
-        indicator.setText(indicatorMessage);
-
+        indicatorMessage = "launch a monitoring service done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        indicatorMessage = "the monitoring service is monitoring these asset directories:";
+        flrLogConsole.println(indicatorMessage, indicatorType);
         String cmdResultMessage = "<p>[√]: launch a monitoring service done !!!</p>";
         String monitoredAssetDirMessage = "<p>the monitoring service is monitoring these asset directories:</p>";
         for(String assetDirPath: allValidAssetDirPaths) {
             monitoredAssetDirMessage += String.format("<p>\u202D   - %s</p>", assetDirPath);
+
+            indicatorMessage = String.format("  - %s", assetDirPath);
+            flrLogConsole.println(indicatorMessage, indicatorType);
         }
+        indicatorMessage = "---------------------------------------------------------------------------------";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        flrLogConsole.println("", indicatorType);
+
+        indicatorMessage =
+                "[*]: the monitoring service is monitoring the asset changes, and then auto scan assets, specifies assets and generates \"r.g.dart\" ...\n" +
+                        "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
         cmdResultMessage += monitoredAssetDirMessage;
         cmdResultMessage += "<p>\u202D</p>";
         cmdResultMessage += terminateTipsMessage;
@@ -657,12 +715,20 @@ public class FlrCommand implements Disposable {
         return true;
     }
 
-    public void stopAssertMonitor(@NotNull ProgressIndicator indicator) {
+    public void stopAssertMonitor(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+        String indicatorMessage = "[Flr Stop Monitor]";
+        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
+        flrLogConsole.println(indicatorMessage, titleLogType);
+
         if(curFlrListener != null) {
             curFlrListener.dispose();
             curFlrListener = null;
         }
         isMonitoringAssets = false;
+
+        indicatorMessage = "[√]: terminate the monitoring service done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
         String cmdResultMessage = "<p>[√]: terminate the monitoring service done !!!</p>";
         cmdResultMessage += "<p>\u202D</p>";
         displayInfoLog(cmdResultMessage);
@@ -725,7 +791,7 @@ public class FlrCommand implements Disposable {
     * 3. 检测flr的配置中是否有配置了合法的资源目录路径
      * 4. 返回所有合法的资源目录的路径数组
     * */
-    private List<String> checkBeforeGenerate() throws FlrException {
+    private List<String> checkBeforeGenerate(@NotNull FlrLogConsole flrLogConsole) throws FlrException {
         String flutterProjectRootDir = curProject.getBasePath();
         String pubspecFilePath = flutterProjectRootDir + "/pubspec.yaml";
         File pubspecFile = new File(pubspecFilePath);
@@ -733,6 +799,9 @@ public class FlrCommand implements Disposable {
         // 检测当前目录是否存在 pubspec.yaml；
         // 若不存在，说明当前目录不是一个flutter工程目录，这时直接终止当前任务，并抛出异常提示；
         if(pubspecFile.exists() == false) {
+            flrLogConsole.println(String.format("[x]: %s not found", pubspecFilePath), FlrLogConsole.LogType.error);
+            flrLogConsole.println("[*]: please make sure current directory is a flutter project directory", FlrLogConsole.LogType.tips);
+
             String message = String.format(
                     "[x]: %s not found\n" +
                     "[*]: please make sure current directory is a flutter project directory",
@@ -748,6 +817,9 @@ public class FlrCommand implements Disposable {
 
         Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFilePath);
         if(pubspecMap == null) {
+            flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
+            flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
+
             String message = String.format(
                     "[x]: %s is a bad YAML file\n" +
                     "[*]: please make sure the pubspec.yaml is right",
@@ -759,9 +831,12 @@ public class FlrCommand implements Disposable {
 
         Map<String, Object> flrMap = (Map<String, Object>)pubspecMap.get("flr");
         if(flrMap == null) {
+            flrLogConsole.println("[x]: have no flr configuration in pubspec.yaml", FlrLogConsole.LogType.error);
+            flrLogConsole.println("[*]: please click menu \"Tools-Flr-Init\" to fix it", FlrLogConsole.LogType.tips);
+
             String message = String.format(
                     "[x]: have no flr configuration in pubspec.yaml\n" +
-                    "[*]: please click menu \"Tools-Flr-init\" to fix it",
+                    "[*]: please click menu \"Tools-Flr-Init\" to fix it",
                     pubspecFilePath
             );
             FlrException exception = new FlrException(message);
@@ -771,6 +846,19 @@ public class FlrCommand implements Disposable {
         String flrVersion = (String) flrMap.get("version");
         Object assetDirPaths = flrMap.get("assets");
         if(assetDirPaths == null || !(assetDirPaths instanceof List)) {
+            flrLogConsole.println("[x]: have no valid asset directories configuration in pubspec.yaml", FlrLogConsole.LogType.error);
+            flrLogConsole.println(String.format(
+                            "[*]: please manually configure the asset directories to fix it, for example:\n" +
+                            "\u202D \n" +
+                            "\u202D     flr:\n" +
+                            "\u202D       version:%s\n" +
+                            "\u202D       assets:\n" +
+                            "\u202D       # config the asset directories that need to be scanned\n" +
+                            "\u202D         - lib/assets/images\n" +
+                            "\u202D         - lib/assets/texts\n",
+                    flrVersion
+            ), FlrLogConsole.LogType.tips);
+
             String message = String.format(
                             "[x]: have no valid asset directories configuration in pubspec.yaml\n" +
                             "[*]: please manually configure the asset directories to fix it, for example:\n" +
@@ -793,6 +881,19 @@ public class FlrCommand implements Disposable {
         allValidAssetDirPaths = new ArrayList<String>(tempSet);
 
         if(allValidAssetDirPaths.isEmpty()) {
+            flrLogConsole.println("[x]: have no valid asset directories configuration in pubspec.yaml", FlrLogConsole.LogType.error);
+            flrLogConsole.println(String.format(
+                    "[*]: please manually configure the asset directories to fix it, for example:\n" +
+                            "\u202D \n" +
+                            "\u202D     flr:\n" +
+                            "\u202D       version:%s\n" +
+                            "\u202D       assets:\n" +
+                            "\u202D       # config the asset directories that need to be scanned\n" +
+                            "\u202D         - lib/assets/images\n" +
+                            "\u202D         - lib/assets/texts\n",
+                    flrVersion
+            ), FlrLogConsole.LogType.tips);
+
             String message = String.format(
                             "[x]: have no valid asset directories configuration in pubspec.yaml\n" +
                             "[*]: please manually configure the asset directories to fix it, for example:\n" +

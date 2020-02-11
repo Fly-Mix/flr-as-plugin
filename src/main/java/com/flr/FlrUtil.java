@@ -1,18 +1,17 @@
 package com.flr;
 
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnAction;
+
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.jetbrains.lang.dart.ide.actions.DartStyleAction;
+import com.sun.istack.NotNull;
 import io.flutter.actions.FlutterPackagesGetAction;
 import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.common.FlowStyle;
@@ -112,6 +111,8 @@ public class FlrUtil {
 
     // MARK: - Shell Util Methods
 
+    // 在IDEA JetBrains IDE上可执行脚本成功，但是在 Android Studio（non-IDEA JetBrains IDE）上却执行失败，
+    // 原因预估是IDE版本差异导致API差异导致执行脚本失败，具体待后面进一步确定
     /*
     * 运行shell脚本并返回运行结果
     * 注意：如果shell脚本中含有awk,一定要按new String[]{"/bin/sh","-c",shStr}写,才可以获得流
@@ -160,6 +161,32 @@ public class FlrUtil {
                     public void run() {
                         FlutterPackagesGetAction flutterPubGetAction = new FlutterPackagesGetAction();
                         flutterPubGetAction.actionPerformed(actionEvent);
+                    }
+                });
+            }
+        });
+    }
+
+    public static void formatDartFile(@NotNull Project project, @NotNull VirtualFile dartVirtualFile) {
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                WriteCommandAction.runWriteCommandAction(project, new Runnable() {
+                    @Override
+                    public void run() {
+                        // 格式化方案一：Android Studio（non-IDEA JetBrains IDE）和 IDEA JetBrains IDE 上均可行
+                        List<VirtualFile> dartFiles = new ArrayList<VirtualFile>();
+                        dartFiles.add(dartVirtualFile);
+                        DartStyleAction.runDartfmt(project, dartFiles);
+
+                        // 格式化方案二：Android Studio（non-IDEA JetBrains IDE）上不成功；在IDEA JetBrains IDE 上可行
+                        /*
+                        PsiFile dartPsiFile = PsiManager.getInstance(project).findFile(dartVirtualFile);
+                        CodeStyleManager.getInstance(project).reformat(dartPsiFile);
+                        */
+
+                        dartVirtualFile.refresh(false, false);
                     }
                 });
             }

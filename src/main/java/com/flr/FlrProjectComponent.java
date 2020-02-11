@@ -10,7 +10,7 @@ public class FlrProjectComponent implements ProjectComponent {
 
     public FlrProjectComponent(Project project) {
         curProject = project;
-        flrCommand = new FlrCommand(project);
+        flrCommand = new FlrCommand(curProject);
     }
 
     @Override

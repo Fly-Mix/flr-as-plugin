@@ -16,25 +16,24 @@ public class FlrMonitorAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getData(PlatformDataKeys.PROJECT);
 
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Flr Monitor", false) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-                FlrProjectComponent flrProjectComponent = project.getComponent(FlrProjectComponent.class);
-                Presentation actionPresentation = e.getPresentation();
-                if(flrProjectComponent.flrCommand.isMonitoringAssets) {
-                    actionPresentation.setText("Start Monitor");
-                    actionPresentation.setDescription("launch a monitoring service");
-                    flrProjectComponent.flrCommand.stopAssertMonitor(indicator);
-                } else {
-                    actionPresentation.setText("Stop Monitor");
-                    actionPresentation.setDescription("terminate the monitoring service");
-                    Boolean isStartSuccess = flrProjectComponent.flrCommand.startAssertMonitor(indicator, e);
-                    if(isStartSuccess == false) {
-                        actionPresentation.setText("Start Monitor");
-                        actionPresentation.setDescription("launch a monitoring service");
-                    }
-                }
+        FlrLogConsole flrLogConsole = FlrLogConsoleFactory.createLogConsole(project);
+        FlrLogConsoleFactory.showCurLogConsole(project);
+        flrLogConsole.clear();
+
+        FlrProjectComponent flrProjectComponent = project.getComponent(FlrProjectComponent.class);
+        Presentation actionPresentation = e.getPresentation();
+        if(flrProjectComponent.flrCommand.isMonitoringAssets) {
+            actionPresentation.setText("Start Monitor");
+            actionPresentation.setDescription("launch a monitoring service");
+            flrProjectComponent.flrCommand.stopAssertMonitor(e, flrLogConsole);
+        } else {
+            actionPresentation.setText("Stop Monitor");
+            actionPresentation.setDescription("terminate the monitoring service");
+            Boolean isStartSuccess = flrProjectComponent.flrCommand.startAssertMonitor(e, flrLogConsole);
+            if(isStartSuccess == false) {
+                actionPresentation.setText("Start Monitor");
+                actionPresentation.setDescription("launch a monitoring service");
             }
-        });
+        }
     }
 }
