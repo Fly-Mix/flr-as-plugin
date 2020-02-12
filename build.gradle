@@ -3,9 +3,6 @@ plugins {
     id 'org.jetbrains.intellij' version '0.4.16'
 }
 
-group 'com.fly-mix'
-version '0.1.0'
-
 sourceCompatibility = 1.8
 
 repositories {
@@ -32,7 +29,8 @@ intellij {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
 patchPluginXml {
-    version = project.version
+    // 设置插件的版本号
+    version = '0.1.0'
 
     /*
     * 插件兼容IDEA的最小版本号
