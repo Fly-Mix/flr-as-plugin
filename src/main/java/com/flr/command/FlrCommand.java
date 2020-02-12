@@ -1,11 +1,8 @@
 package com.flr.command;
 
-import com.flr.FlrConstant;
 import com.flr.FlrException;
 import com.flr.logConsole.FlrLogConsole;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.flr.messageBox.FlrMessageBox;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -33,6 +30,8 @@ public class FlrCommand implements Disposable {
     private final Project curProject;
 
     private FlrListener curFlrListener;
+
+    private String messageBoxTitle = "Flr";
 
     private FlrLogConsole.LogType titleLogType = FlrLogConsole.LogType.tips;
 
@@ -68,13 +67,9 @@ public class FlrCommand implements Disposable {
             flrLogConsole.println(String.format("[x]: %s not found", pubspecFilePath), FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please make sure current directory is a flutter project directory", FlrLogConsole.LogType.tips);
 
-            String message = String.format(
-                    "<p>[x]: %s not found</p>" +
-                    "<p>[*]: please make sure current directory is a flutter project directory</p>",
-                    pubspecFilePath
-            );
-            FlrException exception = new FlrException(message);
-            handleFlrException(exception);
+            String contentTitle = "[!]: init failed !!!";
+            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
+            showFailureMessage(contentTitle, contentMessage);
             return;
         }
 
@@ -84,14 +79,9 @@ public class FlrCommand implements Disposable {
             flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
 
-            String message = String.format(
-                    "[x]: %s is a bad YAML file\n" +
-                    "[*]: please make sure the pubspec.yaml is right",
-                    pubspecFilePath
-            );
-            flrLogConsole.println(message, FlrLogConsole.LogType.error);
-            FlrException exception = new FlrException(message);
-            handleFlrException(exception);
+            String contentTitle = "[!]: init failed !!!";
+            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
+            showFailureMessage(contentTitle, contentMessage);
             return;
         }
 
@@ -146,9 +136,8 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "[√]: init done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        String cmdResultMessage = "<p>[√]: init done !!!</p>";
-        cmdResultMessage += "<p>\u202D</p>";
-        displayInfoLog(cmdResultMessage);
+        String contentTitle = "[√]: init done !!!";
+        showSuccessMessage(contentTitle, "", false);
     }
 
     public void generate(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
@@ -160,27 +149,13 @@ public class FlrCommand implements Disposable {
         try {
             allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
         } catch (FlrException e) {
-            handleFlrException(e);
+            String contentTitle = "[!]: generate failed !!!";
+            handleFlrException(contentTitle, e);
             return;
         }
 
         String pubspecFilePath = getPubspecFilePath();
         Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFilePath);
-
-        if(pubspecMap == null) {
-            flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
-            flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
-
-            String message = String.format(
-                    "[x]: %s is a bad YAML file\n" +
-                    "[*]: please make sure the pubspec.yaml is right",
-                    pubspecFilePath
-            );
-            flrLogConsole.println(message, FlrLogConsole.LogType.error);
-            FlrException exception = new FlrException(message);
-            handleFlrException(exception);
-            return;
-        }
 
         Map<String, Object> flrMap = (Map<String, Object>)pubspecMap.get("flr");
         String flrVersion = (String) flrMap.get("version");
@@ -545,7 +520,8 @@ public class FlrCommand implements Disposable {
             writer.write(rDartContent);
         } catch (IOException e) {
             FlrException flrException = new FlrException(e.getMessage());
-            handleFlrException(flrException);
+            String contentTitle = "[!]: generate failed !!!";
+            handleFlrException(contentTitle, flrException);
             return;
         }
 
@@ -577,7 +553,6 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "[√]: generate done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        String cmdResultMessage = "<p>[√]: generate done !!!</p>";
         int warningCount = 0;
 
         String usedFlrVersion = FlrUtil.getFlrVersion();
@@ -598,12 +573,12 @@ public class FlrCommand implements Disposable {
             warningCount += 1;
         }
 
+        String contentTitle = "[√]: generate done !!!";
         if(warningCount > 0) {
-            String warningMessage = String.format("<p>[!]: have %d warnings, you can get the details from Flr ToolWindow</p>", warningCount);
-            cmdResultMessage += warningMessage;
-            displayWarningLog(cmdResultMessage);
+            String warningMessage = String.format("[!]: have %d warnings, you can get the details from Flr ToolWindow", warningCount);
+            showSuccessMessage(contentTitle, warningMessage, false);
         } else {
-            displayInfoLog(cmdResultMessage);
+            showSuccessMessage(contentTitle, "", false);
         }
 
     }
@@ -617,7 +592,8 @@ public class FlrCommand implements Disposable {
         try {
             allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
         } catch (FlrException e) {
-            handleFlrException(e);
+            String contentTitle = "[!]: generate failed !!!";
+            handleFlrException(contentTitle, e);
             return false;
         }
 
@@ -655,8 +631,9 @@ public class FlrCommand implements Disposable {
         FlrListener.AssetChangesEventCallback assetChangesEventCallback = new FlrListener.AssetChangesEventCallback() {
             @Override
             public void run() {
-                String assetChangesEventMessage = "<p>detect some asset changes, run Flr-Generate Action now ...</p>";
-                displayInfoLog(assetChangesEventMessage);
+                String contentTitle = "[!]: detect some asset changes !!!";
+                String contentMessage = "[*]: invoke Flr-Generate Action now ... ";
+                showSuccessMessage(contentTitle, contentMessage, false);
 
                 String indicatorMessage = "";
                 SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -682,10 +659,10 @@ public class FlrCommand implements Disposable {
                                 "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
                 flrLogConsole.println(indicatorMessage, indicatorType);
 
-                String cmdResultMessage = "<p>[√]: generate done !!!</p>";
-                cmdResultMessage += "<p>\u202D</p>";
-                cmdResultMessage += terminateTipsMessage;
-                displayInfoLog(cmdResultMessage);
+
+                contentTitle = "[!]: invoke Flr-Generate Action done !!!";
+                contentMessage = "[*]: you can get the details from Flr ToolWindow";
+                showSuccessMessage(contentTitle, contentMessage, false);
             }
         };
         curFlrListener = new FlrListener(curProject, allValidAssetDirPaths, assetChangesEventCallback);
@@ -695,11 +672,7 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, indicatorType);
         indicatorMessage = "the monitoring service is monitoring these asset directories:";
         flrLogConsole.println(indicatorMessage, indicatorType);
-        String cmdResultMessage = "<p>[√]: launch a monitoring service done !!!</p>";
-        String monitoredAssetDirMessage = "<p>the monitoring service is monitoring these asset directories:</p>";
         for(String assetDirPath: allValidAssetDirPaths) {
-            monitoredAssetDirMessage += String.format("<p>\u202D   - %s</p>", assetDirPath);
-
             indicatorMessage = String.format("  - %s", assetDirPath);
             flrLogConsole.println(indicatorMessage, indicatorType);
         }
@@ -712,10 +685,9 @@ public class FlrCommand implements Disposable {
                         "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        cmdResultMessage += monitoredAssetDirMessage;
-        cmdResultMessage += "<p>\u202D</p>";
-        cmdResultMessage += terminateTipsMessage;
-        displayInfoLog(cmdResultMessage);
+        String contentTitle = "[√]: start monitor done !!!";
+        String contentMessage = "[*]: you can get the details from Flr ToolWindow";
+        showSuccessMessage(contentTitle, contentMessage, false);
 
         return true;
     }
@@ -734,13 +706,16 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "[√]: terminate the monitoring service done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        String cmdResultMessage = "<p>[√]: terminate the monitoring service done !!!</p>";
-        cmdResultMessage += "<p>\u202D</p>";
-        displayInfoLog(cmdResultMessage);
+        String contentTitle = "[√]: stop monitor done !!!";
+        String contentMessage = "[*]: you can get the details from Flr ToolWindow";
+        showSuccessMessage(contentTitle, contentMessage, false);
     }
 
-    // MARK: Command Action Util Methods
+    // MARK: pubspec.yaml Util Methods
 
+    /*
+    * get the path of pubspec.yaml
+    * */
     private String getPubspecFilePath() {
         String flutterProjectRootDir = curProject.getBasePath();
         String pubspecFilePath = flutterProjectRootDir + "/pubspec.yaml";
@@ -748,32 +723,9 @@ public class FlrCommand implements Disposable {
     }
 
     /*
-    * get the right version of r_dart_library package based on flutter's version
-    * to get more detail, see https://github.com/YK-Unit/r_dart_library#dependency-relationship-table
-    * */
-    /*
-    private String getRDartLibraryVersion() {
-        String rDartLibraryVersion = "0.1.0";
-
-        String shStr = "flutter --version";
-        List<String> outputLineList = FlrUtil.execShell(shStr);
-
-        if (outputLineList.isEmpty()) {
-            return rDartLibraryVersion;
-        }
-
-        String flutterVersionResult = outputLineList.get(0);
-        String versionWithHotfixStr = flutterVersionResult.split(" ")[1];
-        String versionWithoutHotfixStr = versionWithHotfixStr.split("\\+")[0];
-
-        int compareResult = FlrUtil.versionCompare(versionWithoutHotfixStr, "1.10.15");
-        if(compareResult == 0 || compareResult == 1) {
-            rDartLibraryVersion = "0.2.0";
-        }
-
-        return rDartLibraryVersion;
-    }*/
-
+     * get the right version of r_dart_library package based on flutter's version
+     * to get more detail, see https://github.com/YK-Unit/r_dart_library#dependency-relationship-table
+     * */
     private String getRDartLibraryVersion() {
         String rDartLibraryVersion = "0.1.0";
 
@@ -788,6 +740,8 @@ public class FlrCommand implements Disposable {
 
         return rDartLibraryVersion;
     }
+
+    // MARK: Check Methods
 
     /*
     * 按照以下步骤检测是否符合执行创建任务的条件
@@ -807,12 +761,8 @@ public class FlrCommand implements Disposable {
             flrLogConsole.println(String.format("[x]: %s not found", pubspecFilePath), FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please make sure current directory is a flutter project directory", FlrLogConsole.LogType.tips);
 
-            String message = String.format(
-                    "[x]: %s not found\n" +
-                    "[*]: please make sure current directory is a flutter project directory",
-                    pubspecFilePath
-            );
-            FlrException exception = new FlrException(message);
+            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
+            FlrException exception = new FlrException(contentMessage);
             throw(exception);
         }
 
@@ -825,12 +775,8 @@ public class FlrCommand implements Disposable {
             flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
 
-            String message = String.format(
-                    "[x]: %s is a bad YAML file\n" +
-                    "[*]: please make sure the pubspec.yaml is right",
-                    pubspecFilePath
-            );
-            FlrException exception = new FlrException(message);
+            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
+            FlrException exception = new FlrException(contentMessage);
             throw(exception);
         }
 
@@ -839,12 +785,8 @@ public class FlrCommand implements Disposable {
             flrLogConsole.println("[x]: have no flr configuration in pubspec.yaml", FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please click menu \"Tools-Flr-Init\" to fix it", FlrLogConsole.LogType.tips);
 
-            String message = String.format(
-                    "[x]: have no flr configuration in pubspec.yaml\n" +
-                    "[*]: please click menu \"Tools-Flr-Init\" to fix it",
-                    pubspecFilePath
-            );
-            FlrException exception = new FlrException(message);
+            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
+            FlrException exception = new FlrException(contentMessage);
             throw(exception);
         }
 
@@ -864,19 +806,8 @@ public class FlrCommand implements Disposable {
                     flrVersion
             ), FlrLogConsole.LogType.tips);
 
-            String message = String.format(
-                            "[x]: have no valid asset directories configuration in pubspec.yaml\n" +
-                            "[*]: please manually configure the asset directories to fix it, for example:\n" +
-                            "\u202D \n" +
-                            "\u202D     flr:\n" +
-                            "\u202D       version:%s\n" +
-                            "\u202D       assets:\n" +
-                            "\u202D       # config the asset directories that need to be scanned\n" +
-                            "\u202D         - lib/assets/images\n" +
-                            "\u202D         - lib/assets/texts\n",
-                    flrVersion
-            );
-            FlrException exception = new FlrException(message);
+            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
+            FlrException exception = new FlrException(contentMessage);
             throw(exception);
         }
 
@@ -899,43 +830,35 @@ public class FlrCommand implements Disposable {
                     flrVersion
             ), FlrLogConsole.LogType.tips);
 
-            String message = String.format(
-                            "[x]: have no valid asset directories configuration in pubspec.yaml\n" +
-                            "[*]: please manually configure the asset directories to fix it, for example:\n" +
-                            "\u202D \n" +
-                            "\u202D     flr:\n" +
-                            "\u202D       version:%s\n" +
-                            "\u202D       assets:\n" +
-                            "\u202D       # config the asset directories that need to be scanned\n" +
-                            "\u202D         - lib/assets/images\n" +
-                            "\u202D         - lib/assets/texts\n",
-                    flrVersion
-            );
-            FlrException exception = new FlrException(message);
+            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
+            FlrException exception = new FlrException(contentMessage);
             throw(exception);
         }
 
         return allValidAssetDirPaths;
     }
 
-    private void handleFlrException(FlrException exception) {
-        String message = exception.getMessage();
-        displayErrorLog(message);
+    // MARK: Exception Handler Methods
+
+    private void handleFlrException(@NotNull String contentTitle, FlrException exception) {
+        String contentMessage = exception.getMessage();
+        showFailureMessage(contentTitle, contentMessage);
     }
 
-    private void displayInfoLog(String infoMessage) {
-        Notification notification = new Notification(FlrConstant.flrDisplayName, "Flr", infoMessage, NotificationType.INFORMATION);
-        Notifications.Bus.notify(notification, curProject);
+    // MARK: MessageBox Show Methods
+
+    private void showSuccessMessage(@NotNull String title, @NotNull String message, Boolean hasWarning) {
+        String content = "<p>" + title + "</p>" + "<p>" + message + "</p>";
+        if(hasWarning) {
+            FlrMessageBox.showWarning(curProject, messageBoxTitle, content);
+        } else {
+            FlrMessageBox.showInfo(curProject, messageBoxTitle, content);
+        }
     }
 
-    private void displayWarningLog(String warningMessage) {
-        Notification notification = new Notification(FlrConstant.flrDisplayName, "Flr", warningMessage, NotificationType.WARNING);
-        Notifications.Bus.notify(notification, curProject);
-    }
-
-    private void displayErrorLog(String errorMessage) {
-        Notification notification = new Notification(FlrConstant.flrDisplayName, "Flr", errorMessage, NotificationType.ERROR);
-        Notifications.Bus.notify(notification, curProject);
+    private void showFailureMessage(@NotNull String title, @NotNull String message) {
+        String content = "<p>" + title + "</p>" + "<p>" + message + "</p>";
+        FlrMessageBox.showError(curProject, messageBoxTitle, content);
     }
 
 }
