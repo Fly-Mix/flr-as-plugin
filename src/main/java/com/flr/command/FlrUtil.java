@@ -2,6 +2,7 @@ package com.flr.command;
 
 
 import com.flr.FlrConstant;
+import com.flr.FlrException;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -252,12 +253,17 @@ public class FlrUtil {
     * @param packageName 项目工程的包名
     * @return [legalAssetList, illegalAssetList]
     *  * */
-    public static List<List<String>> getAssetsInDir(Project project, String assetDirPath, List<String> ignoredAssetTypes, String packageName) {
+    public static List<List<String>> getAssetsInDir(Project project, String assetDirPath, List<String> ignoredAssetTypes, String packageName) throws FlrException {
         List<String> legalAssetList = new ArrayList<String>();
         List<String> illegalAssetList = new ArrayList<String>();
 
         String assetDirFullPath = project.getBasePath() + "/" + assetDirPath;
         File assetDirFile = new File(assetDirFullPath);
+        if(assetDirFile.exists() == false) {
+            String message = String.format("%s not exists", assetDirFullPath);
+            FlrException exception = new FlrException(message);
+            throw(exception);
+        }
         VirtualFile assetDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(assetDirFile);
         VirtualFile[] assetDirChildren = assetDirVirtualFile.getChildren();
         List<VirtualFile> assetFiles = new ArrayList<VirtualFile>();

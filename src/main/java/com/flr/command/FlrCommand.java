@@ -174,13 +174,19 @@ public class FlrCommand implements Disposable {
         List<String> illegalAssetList = new ArrayList<String>();
 
         for(String assetDirPath: allValidAssetDirPaths) {
-            List<List<String>> assetsResult =  FlrUtil.getAssetsInDir(curProject, assetDirPath, ignoredAssetTypes, packageName);
-            List<String> partOfLegalAssetList = assetsResult.get(0);
-            List<String> partOfIllegalAssetList = assetsResult.get(1);
+            try {
+                List<List<String>> assetsResult =  FlrUtil.getAssetsInDir(curProject, assetDirPath, ignoredAssetTypes, packageName);
+                List<String> partOfLegalAssetList = assetsResult.get(0);
+                List<String> partOfIllegalAssetList = assetsResult.get(1);
 
-            legalAssetList.addAll(partOfLegalAssetList);
-            illegalAssetList.addAll(partOfIllegalAssetList);
+                legalAssetList.addAll(partOfLegalAssetList);
+                illegalAssetList.addAll(partOfIllegalAssetList);
+            } catch (FlrException e) {
+                String errorMessage = "\n[x]: " + e.getMessage() + "\n";
+                flrLogConsole.println(errorMessage, FlrLogConsole.LogType.error);
 
+                showFailureMessage("[!]: have an exception !!!", errorMessage);
+            }
         }
 
         indicatorMessage = "scan assets done !!!";
