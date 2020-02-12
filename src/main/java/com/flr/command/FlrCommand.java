@@ -1,6 +1,8 @@
-package com.flr;
+package com.flr.command;
 
-import com.intellij.execution.ui.ConsoleViewContentType;
+import com.flr.FlrConstant;
+import com.flr.FlrException;
+import com.flr.logConsole.FlrLogConsole;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;

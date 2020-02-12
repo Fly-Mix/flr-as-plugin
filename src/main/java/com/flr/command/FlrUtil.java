@@ -1,4 +1,4 @@
-package com.flr;
+package com.flr.command;
 
 
 import com.intellij.openapi.actionSystem.AnActionEvent;

@@ -1,4 +1,4 @@
-package com.flr;
+package com.flr.logConsole;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
@@ -6,12 +6,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.lang.dart.ide.actions.DartStyleAction;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class FlrLogConsole {
     public enum LogType {

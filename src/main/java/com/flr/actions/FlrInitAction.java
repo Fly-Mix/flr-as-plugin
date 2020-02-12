@@ -1,17 +1,18 @@
-package com.flr;
+package com.flr.actions;
 
+import com.flr.logConsole.FlrLogConsole;
+import com.flr.logConsole.FlrLogConsoleFactory;
+import com.flr.FlrApp;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.lang.dart.ide.actions.DartStyleAction;
 import org.jetbrains.annotations.NotNull;
 
-public class FlrGenerateAction extends AnAction {
+public class FlrInitAction extends AnAction {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
@@ -21,11 +22,14 @@ public class FlrGenerateAction extends AnAction {
         FlrLogConsoleFactory.showCurLogConsole(project);
         flrLogConsole.clear();
 
-        FlrProjectComponent flrProjectComponent = project.getComponent(FlrProjectComponent.class);
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Flr Generate", false) {
+        FlrApp flrApp = project.getComponent(FlrApp.class);
+
+        // Java Code Examples for com.intellij.openapi.progress.ProgressIndicator
+        // https://www.programcreek.com/java-api-examples/?api=com.intellij.openapi.progress.ProgressIndicator
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, "Flr Init", false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-                flrProjectComponent.flrCommand.generate(e, flrLogConsole);
+                flrApp.flrCommand.init(e, flrLogConsole);
             }
         });
     }

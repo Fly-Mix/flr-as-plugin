@@ -1,14 +1,13 @@
-package com.flr;
+package com.flr.actions;
 
+import com.flr.logConsole.FlrLogConsole;
+import com.flr.logConsole.FlrLogConsoleFactory;
+import com.flr.FlrApp;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 public class FlrMonitorAction extends AnAction {
 
@@ -20,16 +19,16 @@ public class FlrMonitorAction extends AnAction {
         FlrLogConsoleFactory.showCurLogConsole(project);
         flrLogConsole.clear();
 
-        FlrProjectComponent flrProjectComponent = project.getComponent(FlrProjectComponent.class);
+        FlrApp flrApp = project.getComponent(FlrApp.class);
         Presentation actionPresentation = e.getPresentation();
-        if(flrProjectComponent.flrCommand.isMonitoringAssets) {
+        if(flrApp.flrCommand.isMonitoringAssets) {
             actionPresentation.setText("Start Monitor");
             actionPresentation.setDescription("launch a monitoring service");
-            flrProjectComponent.flrCommand.stopAssertMonitor(e, flrLogConsole);
+            flrApp.flrCommand.stopAssertMonitor(e, flrLogConsole);
         } else {
             actionPresentation.setText("Stop Monitor");
             actionPresentation.setDescription("terminate the monitoring service");
-            Boolean isStartSuccess = flrProjectComponent.flrCommand.startAssertMonitor(e, flrLogConsole);
+            Boolean isStartSuccess = flrApp.flrCommand.startAssertMonitor(e, flrLogConsole);
             if(isStartSuccess == false) {
                 actionPresentation.setText("Start Monitor");
                 actionPresentation.setDescription("launch a monitoring service");

@@ -14,23 +14,23 @@
 
     <project-components>
         <component>
-            <implementation-class>com.flr.FlrProjectComponent</implementation-class>
+            <implementation-class>com.flr.FlrApp</implementation-class>
         </component>
     </project-components>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
-        <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.FlrLogConsoleFactory"/>
+        <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.logConsole.FlrLogConsoleFactory"/>
     </extensions>
 
     <actions>
         <!-- Add your actions here -->
-        <group id="FlrToolsActionGroup" text="Flr" description="Flutter Resource Manager Android Studio Plugin" icon="/icons/flr_16.png" popup="true">
+        <group id="flr.group" text="Flr" description="Flutter Resource Manager Android Studio Plugin" icon="/icons/flr_16.png" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <action id="flr.init" class="com.flr.FlrInitAction" text="Init" description="init Flutter project"/>
-            <action id="flr.generate" class="com.flr.FlrGenerateAction" text="Generate"
+            <action id="flr.init" class="com.flr.actions.FlrInitAction" text="Init" description="init Flutter project"/>
+            <action id="flr.generate" class="com.flr.actions.FlrGenerateAction" text="Generate"
                     description="Scan assets, specify scanned assets in pubspec.yaml, generate r.g.dart"/>
-            <action id="flr.monitor" class="com.flr.FlrMonitorAction" text="Start Monitor"
+            <action id="flr.monitor" class="com.flr.actions.FlrMonitorAction" text="Start Monitor"
                     description="start a monitoring service"/>
         </group>
 
