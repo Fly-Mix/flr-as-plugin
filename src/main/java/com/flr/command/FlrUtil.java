@@ -1,9 +1,12 @@
 package com.flr.command;
 
 
+import com.flr.FlrConstant;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,6 +73,15 @@ public class FlrUtil {
         }
 
         return 0;
+    }
+
+    /*
+    * 获取当前插件的版本
+    * */
+    public static String getFlrVersion() {
+        PluginId flrPluginId = PluginId.getId(FlrConstant.flrId);
+        String flrVersion = PluginManager.getPlugin(flrPluginId).getVersion();
+        return  flrVersion;
     }
 
     // MARK: - Pubspec.yaml Util Methods

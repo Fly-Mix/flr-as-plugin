@@ -23,7 +23,7 @@ import io.flutter.sdk.*;
 
 
 // 处理泛型对象时，若不做检查，就进行类型强制转换（如 (Map<String, Object>)map.get("key")），
-// 编译器会报警告：com.fly_mix.flr.FlrCommand.java使用了未经检查或不安全的操作。
+// 编译器会报警告：FlrCommand.java使用了未经检查或不安全的操作。
 // 解决办法之一是，添加 @SuppressWarnings("unchecked")。
 @SuppressWarnings("unchecked")
 public class FlrCommand implements Disposable {
@@ -107,7 +107,8 @@ public class FlrCommand implements Disposable {
         //      - lib/assets/texts
         //
         Map<String, Object> flrMap = new LinkedHashMap<>();
-        flrMap.put("version", FlrConstant.flrVersion);
+        String usedFlrVersion = FlrUtil.getFlrVersion();
+        flrMap.put("version", usedFlrVersion);
         List<String> assetList = new ArrayList<String>();
         flrMap.put("assets", assetList);
         pubspecMap.put("flr", flrMap);
@@ -579,7 +580,7 @@ public class FlrCommand implements Disposable {
         String cmdResultMessage = "<p>[√]: generate done !!!</p>";
         int warningCount = 0;
 
-        String usedFlrVersion = FlrConstant.flrVersion;
+        String usedFlrVersion = FlrUtil.getFlrVersion();
         if(flrVersion.equals(usedFlrVersion) == false) {
             flrLogConsole.println(String.format("[!]: warning, the configured Flr version is %s, while the currently used Flr version is %s", flrVersion, usedFlrVersion), FlrLogConsole.LogType.warning);
             flrLogConsole.println("[*]: to fix it, you should make sure that both versions are the same", FlrLogConsole.LogType.tips);
