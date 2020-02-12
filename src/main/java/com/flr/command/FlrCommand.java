@@ -582,12 +582,14 @@ public class FlrCommand implements Disposable {
 
         String usedFlrVersion = FlrUtil.getFlrVersion();
         if(flrVersion.equals(usedFlrVersion) == false) {
+            flrLogConsole.println("", indicatorType);
             flrLogConsole.println(String.format("[!]: warning, the configured Flr version is %s, while the currently used Flr version is %s", flrVersion, usedFlrVersion), FlrLogConsole.LogType.warning);
             flrLogConsole.println("[*]: to fix it, you should make sure that both versions are the same", FlrLogConsole.LogType.tips);
             warningCount += 1;
         }
 
         if(illegalAssetList.isEmpty() == false) {
+            flrLogConsole.println("", indicatorType);
             flrLogConsole.println("[!]: warning, find illegal assets who's file basename contains illegal characters:", FlrLogConsole.LogType.warning);
             for(String illegalAsset: illegalAssetList) {
                 flrLogConsole.println(String.format("   - %s", illegalAsset), FlrLogConsole.LogType.warning);
