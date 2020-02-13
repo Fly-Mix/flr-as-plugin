@@ -67,7 +67,7 @@ public class FlrCommand implements Disposable {
             flrLogConsole.println(String.format("[x]: %s not found", pubspecFilePath), FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please make sure current directory is a flutter project directory", FlrLogConsole.LogType.tips);
 
-            String contentTitle = "[!]: init failed !!!";
+            String contentTitle = "[x]: init failed !!!";
             String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
             showFailureMessage(contentTitle, contentMessage);
             return;
@@ -79,7 +79,7 @@ public class FlrCommand implements Disposable {
             flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
 
-            String contentTitle = "[!]: init failed !!!";
+            String contentTitle = "[x]: init failed !!!";
             String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
             showFailureMessage(contentTitle, contentMessage);
             return;
@@ -149,7 +149,7 @@ public class FlrCommand implements Disposable {
         try {
             allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
         } catch (FlrException e) {
-            String contentTitle = "[!]: generate failed !!!";
+            String contentTitle = "[x]: generate failed !!!";
             handleFlrException(contentTitle, e);
             return;
         }
@@ -185,7 +185,7 @@ public class FlrCommand implements Disposable {
                 String errorMessage = "\n[x]: " + e.getMessage() + "\n";
                 flrLogConsole.println(errorMessage, FlrLogConsole.LogType.error);
 
-                showFailureMessage("[!]: have an exception !!!", errorMessage);
+                showFailureMessage("[x]: have an exception !!!", errorMessage);
             }
         }
 
@@ -526,7 +526,7 @@ public class FlrCommand implements Disposable {
             writer.write(rDartContent);
         } catch (IOException e) {
             FlrException flrException = new FlrException(e.getMessage());
-            String contentTitle = "[!]: generate failed !!!";
+            String contentTitle = "[x]: generate failed !!!";
             handleFlrException(contentTitle, flrException);
             return;
         }
@@ -598,7 +598,7 @@ public class FlrCommand implements Disposable {
         try {
             allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
         } catch (FlrException e) {
-            String contentTitle = "[!]: generate failed !!!";
+            String contentTitle = "[x]: generate failed !!!";
             handleFlrException(contentTitle, e);
             return false;
         }
