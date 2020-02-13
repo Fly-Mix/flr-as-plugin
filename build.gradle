@@ -41,7 +41,9 @@ patchPluginXml {
     sinceBuild = '191'
 
     changeNotes = """
-      <ul>
-      <li><b>0.1.0</b> Release 2020.2 and earlier.</li>
-      </ul>"""
+<h1>0.1.0</h1>
+<ul>
+  <li>initial alpha release</li>
+</ul>
+    """
 }

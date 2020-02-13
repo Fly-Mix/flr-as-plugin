@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.fly-mix.flr-as-plugin</id>
+    <id>com.fly-mix.flr</id>
     <name>Flr</name>
     <vendor email="yorkzhang520@gmail.com" url="https://github.com/Fly-Mix/flr-as-plugin">Fly-Mix</vendor>
 
