@@ -32,6 +32,12 @@ patchPluginXml {
     // 设置插件的版本号
     version = '0.1.0'
 
+    // 设置插件描述
+    pluginDescription = """
+<p>Flr (Flutter-R): A Flutter Resource Manager Android Studio Plugin, which can help flutter developer to auto specify assets in pubspec.yaml and generate r.g.dart file.</p>
+<p>You can get more details form <a href="https://github.com/Fly-Mix/flr-as-plugin">GitHub repository</a>.</p>
+    """
+
     /*
     * 插件兼容IDEA的最小版本号
     * 详细可参考：
@@ -40,8 +46,12 @@ patchPluginXml {
     * */
     sinceBuild = '191'
 
+    /*
+    * 设置版本更新日志
+    * 注意：最新版本号的标题样式改为h2，其他版本号的标题样式改为h3
+    */
     changeNotes = """
-<h1>0.1.0</h1>
+<h2>0.1.0</h2>
 <ul>
   <li>initial release</li>
 </ul>
