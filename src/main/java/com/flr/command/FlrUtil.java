@@ -89,36 +89,40 @@ public class FlrUtil {
 
     // MARK: - Pubspec.yaml Util Methods
 
-    public static Map<String, Object> loadPubspecMapFromYaml(String pubspecFilePath) {
+    public static Map<String, Object> loadPubspecMapFromYaml(File pubspecFile) {
         try {
             LoadSettings settings = LoadSettings.builder().build();
             Load load = new Load(settings);
-            File pubspecFile = new File(pubspecFilePath);
             InputStream inputStream = new FileInputStream(pubspecFile);
             Map<String, Object> pubspecMap = (Map<String, Object>) load.loadFromInputStream(inputStream);
-            return  pubspecMap;
+            return pubspecMap;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public static void dumpPubspecMapToYaml(Map<String, Object> pubspecMap, String pubspecFilePath) {
+    public static void dumpPubspecMapToYaml(Map<String, Object> pubspecMap, File pubspecFile) {
         try {
             DumpSettingsBuilder settingsBuilder = DumpSettings.builder();
             settingsBuilder.setDefaultFlowStyle(FlowStyle.BLOCK);
             settingsBuilder.setIndicatorIndent(2);
             DumpSettings settings = settingsBuilder.build();
             Dump dump = new Dump(settings);
-            File file = new File(pubspecFilePath);
-            StreamDataWriter writer = new YamlOutputStreamWriter(new FileOutputStream(file),
+            StreamDataWriter writer = new YamlOutputStreamWriter(new FileOutputStream(pubspecFile),
                     StandardCharsets.UTF_8) {
                 @Override
                 public void processIOException(IOException e) {
-                    throw new RuntimeException(e);
+                    e.getStackTrace();
                 }
             };
             dump.dump(pubspecMap, writer);
+
+            VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
+            if(pubspecFile == null) {
+                return;
+            }
+            pubspecVirtualFile.refresh(false, false);
         } catch (Exception e) {
             e.printStackTrace();
         }

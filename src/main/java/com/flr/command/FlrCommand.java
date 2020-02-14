@@ -74,7 +74,7 @@ public class FlrCommand implements Disposable {
         }
 
         // 读取pubspec.yaml，然后添加相关配置
-        Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFilePath);
+        Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFile);
         if(pubspecMap == null) {
             flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
@@ -121,11 +121,8 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "add dependency \"r_dart_library\"(https://github.com/YK-Unit/r_dart_library) into pubspec.yaml done!";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        // 保存pubspec.yaml
-        // 更新并刷新 pubspec.yaml
-        FlrUtil.dumpPubspecMapToYaml(pubspecMap, pubspecFilePath);
-        VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
-        pubspecVirtualFile.refresh(false, false);
+        // 保存并刷新 pubspec.yaml
+        FlrUtil.dumpPubspecMapToYaml(pubspecMap, pubspecFile);
 
         indicatorMessage = "get dependency \"r_dart_library\" via running \"Flutter Packages Get\" action now ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
@@ -155,7 +152,8 @@ public class FlrCommand implements Disposable {
         }
 
         String pubspecFilePath = getPubspecFilePath();
-        Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFilePath);
+        File pubspecFile = new File(pubspecFilePath);
+        Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFile);
 
         Map<String, Object> flrMap = (Map<String, Object>)pubspecMap.get("flr");
         String flrVersion = (String) flrMap.get("version");
@@ -200,11 +198,8 @@ public class FlrCommand implements Disposable {
         flutterMap.put("assets", legalAssetList);
         pubspecMap.put("flutter", flutterMap);
 
-        // 更新并刷新 pubspec.yaml
-        FlrUtil.dumpPubspecMapToYaml(pubspecMap, pubspecFilePath);
-        File pubspecFile = new File(pubspecFilePath);
-        VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
-        pubspecVirtualFile.refresh(false, false);
+        // 保存刷新 pubspec.yaml
+        FlrUtil.dumpPubspecMapToYaml(pubspecMap, pubspecFile);
 
         indicatorMessage = "specify scanned assets in pubspec.yaml done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
@@ -771,7 +766,7 @@ public class FlrCommand implements Disposable {
         // 若有，说明已经进行了初始化；然后检测是否配置了资源目录，若没有配置，这时直接终止当前任务，并提示开发者手动配置它
         // 若没有，说明还没进行初始化，这时直接终止当前任务，并提示开发者手动配置它
 
-        Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFilePath);
+        Map<String, Object> pubspecMap = FlrUtil.loadPubspecMapFromYaml(pubspecFile);
         if(pubspecMap == null) {
             flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
