@@ -520,32 +520,23 @@ public class FlrCommand implements Disposable {
 
         // 把 rDartContent 写到 r.g.dart 中
         String rDartFilePath = curProject.getBasePath() + "/lib/r.g.dart";
-        //Use try-with-resource to get auto-closeable writer instance
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(rDartFilePath)))
-        {
-            writer.write(rDartContent);
-        } catch (IOException e) {
-            FlrException flrException = new FlrException(e.getMessage());
+        File rDartFile = new File(rDartFilePath);
+        try {
+            FlrUtil.writeContentToFile(curProject, rDartContent, rDartFile);
+        } catch (FlrException e) {
             String contentTitle = "[x]: generate failed !!!";
-            handleFlrException(contentTitle, flrException);
+            handleFlrException(contentTitle, e);
             return;
         }
-
-        File rDartFile = new File(rDartFilePath);
-        VirtualFile rDartVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(rDartFile);
-        rDartVirtualFile.refresh(false, false);
-
         indicatorMessage = String.format("generate for %s done!", curProject.getBasePath());
         flrLogConsole.println(indicatorMessage, indicatorType);
 
         // 格式化 r.g.dart
         indicatorMessage = "format r.g.dart now ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
-        FlrUtil.formatDartFile(curProject, rDartVirtualFile);
+        FlrUtil.formatDartFile(curProject, rDartFile);
         indicatorMessage = "format r.g.dart done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
-
-        // 刷新 r.g.dart
 
         // 执行 "Flutter Packages Get" action
         indicatorMessage = "running \"Flutter Packages Get\" action now ...";
