@@ -30,7 +30,7 @@ intellij {
 // See https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
 patchPluginXml {
     // 设置插件的版本号
-    version = '0.1.0'
+    version = '0.1.1'
 
     // 设置插件描述
     pluginDescription = """
@@ -51,7 +51,12 @@ patchPluginXml {
     * 注意：最新版本号的标题样式改为h2，其他版本号的标题样式改为h3
     */
     changeNotes = """
-<h2>0.1.0</h2>
+<h2>0.1.1</h2>
+<ul>
+  <li>optimize init&generate functions</li>
+   <li>fix some bugs</li>
+</ul>
+<h3>0.1.0</h3>
 <ul>
   <li>initial release</li>
 </ul>
