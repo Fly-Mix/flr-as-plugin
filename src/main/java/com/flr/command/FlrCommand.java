@@ -121,6 +121,19 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "add dependency \"r_dart_library\"(https://github.com/YK-Unit/r_dart_library) into pubspec.yaml done!";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
+        // 检测 flutter 下的assets配置是否有效（assets要求为非空数组），若无效，则删除该配置，避免执行 flutter pub get 时会失败
+        Map<String, Object> flutterMap = (Map<String, Object>)pubspecMap.get("flutter");
+        String flutterAssetsKey = "assets";
+        Object flutterAssets = flutterMap.get(flutterAssetsKey);
+        Boolean shouldRmFlutterAssetsKey = true;
+        if(flutterAssets instanceof List && ((List)flutterAssets).isEmpty() == false) {
+            shouldRmFlutterAssetsKey = false;
+        }
+        if(shouldRmFlutterAssetsKey) {
+            flutterMap.remove(flutterAssetsKey);
+            pubspecMap.put("flutter", flutterMap);
+        }
+
         // 保存并刷新 pubspec.yaml
         FlrUtil.dumpPubspecMapToYaml(pubspecMap, pubspecFile);
 
