@@ -21,6 +21,8 @@ import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.common.FlowStyle;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
@@ -180,8 +182,7 @@ public class FlrUtil {
         });
     }
 
-    public static void formatDartFile(@NotNull Project project, @NotNull VirtualFile dartVirtualFile) {
-
+    public static void formatDartFile(@NotNull Project project, @NotNull File dartFile) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -189,6 +190,10 @@ public class FlrUtil {
                     @Override
                     public void run() {
                         // 格式化方案一：Android Studio（non-IDEA JetBrains IDE）和 IDEA JetBrains IDE 上均可行
+                        VirtualFile dartVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(dartFile);
+                        if (dartVirtualFile == null) {
+                            return;
+                        }
                         List<VirtualFile> dartFiles = new ArrayList<VirtualFile>();
                         dartFiles.add(dartVirtualFile);
                         DartStyleAction.runDartfmt(project, dartFiles);
@@ -238,6 +243,37 @@ public class FlrUtil {
         }
         String fileExtension = fileBasename.substring(lastIndexOf);
         return fileExtension;
+    }
+
+    public static void writeContentToFile(@NotNull Project project,@NotNull String content, @NotNull File file) throws FlrException {
+        if(file.exists() == false) {
+            try {
+                // 创建文件，并同步加载文件到工程
+                file.createNewFile();
+                List<File> ioFiles = new ArrayList<File>();
+                ioFiles.add(file);
+                LocalFileSystem.getInstance().refreshIoFiles(ioFiles);
+            } catch (IOException e) {
+                e.printStackTrace();
+                FlrException flrException = new FlrException(e.getMessage());
+                throw flrException;
+            }
+        }
+        //Use try-with-resource to get auto-closeable writer instance
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(file.getPath())))
+        {
+            writer.write(content);
+        } catch (IOException e) {
+            e.printStackTrace();
+            FlrException flrException = new FlrException(e.getMessage());
+            throw flrException;
+        }
+
+        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+        if(virtualFile == null) {
+            return;
+        }
+        virtualFile.refresh(false, false);
     }
 
     // MARK: - Asset Util Methods
