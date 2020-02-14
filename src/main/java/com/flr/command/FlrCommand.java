@@ -582,7 +582,7 @@ public class FlrCommand implements Disposable {
         String contentTitle = "[√]: generate done !!!";
         if(warningCount > 0) {
             String warningMessage = String.format("[!]: have %d warnings, you can get the details from Flr ToolWindow", warningCount);
-            showSuccessMessage(contentTitle, warningMessage, false);
+            showSuccessMessage(contentTitle, warningMessage, true);
         } else {
             showSuccessMessage(contentTitle, "", false);
         }
