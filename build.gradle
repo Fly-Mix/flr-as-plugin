@@ -58,7 +58,8 @@ patchPluginXml {
     changeNotes = """
 <h2>0.1.1</h2>
 <ul>
-  <li>optimize init&generate functions</li>
+  <li>optimize init and generate actions</li>
+  <li>optimize user interaction</li>
   <li>fix some bugs</li>
 </ul>
 <h3>0.1.0</h3>
