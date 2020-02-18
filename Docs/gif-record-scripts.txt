@@ -1,0 +1,41 @@
+---------------------------------------------
+1. Click
+`Tools > Flr > Init`
+to init Flutter project
+
+---------------------------------------------
+
+2. Edit pubspec.yaml
+to configure the asset directory paths
+
+---------------------------------------------
+
+3. Click
+`Tools > Flr > Generate`
+to specify assets and generate r.g.dart
+
+---------------------------------------------
+
+One More Thing:
+
+If you want Flr to auto generate when you change Flutter asssets, 
+
+you can Click `Tools > Flr > Start Monitor` to launch a monitoring service.
+
+For example:
+
+---------------------------------------------
+
+1. Click
+`Tools > Flr > Start Monitor`
+to launch a monitoring service
+
+---------------------------------------------
+
+2. Add a new asset: 163.com.yaml
+
+---------------------------------------------
+
+3. Click
+`Tools > Flr > Stop Monitor`
+to terminate the monitoring service if you want
