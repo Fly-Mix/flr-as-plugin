@@ -21,6 +21,8 @@ import org.snakeyaml.engine.v2.api.*;
 import org.snakeyaml.engine.v2.common.FlowStyle;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
@@ -87,36 +89,40 @@ public class FlrUtil {
 
     // MARK: - Pubspec.yaml Util Methods
 
-    public static Map<String, Object> loadPubspecMapFromYaml(String pubspecFilePath) {
+    public static Map<String, Object> loadPubspecMapFromYaml(File pubspecFile) {
         try {
             LoadSettings settings = LoadSettings.builder().build();
             Load load = new Load(settings);
-            File pubspecFile = new File(pubspecFilePath);
             InputStream inputStream = new FileInputStream(pubspecFile);
             Map<String, Object> pubspecMap = (Map<String, Object>) load.loadFromInputStream(inputStream);
-            return  pubspecMap;
+            return pubspecMap;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public static void dumpPubspecMapToYaml(Map<String, Object> pubspecMap, String pubspecFilePath) {
+    public static void dumpPubspecMapToYaml(Map<String, Object> pubspecMap, File pubspecFile) {
         try {
             DumpSettingsBuilder settingsBuilder = DumpSettings.builder();
             settingsBuilder.setDefaultFlowStyle(FlowStyle.BLOCK);
             settingsBuilder.setIndicatorIndent(2);
             DumpSettings settings = settingsBuilder.build();
             Dump dump = new Dump(settings);
-            File file = new File(pubspecFilePath);
-            StreamDataWriter writer = new YamlOutputStreamWriter(new FileOutputStream(file),
+            StreamDataWriter writer = new YamlOutputStreamWriter(new FileOutputStream(pubspecFile),
                     StandardCharsets.UTF_8) {
                 @Override
                 public void processIOException(IOException e) {
-                    throw new RuntimeException(e);
+                    e.getStackTrace();
                 }
             };
             dump.dump(pubspecMap, writer);
+
+            VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
+            if(pubspecFile == null) {
+                return;
+            }
+            pubspecVirtualFile.refresh(false, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -180,8 +186,7 @@ public class FlrUtil {
         });
     }
 
-    public static void formatDartFile(@NotNull Project project, @NotNull VirtualFile dartVirtualFile) {
-
+    public static void formatDartFile(@NotNull Project project, @NotNull File dartFile) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -189,6 +194,10 @@ public class FlrUtil {
                     @Override
                     public void run() {
                         // 格式化方案一：Android Studio（non-IDEA JetBrains IDE）和 IDEA JetBrains IDE 上均可行
+                        VirtualFile dartVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(dartFile);
+                        if (dartVirtualFile == null) {
+                            return;
+                        }
                         List<VirtualFile> dartFiles = new ArrayList<VirtualFile>();
                         dartFiles.add(dartVirtualFile);
                         DartStyleAction.runDartfmt(project, dartFiles);
@@ -238,6 +247,37 @@ public class FlrUtil {
         }
         String fileExtension = fileBasename.substring(lastIndexOf);
         return fileExtension;
+    }
+
+    public static void writeContentToFile(@NotNull Project project,@NotNull String content, @NotNull File file) throws FlrException {
+        if(file.exists() == false) {
+            try {
+                // 创建文件，并同步加载文件到工程
+                file.createNewFile();
+                List<File> ioFiles = new ArrayList<File>();
+                ioFiles.add(file);
+                LocalFileSystem.getInstance().refreshIoFiles(ioFiles);
+            } catch (IOException e) {
+                e.printStackTrace();
+                FlrException flrException = new FlrException(e.getMessage());
+                throw flrException;
+            }
+        }
+        //Use try-with-resource to get auto-closeable writer instance
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(file.getPath())))
+        {
+            writer.write(content);
+        } catch (IOException e) {
+            e.printStackTrace();
+            FlrException flrException = new FlrException(e.getMessage());
+            throw flrException;
+        }
+
+        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+        if(virtualFile == null) {
+            return;
+        }
+        virtualFile.refresh(false, false);
     }
 
     // MARK: - Asset Util Methods
