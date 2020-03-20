@@ -11,14 +11,11 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.jetbrains.lang.dart.ide.actions.DartStyleAction;
 import com.sun.istack.NotNull;
 import io.flutter.actions.FlutterPackagesGetAction;
-import org.snakeyaml.engine.v2.api.*;
-import org.snakeyaml.engine.v2.common.FlowStyle;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -91,10 +88,16 @@ public class FlrUtil {
 
     public static Map<String, Object> loadPubspecMapFromYaml(File pubspecFile) {
         try {
-            LoadSettings settings = LoadSettings.builder().build();
-            Load load = new Load(settings);
+            Yaml yaml = new Yaml();
             InputStream inputStream = new FileInputStream(pubspecFile);
-            Map<String, Object> pubspecMap = (Map<String, Object>) load.loadFromInputStream(inputStream);
+            Iterable<Object> itr = yaml.loadAll(inputStream);
+            Map<String, Object> pubspecMap = null;
+            for (Object obj : itr) {
+                if(obj instanceof Map) {
+                    pubspecMap = (Map<String, Object>)obj;
+                    break;
+                }
+            }
             return pubspecMap;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -104,19 +107,13 @@ public class FlrUtil {
 
     public static void dumpPubspecMapToYaml(Map<String, Object> pubspecMap, File pubspecFile) {
         try {
-            DumpSettingsBuilder settingsBuilder = DumpSettings.builder();
-            settingsBuilder.setDefaultFlowStyle(FlowStyle.BLOCK);
-            settingsBuilder.setIndicatorIndent(2);
-            DumpSettings settings = settingsBuilder.build();
-            Dump dump = new Dump(settings);
-            StreamDataWriter writer = new YamlOutputStreamWriter(new FileOutputStream(pubspecFile),
-                    StandardCharsets.UTF_8) {
-                @Override
-                public void processIOException(IOException e) {
-                    e.getStackTrace();
-                }
-            };
-            dump.dump(pubspecMap, writer);
+            DumperOptions dumperOptions = new DumperOptions();
+            dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+            dumperOptions.setIndent(2);
+            dumperOptions.setIndicatorIndent(0);
+            Yaml yaml = new Yaml(dumperOptions);
+            FileWriter writer = new FileWriter(pubspecFile);
+            yaml.dump(pubspecMap, writer);
 
             VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
             if(pubspecFile == null) {

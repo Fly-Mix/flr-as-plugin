@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile group: 'org.snakeyaml', name: 'snakeyaml-engine', version: '2.1'
+    compile group: 'org.yaml', name: 'snakeyaml', version: '1.26'
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
