@@ -736,7 +736,7 @@ public class FlrCommand implements Disposable {
      * to get more detail, see https://github.com/YK-Unit/r_dart_library#dependency-relationship-table
      * */
     private String getRDartLibraryVersion() {
-        String rDartLibraryVersion = "0.1.0";
+        String rDartLibraryVersion = "0.1.1";
 
         VirtualFile flutterSdkHome = FlutterSdk.getFlutterSdk(curProject).getHome();
         FlutterSdkVersion flutterSdkVersion = FlutterSdkVersion.readFromSdk(flutterSdkHome);
@@ -744,7 +744,7 @@ public class FlrCommand implements Disposable {
         String flutterVersionWithoutHotfixStr = flutterSdkVersion.toString();
         int compareResult = FlrUtil.versionCompare(flutterVersionWithoutHotfixStr, "1.10.15");
         if(compareResult == 0 || compareResult == 1) {
-            rDartLibraryVersion = "0.2.0";
+            rDartLibraryVersion = "0.2.1";
         }
 
         return rDartLibraryVersion;
