@@ -56,7 +56,7 @@ patchPluginXml {
     * - https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
     * - http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
     * */
-    //sinceBuild = '192'
+    sinceBuild = '192'
     //untilBuild = '192.*'
 
     /*
