@@ -86,7 +86,7 @@ public class FlrUtil {
 
     // MARK: - Pubspec.yaml Util Methods
 
-    public static Map<String, Object> loadPubspecMapFromYaml(File pubspecFile) {
+    public static Map<String, Object> loadPubspecConfigFromFile(File pubspecFile) {
         try {
             Yaml yaml = new Yaml();
             InputStream inputStream = new FileInputStream(pubspecFile);
@@ -105,7 +105,7 @@ public class FlrUtil {
         return null;
     }
 
-    public static void dumpPubspecMapToYaml(Map<String, Object> pubspecMap, File pubspecFile) {
+    public static void dumpPubspecConfigToFile(Map<String, Object> pubspecMap, File pubspecFile) {
         try {
             DumperOptions dumperOptions = new DumperOptions();
             dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
