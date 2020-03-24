@@ -1,5 +1,6 @@
 package com.flr.command;
 
+import com.flr.FlrConstant;
 import com.flr.FlrException;
 import com.flr.logConsole.FlrLogConsole;
 import com.flr.messageBox.FlrMessageBox;
@@ -91,14 +92,13 @@ public class FlrCommand implements Disposable {
         // 添加Flr的配置到pubspec.yaml
         // Flr的配置:
         // flr:
-        //    - version: 0.2.0
+        //    - core_version: 1.0.0
         //    - assets:
-        //      - lib/assets/images
-        //      - lib/assets/texts
+        //    - fonts:
         //
         Map<String, Object> flrMap = new LinkedHashMap<>();
-        String usedFlrVersion = FlrUtil.getFlrVersion();
-        flrMap.put("version", usedFlrVersion);
+        String usedFlrCoreLogicVersion = FlrConstant.flrCoreLogicVersion;
+        flrMap.put("core_version", usedFlrCoreLogicVersion);
         List<String> assetList = new ArrayList<String>();
         flrMap.put("assets", assetList);
         pubspecMap.put("flr", flrMap);
