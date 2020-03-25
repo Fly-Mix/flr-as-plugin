@@ -703,7 +703,10 @@ public class FlrCommand implements Disposable {
         }
     }
 
-    public Boolean startAssertMonitor(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+    /*
+    * 启动一个资源变化监控服务，若检测到有资源变化，就自动执行generate操作
+    * */
+    public Boolean startMonitor(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
         String indicatorMessage = "[Flr Start Monitor]";
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
@@ -718,7 +721,7 @@ public class FlrCommand implements Disposable {
 //        }
 
         if(curFlrListener != null) {
-            stopAssertMonitor(actionEvent, flrLogConsole);
+            stopMonitor(actionEvent, flrLogConsole);
         }
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
@@ -812,7 +815,10 @@ public class FlrCommand implements Disposable {
         return true;
     }
 
-    public void stopAssertMonitor(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+    /*
+    * 停止资源变化监控服务
+    * */
+    public void stopMonitor(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
         String indicatorMessage = "[Flr Stop Monitor]";
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
