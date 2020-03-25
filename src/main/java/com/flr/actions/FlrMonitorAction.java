@@ -24,11 +24,11 @@ public class FlrMonitorAction extends AnAction {
         if(flrApp.flrCommand.isMonitoringAssets) {
             actionPresentation.setText("Start Monitor");
             actionPresentation.setDescription("launch a monitoring service");
-            flrApp.flrCommand.stopAssertMonitor(e, flrLogConsole);
+            flrApp.flrCommand.stopMonitor(e, flrLogConsole);
         } else {
             actionPresentation.setText("Stop Monitor");
             actionPresentation.setDescription("terminate the monitoring service");
-            Boolean isStartSuccess = flrApp.flrCommand.startAssertMonitor(e, flrLogConsole);
+            Boolean isStartSuccess = flrApp.flrCommand.startMonitor(e, flrLogConsole);
             if(isStartSuccess == false) {
                 actionPresentation.setText("Start Monitor");
                 actionPresentation.setDescription("launch a monitoring service");
