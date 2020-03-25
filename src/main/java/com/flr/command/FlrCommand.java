@@ -117,8 +117,8 @@ public class FlrCommand implements Disposable {
         //
         // flr:
         //    - core_version: 1.0.0
-        //    - assets:
-        //    - fonts:
+        //    - assets: []
+        //    - fonts: []
         //
         Map<String, Object> flrConfig = new LinkedHashMap<>();
         String usedFlrCoreLogicVersion = FlrConstant.CORE_VERSION;
