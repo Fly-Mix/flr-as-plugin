@@ -456,7 +456,7 @@ public class FlrCommand implements Disposable {
             String tipsText  = "[*]: to fix it, you should only use letters (a-z, A-Z), numbers (0-9), and the other legal characters ('_', '+', '-', '.', '·', '!', '@', '&', '$', '￥') to name the file";
 
             FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
-            FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.warning);
+            FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.tips);
             List<FlrColoredLogEntity.Item> items = Arrays.asList(warningItem, tipsItem);
 
             FlrColoredLogEntity logEntity = new FlrColoredLogEntity(items);
@@ -696,7 +696,7 @@ public class FlrCommand implements Disposable {
             if(warningCount > 1) {
                 warningUnitDesc = "warnings";
             }
-            String warningMessage = String.format("[!]: have %d %s, you can get the details from Flr ToolWindow", warningCount, warningUnitDesc);
+            String warningMessage = String.format("[!]: found %d %s, you can get the details from Flr ToolWindow", warningCount, warningUnitDesc);
             showSuccessMessage(contentTitle, warningMessage, true);
         } else {
             showSuccessMessage(contentTitle, "", false);
