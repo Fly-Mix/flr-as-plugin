@@ -2,6 +2,11 @@ package com.flr.command;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.command.util.FlrAssetUtil;
+import com.flr.command.util.FlrCodeUtil;
+import com.flr.command.util.FlrFileUtil;
+import com.flr.command.util.FlrUtil;
+import com.flr.logConsole.FlrColoredLogEntity;
 import com.flr.logConsole.FlrLogConsole;
 import com.flr.messageBox.FlrMessageBox;
 import com.intellij.openapi.Disposable;
@@ -16,6 +21,20 @@ import java.util.*;
 
 import io.flutter.sdk.*;
 
+/**
+ * 专有名词简单解释和示例：
+ * （详细定义请看 flr-core 项目的文档描述）
+ *
+ * package_name：flutter工程的package产物的名称，例如“flutter_demo”
+ * resource_file：flutter工程的资源文件，例如“lib/assets/images/hot_foot_N.png”、“lib/assets/images/3.0x/hot_foot_N.png”
+ * asset：flutter工程的package产物中资源，可当作是工程中的资源文件的映射和声明，例如上述2个资源对于的asset都是“packages/flutter_demo/assets/images/hot_foot_N.png”
+ * file_basename：资源的文件名，其定义是“#{file_basename_no_extension}#{file_extname}”，例如“hot_foot_N.png”
+ * file_basename_no_extension：资源的不带扩展名的文件名，例如“hot_foot_N”
+ * file_extname：资源的扩展名，例如“.png”
+ *
+ * asset_name：main asset的名称，例如“assets/images/hot_foot_N.png”
+ * asset_id：资源ID，其值一般为 file_basename_no_extension
+ * */
 
 // 处理泛型对象时，若不做检查，就进行类型强制转换（如 (Map<String, Object>)map.get("key")），
 // 编译器会报警告：FlrCommand.java使用了未经检查或不安全的操作。
@@ -55,38 +74,37 @@ public class FlrCommand implements Disposable {
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
 
-        String pubspecFilePath = getPubspecFilePath();
-        File pubspecFile = new File(pubspecFilePath);
+        String flrExceptionTitle = "[x]: init failed !!!";
+
+        String flutterProjectRootDir = curProject.getBasePath();
 
         // ----- Step-1 Begin -----
         // 进行环境检测:
         //  - 检测当前 flutter 工程根目录是否存在 pubspec.yaml
         //
-        if(pubspecFile.exists() == false) {
-            flrLogConsole.println(String.format("[x]: %s not found", pubspecFilePath), FlrLogConsole.LogType.error);
-            flrLogConsole.println("[*]: please make sure current directory is a flutter project directory", FlrLogConsole.LogType.tips);
-
-            String contentTitle = "[x]: init failed !!!";
-            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
-            showFailureMessage(contentTitle, contentMessage);
+        try {
+            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
+        } catch (FlrException e) {
+            handleFlrException(flrExceptionTitle, e);
             return;
         }
 
         // ----- Step-1 End -----
+
+        String pubspecFilePath = getPubspecFilePath();
+        File pubspecFile = new File(pubspecFilePath);
 
         // ----- Step-2 Begin -----
         // 添加 flr_config 和 r_dart_library 的依赖声明到 pubspec.yaml
         //
 
         // 读取pubspec.yaml，然后添加相关配置
-        Map<String, Object> pubspecConfig = FlrUtil.loadPubspecConfigFromFile(pubspecFile);
-        if(pubspecConfig == null) {
+        Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
+        if(pubspecConfig == null || (pubspecConfig instanceof Map) == false) {
             flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
             flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
 
-            String contentTitle = "[x]: init failed !!!";
-            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
-            showFailureMessage(contentTitle, contentMessage);
+            handleFlrException(flrExceptionTitle, FlrException.ILLEGAL_ENV);
             return;
         }
 
@@ -103,7 +121,7 @@ public class FlrCommand implements Disposable {
         //    - fonts:
         //
         Map<String, Object> flrConfig = new LinkedHashMap<>();
-        String usedFlrCoreLogicVersion = FlrConstant.flrCoreLogicVersion;
+        String usedFlrCoreLogicVersion = FlrConstant.CORE_VERSION;
         flrConfig.put("core_version", usedFlrCoreLogicVersion);
         List<String> assetResourceDirList = new ArrayList<String>();
         flrConfig.put("assets", assetResourceDirList);
@@ -163,7 +181,7 @@ public class FlrCommand implements Disposable {
         // ----- Step-3 End -----
 
         // 保存并刷新 pubspec.yaml
-        FlrUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
+        FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
 
         // ----- Step-4 Begin -----
         // 调用flutter工具，为flutter工程获取依赖
@@ -184,394 +202,457 @@ public class FlrCommand implements Disposable {
         showSuccessMessage(contentTitle, "", false);
     }
 
+    /*
+    * 扫描资源目录，自动为资源添加声明到 pubspec.yaml 和生成 r.g.dart
+    * */
     public void generate(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
         String indicatorMessage = "[Flr Generate]";
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
 
-        List<String> allValidAssetDirPaths = null;
+        String flrExceptionTitle = "[x]: generate failed !!!";
+
+        // 警告日志数组
+        List<FlrColoredLogEntity> warningMessages = new ArrayList<FlrColoredLogEntity>();
+
+        String flutterProjectRootDir = curProject.getBasePath();
+        String pubspecFilePath;
+        File pubspecFile;
+        Map<String, Object> pubspecConfig;
+        Map<String, Object> flrConfig;
+        List<List<String>> resourceDirResultTuple;
+
+        // ----- Step-1 Begin -----
+        // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程：
+        // - 检测当前flutter工程根目录是否存在pubspec.yaml
+        // - 检测当前pubspec.yaml中是否存在Flr的配置
+        // - 检测当前flr_config中的resource_dir配置是否合法：
+        //    判断合法的标准是：assets配置或者fonts配置了至少1个legal_resource_dir
+        //
+
         try {
-            allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
+            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
+
+            pubspecFilePath = getPubspecFilePath();
+            pubspecFile = new File(pubspecFilePath);
+            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
+
+            FlrChecker.checkFlrConfigIsExisted(flrLogConsole, pubspecConfig);
+            flrConfig = (Map<String, Object>)pubspecConfig.get("flr");
+
+            resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(flrLogConsole, flrConfig, flutterProjectRootDir);
         } catch (FlrException e) {
-            String contentTitle = "[x]: generate failed !!!";
-            handleFlrException(contentTitle, e);
+            handleFlrException(flrExceptionTitle, e);
             return;
         }
 
-        String pubspecFilePath = getPubspecFilePath();
-        File pubspecFile = new File(pubspecFilePath);
-        Map<String, Object> pubspecMap = FlrUtil.loadPubspecConfigFromFile(pubspecFile);
+        String packageName = (String) pubspecConfig.get("name");
 
-        Map<String, Object> flrMap = (Map<String, Object>)pubspecMap.get("flr");
-        String flrVersion = (String) flrMap.get("version");
+        // ----- Step-1 End -----
+
+        // ----- Step-2 Begin -----
+        // 进行核心逻辑版本检测：
+        // 检测Flr配置中的核心逻辑版本号和当前工具的核心逻辑版本号是否一致；若不一致，则生成“核心逻辑版本不一致”的警告日志，存放到警告日志数组
+
+        String flrCoreVersion = (String)flrConfig.get("core_version");
+
+        if(flrCoreVersion instanceof String == false) {
+            flrCoreVersion = "unknown";
+        }
+
+        if(flrCoreVersion.equals(FlrConstant.CORE_VERSION) == false) {
+            String warningText = String.format("[!]: warning, the core logic version of the configured Flr tool is %s, while the core logic version of the currently used Flr tool is %s", flrCoreVersion,FlrConstant.CORE_VERSION);
+            String tipsText = "[*]: to fix it, you should make sure that the core logic version of the Flr tool you are currently using is consistent with the configuration";
+
+            FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
+            FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.tips);
+            List<FlrColoredLogEntity.Item> items = Arrays.asList(warningItem, tipsItem);
+
+            FlrColoredLogEntity logEntity = new FlrColoredLogEntity(items);
+            warningMessages.add(logEntity);
+        }
+
+        // ----- Step-2 End -----
+
+        // ----- Step-3 Begin -----
+        // 获取assets_legal_resource_dir数组、fonts_legal_resource_dir数组和illegal_resource_dir数组：
+        // - 从flr_config中的assets配置获取assets_legal_resource_dir数组和assets_illegal_resource_dir数组；
+        // - 从flr_config中的fonts配置获取fonts_legal_resource_dir数组和fonts_illegal_resource_dir数组；
+        // - 合并assets_illegal_resource_dir数组和fonts_illegal_resource_dir数组为illegal_resource_dir数组‘；若illegal_resource_dir数组长度大于0，则生成“存在非法的资源目录”的警告日志，存放到警告日志数组。
+
+        // 合法的资源目录数组
+        List<String> assetsLegalResourceDirArray = resourceDirResultTuple.get(0);
+        List<String> fontsLegalResourceDirArray = resourceDirResultTuple.get(1);
+        // 非法的资源目录数组
+        List<String>  illegalResourceDirArray = resourceDirResultTuple.get(2);
+
+        if(illegalResourceDirArray.size() > 0) {
+            String warningText = "[!]: warning, found the following resource directory which is not existed: ";
+            for (String resourceDir : illegalResourceDirArray) {
+                warningText += "\n" + String.format("  - %s", resourceDir);
+            }
+
+            FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
+            List<FlrColoredLogEntity.Item> items = Arrays.asList(warningItem);
+
+            FlrColoredLogEntity logEntity = new FlrColoredLogEntity(items);
+            warningMessages.add(logEntity);
+        }
+
+        // ----- Step-3 End -----
 
         indicatorMessage = "scan assets now ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        // 需要过滤的资源类型
-        // .DS_Store 是 macOS 下文件夹里默认自带的的隐藏文件
-        List<String> ignoredAssetTypes = new ArrayList<String>();
-        ignoredAssetTypes.add(".DS_Store");
+        // ----- Step-4 Begin -----
+        // 扫描assets_legal_resource_dir数组中的legal_resource_dir，输出image_asset数组和illegal_image_file数组：
+        // - 创建image_asset数组、illegal_image_file数组；
+        // - 遍历assets_legal_resource_dir数组，按照如下处理每个资源目录：
+        //  - 扫描当前资源目录和其第1级的子目录，查找所有image_file；
+        //  - 根据legal_resource_file的标准，筛选查找结果生成legal_image_file子数组和illegal_image_file子数组；illegal_image_file子数组合并到illegal_image_file数组；
+        //  - 根据image_asset的定义，遍历legal_image_file子数组，生成image_asset子数；组；image_asset子数组合并到image_asset数组。
+        // - 对image_asset数组做去重处理；
+        // - 按照字典顺序对image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
+        // - 输出image_asset数组和illegal_image_file数组。
+        //
 
-        // 扫描资源，然后为扫描到的资源添加声明到pubspec.yaml
-        String packageName = (String) pubspecMap.get("name");
-        List<String> legalAssetList = new ArrayList<String>();
-        List<String> illegalAssetList = new ArrayList<String>();
+        List<String> imageAssetArray = new ArrayList<String>();
+        List<VirtualFile> illegalImageFileArray = new ArrayList<VirtualFile>();
 
-        for(String assetDirPath: allValidAssetDirPaths) {
-            try {
-                List<List<String>> assetsResult =  FlrUtil.getAssetsInDir(curProject, assetDirPath, ignoredAssetTypes, packageName);
-                List<String> partOfLegalAssetList = assetsResult.get(0);
-                List<String> partOfIllegalAssetList = assetsResult.get(1);
+        for (String resourceDir : assetsLegalResourceDirArray) {
+            List<List<VirtualFile>> imageFileResultTuple = FlrFileUtil.findImageFiles(curProject, resourceDir);
+            List<VirtualFile> legalImageFileSubArray = imageFileResultTuple.get(0);
+            List<VirtualFile> illegalImageFileSubArray = imageFileResultTuple.get(1);
 
-                legalAssetList.addAll(partOfLegalAssetList);
-                illegalAssetList.addAll(partOfIllegalAssetList);
-            } catch (FlrException e) {
-                String errorMessage = "\n[x]: " + e.getMessage() + "\n";
-                flrLogConsole.println(errorMessage, FlrLogConsole.LogType.error);
+            illegalImageFileArray.addAll(illegalImageFileSubArray);
 
-                showFailureMessage("[x]: have an exception !!!", errorMessage);
+            List<String> imageAssetSubArray = FlrAssetUtil.generateImageAssets(legalImageFileSubArray, flutterProjectRootDir, resourceDir, packageName);
+            imageAssetArray.addAll(imageAssetSubArray);
+        }
+
+        // uniq
+        imageAssetArray = new ArrayList<String>(new HashSet<String>(imageAssetArray));
+        // sort
+        Collections.sort(imageAssetArray);
+
+        // ----- Step-4 End -----
+
+        // ----- Step-5 Begin -----
+        // 扫描assets_legal_resource_dir数组中的legal_resource_dir，输出text_asset数组和illegal_text_file数组：
+        // - 创建text_asset数组、illegal_text_file数组；
+        // - 遍历assets_legal_resource_dir数组，按照如下处理每个资源目录：
+        //  - 扫描当前资源目录和其所有层级的子目录，查找所有text_file；
+        //  - 根据legal_resource_file的标准，筛选查找结果生成legal_text_file子数组和illegal_text_file子数组；illegal_text_file子数组合并到illegal_text_file数组；
+        //  - 根据text_asset的定义，遍历legal_text_file子数组，生成text_asset子数组；text_asset子数组合并到text_asset数组。
+        // - 对text_asset数组做去重处理；
+        // - 按照字典顺序对text_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
+        // - 输出text_asset数组和illegal_image_file数组。
+        //
+
+        List<String> textAssetArray = new ArrayList<String>();
+        List<VirtualFile> illegalTextFileArray = new ArrayList<VirtualFile>();
+
+        for (String resourceDir : assetsLegalResourceDirArray) {
+            List<List<VirtualFile>> textFileResultTuple = FlrFileUtil.findTextFiles(curProject, resourceDir);
+            List<VirtualFile> legalTextFileSubArray = textFileResultTuple.get(0);
+            List<VirtualFile> illegalTextFileSubArray = textFileResultTuple.get(1);
+
+            illegalTextFileArray.addAll(illegalTextFileSubArray);
+
+            List<String> textAssetSubArray = FlrAssetUtil.generateTextAssets(legalTextFileSubArray, flutterProjectRootDir, resourceDir, packageName);
+            textAssetArray.addAll(textAssetSubArray);
+        }
+
+        // uniq
+        textAssetArray = new ArrayList<String>(new HashSet<String>(textAssetArray));
+        // sort
+        Collections.sort(textAssetArray);
+
+        // ----- Step-5 End -----
+
+        // ----- Step-6 Begin -----
+        // 扫描fonts_legal_resource_dir数组中的legal_resource_dir，输出font_family_config数组、illegal_font_file数组：
+        // - 创建font_family_config数组、illegal_font_file数组；
+        // - 遍历fonts_legal_resource_dir数组，按照如下处理每个资源目录：
+        //  - 扫描当前资源目录，获得其第1级子目录数组，并按照字典顺序对数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
+        //  - 遍历第1级子目录数组，按照如下处理每个子目录：
+        //    - 获取当前子目录的名称，生成font_family_name；
+        //    - 扫描当前子目录和其所有子目录，查找所有font_file；
+        //    - 根据legal_resource_file的标准，筛选查找结果生成legal_font_file数组和illegal_font_file子数组；illegal_font_file子数组合并到illegal_font_file数组；
+        //    - 据font_asset的定义，遍历legal_font_file数组，生成font_asset_config数组；
+        //    - 按照字典顺序对生成font_asset_config数组做升序排列（比较asset的值）；
+        //    - 根据font_family_config的定义，为当前子目录组织font_family_name和font_asset_config数组生成font_family_config对象，添加到font_family_config子数组；font_family_config子数组合并到font_family_config数组。
+        // - 输出font_family_config数组、illegal_font_file数组；
+        // - 按照字典顺序对font_family_config数组做升序排列（比较family的值）。
+
+
+        List<Map> fontFamilyConfigArray = new ArrayList<Map>();
+        List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
+
+        for (String resourceDir : fontsLegalResourceDirArray) {
+            List<VirtualFile> fontFamilyDirArray = FlrFileUtil.findTopChildDirs(curProject, resourceDir);
+
+            for (VirtualFile fontFamilyDirFile : fontFamilyDirArray) {
+               String fontFamilyName = fontFamilyDirFile.getName();
+
+                List<List<VirtualFile>> fontFileResultTuple = FlrFileUtil.findFontFilesInFontFamilyDir(curProject, fontFamilyDirFile);
+                List<VirtualFile> legalFontFileArray = fontFileResultTuple.get(0);
+                List<VirtualFile> illegalFontFileSubArray = fontFileResultTuple.get(1);
+
+                illegalFontFileArray.addAll(illegalFontFileSubArray);
+
+                if(legalFontFileArray.size() <= 0) {
+                    continue;
+                }
+
+                List<Map> fontAssetConfigArray = FlrAssetUtil.generateFontAssetConfigs(legalFontFileArray, flutterProjectRootDir, resourceDir, packageName);
+                fontAssetConfigArray.sort(new Comparator<Map>() {
+                    @Override
+                    public int compare(Map o1, Map o2) {
+                        String assetValue1 = (String)o1.get("asset");
+                        String assetValue2 = (String)o2.get("asset");
+                        return assetValue1.compareTo(assetValue2);
+                    }
+                });
+
+                Map<String, Object> fontFamilyConfig = new LinkedHashMap<String, Object>();
+                fontFamilyConfig.put("family", fontFamilyName);
+                fontFamilyConfig.put("fonts", fontAssetConfigArray);
+
+                fontFamilyConfigArray.add(fontFamilyConfig);
             }
         }
 
+        fontFamilyConfigArray.sort(new Comparator<Map>() {
+            @Override
+            public int compare(Map o1, Map o2) {
+                String familyValue1 = (String)o1.get("family");
+                String familyValue2 = (String)o2.get("family");
+                return familyValue1.compareTo(familyValue2);
+            }
+        });
+
+        // ----- Step-6 End -----
+
         indicatorMessage = "scan assets done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
+
+        //  ----- Step-7 Begin -----
+        //  检测是否存在illegal_resource_file：
+        // - 合并illegal_image_file数组、illegal_text_file数组和illegal_font_file数组为illegal_resource_file数组；
+        // - 若illegal_resource_file数组长度大于0，则生成“存在非法的资源文件”的警告日志，存放到警告日志数组。
+
+        List<VirtualFile> illegalResourceFileArray = new ArrayList<VirtualFile>();
+        illegalResourceFileArray.addAll(illegalImageFileArray);
+        illegalResourceFileArray.addAll(illegalTextFileArray);
+        illegalResourceFileArray.addAll(illegalFontFileArray);
+
+        if(illegalResourceFileArray.size() > 0) {
+            String warningText = "[!]: warning, found the following illegal resource file who's file basename contains illegal characters: ";
+            for (VirtualFile resourceFile : illegalResourceFileArray) {
+                warningText += "\n" + String.format("  - %s", resourceFile.getPath());
+            }
+
+            String tipsText  = "[*]: to fix it, you should only use letters (a-z, A-Z), numbers (0-9), and the other legal characters ('_', '+', '-', '.', '·', '!', '@', '&', '$', '￥') to name the file";
+
+            FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
+            FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.warning);
+            List<FlrColoredLogEntity.Item> items = Arrays.asList(warningItem, tipsItem);
+
+            FlrColoredLogEntity logEntity = new FlrColoredLogEntity(items);
+            warningMessages.add(logEntity);
+        }
+
+        // ----- Step-7 End -----
 
         // 添加资源声明到 `pubspec.yaml`
         indicatorMessage = "specify scanned assets in pubspec.yaml now ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        Map<String, Object> flutterMap = (Map<String, Object>)pubspecMap.get("flutter");
-        flutterMap.put("assets", legalAssetList);
-        pubspecMap.put("flutter", flutterMap);
+        // ----- Step-8 Begin -----
+        // 为扫描得到的legal_resource_file添加资源声明到pubspec.yaml：
+        // - 合并image_asset数组和text_asset数组为asset数组（image_asset数组元素在前）;
+        // - 修改pubspec.yaml中flutter-assets配置的值为asset数组；
+        // - 修改pubspec.yaml中flutter-fonts配置的值为font_family_config数组。
+        //
+        List<String> assetArray = new ArrayList<>();
+        assetArray.addAll(imageAssetArray);
+        assetArray.addAll(textAssetArray);
+
+        Map<String, Object> flutterConfig = (Map<String, Object>)pubspecConfig.get("flutter");
+        if(assetArray.size() > 0) {
+            flutterConfig.put("assets", assetArray);
+        } else {
+            flutterConfig.remove("assets");
+        }
+
+        if(fontFamilyConfigArray.size() > 0) {
+            flutterConfig.put("fonts", fontFamilyConfigArray);
+        } else {
+            flutterConfig.remove("fonts");
+        }
+        pubspecConfig.put("flutter", flutterConfig);
 
         // 保存刷新 pubspec.yaml
-        FlrUtil.dumpPubspecConfigToFile(pubspecMap, pubspecFile);
+        FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
+
+        // ----- Step-8 End -----
 
         indicatorMessage = "specify scanned assets in pubspec.yaml done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
+
+        // ----- Step-9 Begin -----
+        // 按照SVG分类，从image_asset数组筛选得到有序的non_svg_image_asset数组和svg_image_asset数组：
+        //  - 按照SVG分类，从image_asset数组筛选得到non_svg_image_asset数组和svg_image_asset数组；
+        //  - 按照字典顺序对non_svg_image_asset数组和svg_image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
+        //
+
+        List<String> nonSvgImageAssetArray = new ArrayList<String>();
+        List<String> svgImageAssetArray = new ArrayList<String>();
+
+        for (String asset : imageAssetArray) {
+            File assetFile = new File(asset);
+            String fileExtName = FlrFileUtil.getFileExtension(assetFile).toLowerCase();
+
+            if(fileExtName.equals(".svg")) {
+                svgImageAssetArray.add(asset);
+            } else {
+                nonSvgImageAssetArray.add(asset);
+            }
+        }
+
+        Collections.sort(nonSvgImageAssetArray);
+        Collections.sort(svgImageAssetArray);
+
+        // ----- Step-9 End -----
 
         // 创建生成 `r.g.dart`
         indicatorMessage = "generate \"r.g.dart\" now ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        String rDartContent = "";
 
-        // ----- R Begin -----
-        String rCode = String.format("// GENERATED CODE - DO NOT MODIFY BY HAND\n" +
-                "// GENERATED BY FLR ANDROID STUDIO PLUGIN, SEE https://github.com/Fly-Mix/flr-as-plugin\n" +
-                "//\n" +
-                "\n" +
-                "import 'package:flutter/widgets.dart';\n" +
-                "import 'package:flutter/services.dart' show rootBundle;\n" +
-                "import 'package:path/path.dart' as path;\n" +
-                "import 'package:flutter_svg/flutter_svg.dart';\n" +
-                "import 'package:r_dart_library/asset_svg.dart';\n" +
-                "\n" +
-                "/// This `R` class is generated and contains references to static asset resources.\n" +
-                "class R {\n" +
-                "  /// package name: %s\n" +
-                "  static const package = \"%s\";\n" +
-                "\n" +
-                "  /// This `R.image` struct is generated, and contains static references to static non-svg type image asset resources.\n" +
-                "  static const image = _R_Image();\n" +
-                "\n" +
-                "  /// This `R.svg` struct is generated, and contains static references to static svg type image asset resources.\n" +
-                "  static const svg = _R_Svg();\n" +
-                "\n" +
-                "  /// This `R.text` struct is generated, and contains static references to static text asset resources.\n" +
-                "  static const text = _R_Text();\n" +
-                "}\n" +
-                "\n" +
-                "/// Asset resource’s metadata class.\n" +
-                "/// For example, here is the metadata of `packages/flutter_demo/assets/images/example.png` asset:\n" +
-                "/// - packageName：flutter_demo\n" +
-                "/// - assetName：assets/images/example.png\n" +
-                "/// - fileDirname：assets/images\n" +
-                "/// - fileBasename：example.png\n" +
-                "/// - fileBasenameNoExtension：example\n" +
-                "/// - fileExtname：.png\n" +
-                "class AssetResource {\n" +
-                "  /// Creates an object to hold the asset resource’s metadata.\n" +
-                "  const AssetResource(this.assetName, {this.packageName}) : assert(assetName != null);\n" +
-                "\n" +
-                "  /// The name of the main asset from the set of asset resources to choose from.\n" +
-                "  final String assetName;\n" +
-                "\n" +
-                "  /// The name of the package from which the asset resource is included.\n" +
-                "  final String packageName;\n" +
-                "\n" +
-                "  /// The name used to generate the key to obtain the asset resource. For local assets\n" +
-                "  /// this is [assetName], and for assets from packages the [assetName] is\n" +
-                "  /// prefixed 'packages/<package_name>/'.\n" +
-                "  String get keyName => packageName == null ? assetName : \"packages/$packageName/$assetName\";\n" +
-                "\n" +
-                "  /// The file basename of the asset resource.\n" +
-                "  String get fileBasename {\n" +
-                "    final basename = path.basename(assetName);\n" +
-                "    return basename;\n" +
-                "  }\n" +
-                "\n" +
-                "  /// The no extension file basename of the asset resource.\n" +
-                "  String get fileBasenameNoExtension {\n" +
-                "    final basenameWithoutExtension = path.basenameWithoutExtension(assetName);\n" +
-                "    return basenameWithoutExtension;\n" +
-                "  }\n" +
-                "\n" +
-                "  /// The file extension name of the asset resource.\n" +
-                "  String get fileExtname {\n" +
-                "    final extension = path.extension(assetName);\n" +
-                "    return extension;\n" +
-                "  }\n" +
-                "\n" +
-                "  /// The directory path name of the asset resource.\n" +
-                "  String get fileDirname {\n" +
-                "    var dirname = assetName;\n" +
-                "    if (packageName != null) {\n" +
-                "      final packageStr = \"packages/$packageName/\";\n" +
-                "      dirname = dirname.replaceAll(packageStr, \"\");\n" +
-                "    }\n" +
-                "    final filenameStr = \"$fileBasename/\";\n" +
-                "    dirname = dirname.replaceAll(filenameStr, \"\");\n" +
-                "    return dirname;\n" +
-                "  }\n" +
-                "}\n", packageName, packageName);
+        // ----- Step-10 Begin -----
+        // 在当前根目录下创建新的r.g.dart文件。
+        //
 
-        rDartContent +=  rCode;
+        String r_dart_file_content = "";
 
-        // ----- R End -----
+        // ----- Step-10 End -----
 
-        List<String> supportedAssetImages = Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".webp", ".icon", ".bmp", ".wbmp");
-        List<String> supportedAssetTexts = Arrays.asList(".txt", ".json", ".yaml", ".xml");
+        // ----- Step-11 Begin -----
+        // 生成 R 类的代码，追加写入r.g.dart
+        //
 
-        // ----- _R_Image_AssetResource Begin -----
-        // 生成 `class _R_Image_AssetResource` 的代码
+        String g_R_class_code = FlrCodeUtil.generate_R_class(packageName);
+        r_dart_file_content += g_R_class_code;
 
-        String rImageAssetResourceCodeHeader = "\n" +
-                "// ignore: camel_case_types\n" +
-                "class _R_Image_AssetResource {\n" +
-                "  const _R_Image_AssetResource();\n";
-        rDartContent += rImageAssetResourceCodeHeader;
+        // ----- Step-11 End -----
 
-        for(String asset: legalAssetList) {
-            File assetFile = new File(asset);
 
-            if (assetFile == null) {
-                continue;
-            }
+        // ----- Step-12 Begin -----
+        // 生成 AssetResource 类的代码，追加写入r.g.dart
+        //
 
-            String fileExtName = FlrUtil.getFileExtension(assetFile).toLowerCase();
-            if (supportedAssetImages.contains(fileExtName) == false) {
-                continue;
-            }
+        r_dart_file_content += "\n";
+        String g_AssetResource_class_code = FlrCodeUtil.generate_AssetResource_class(packageName);
+        r_dart_file_content += g_AssetResource_class_code;
 
-            String assetResourceCode = FlrUtil.generateAssetResourceCode(asset, packageName, ".png");
-            rDartContent +=  assetResourceCode;
-        }
+        // ----- Step-12 End -----
 
-        String rImageAssetResourceCodeFooter = "}\n";
-        rDartContent +=  rImageAssetResourceCodeFooter;
 
-        // ----- _R_Image_AssetResource End -----
+        // ----- Step-13 Begin -----
+        // 遍历 non_svg_image_asset 数组，生成 _R_Image_AssetResource 类，追加写入 r.g.dart
+        //
 
-        // ----- _R_Svg_AssetResource Begin -----
-        // 生成 `class _R_Svg_AssetResource` 的代码
+        r_dart_file_content += "\n";
+        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, packageName);
+        r_dart_file_content += g__R_Image_AssetResource_class_code;
 
-        String rSvgAssetResourceCodeHeader = "\n" +
-                "// ignore: camel_case_types\n" +
-                "class _R_Svg_AssetResource {\n" +
-                "  const _R_Svg_AssetResource();\n";
-        rDartContent += rSvgAssetResourceCodeHeader;
+        // ----- Step-13 End -----
 
-        for(String asset: legalAssetList) {
-            File assetFile = new File(asset);
 
-            if (assetFile == null) {
-                continue;
-            }
+        // ----- Step-14 Begin -----
+        // 遍历 svg_image_asset 数组，生成 _R_Svg_AssetResource 类，追加写入 r.g.dart。
+        //
 
-            String fileExtName = FlrUtil.getFileExtension(assetFile).toLowerCase();
-            if (fileExtName.equals(".svg") == false) {
-                continue;
-            }
+        r_dart_file_content += "\n";
+        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, packageName);
+        r_dart_file_content += g__R_Svg_AssetResource_class_code;
 
-            String assetResourceCode = FlrUtil.generateAssetResourceCode(asset, packageName, ".svg");
-            rDartContent +=  assetResourceCode;
-        }
+        // ----- Step-14 End -----
 
-        String rSvgAssetResourceCodeFooter = "}\n";
-        rDartContent += rSvgAssetResourceCodeFooter;
+        // ----- Step-15 Begin -----
+        // 遍历 text_asset 数组，生成 _R_Image_AssetResource 类，追加写入 r.g.dart
+        //
 
-        // ----- _R_Svg_AssetResource End -----
+        r_dart_file_content += "\n";
+        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, packageName);
+        r_dart_file_content += g__R_Text_AssetResource_class_code;
 
-        // ----- _R_Text_AssetResource Begin -----
-        // 生成 `class _R_Text_AssetResource` 的代码
+        // ----- Step-15 End -----
 
-        String rTextAssetResourceCodeHeader = "\n" +
-                "// ignore: camel_case_types\n" +
-                "class _R_Text_AssetResource {\n" +
-                "  const _R_Text_AssetResource();\n";
-        rDartContent += rTextAssetResourceCodeHeader;
+        // ----- Step-16 Begin -----
+        // 遍历non_svg_image_asset数组，生成 _R_Image 类，追加写入 r.g.dart
+        //
 
-        for(String asset: legalAssetList) {
-            File assetFile = new File(asset);
+        r_dart_file_content += "\n";
+        String g__R_Image_class_code = FlrCodeUtil.generate__R_Image_class(nonSvgImageAssetArray, packageName);
+        r_dart_file_content += g__R_Image_class_code;
 
-            if (assetFile == null) {
-                continue;
-            }
+        // ----- Step-16 End -----
 
-            String fileExtName = FlrUtil.getFileExtension(assetFile).toLowerCase();
-            if (supportedAssetTexts.contains(fileExtName) == false) {
-                continue;
-            }
+        // ----- Step-17 Begin -----
+        // 遍历 svg_image_asset 数组，生成 _R_Svg 类，追加写入 r.g.dart。
+        //
 
-            String assetResourceCode = FlrUtil.generateAssetResourceCode(asset, packageName, null);
-            rDartContent +=  assetResourceCode;
-        }
+        r_dart_file_content += "\n";
+        String g__R_Svg_class_code = FlrCodeUtil.generate__R_Svg_class(svgImageAssetArray, packageName);
+        r_dart_file_content += g__R_Svg_class_code;
 
-        String rTextAssetResourceCodeFooter = "}\n";
-        rDartContent +=  rTextAssetResourceCodeFooter;
+        // ----- Step-17 End -----
 
-        // ----- _R_Text_AssetResource End -----
+        // ----- Step-18 Begin -----
+        // 遍历 text_asset 数组，生成 _R_Image 类，追加写入 r.g.dart。
+        //
 
-        // -----  _R_Image Begin -----
-        // 生成 `class _R_Image` 的代码
+        r_dart_file_content += "\n";
+        String g__R_Text_class_code = FlrCodeUtil.generate__R_Text_class(textAssetArray, packageName);
+        r_dart_file_content += g__R_Text_class_code;
 
-        String rImageCodeHeader = "\n" +
-                "/// This `_R_Image` class is generated and contains references to static non-svg type image asset resources.\n" +
-                "// ignore: camel_case_types\n" +
-                "class _R_Image {\n" +
-                "  const _R_Image();\n" +
-                "\n" +
-                "  final asset = const _R_Image_AssetResource();\n";
-        rDartContent += rImageCodeHeader;
+        // ----- Step-18 End -----
 
-        for(String asset: legalAssetList) {
-            File assetFile = new File(asset);
+        // ----- Step-19 Begin -----
+        // 遍历font_family_config数组，根据下面的模板生成_R_Font_Family类，追加写入r.g.dart。
 
-            if (assetFile == null) {
-                continue;
-            }
+        r_dart_file_content += "\n";
+        String g__R_Font_Family_class_code = FlrCodeUtil.generate__R_Font_Family_class(fontFamilyConfigArray, packageName);
+        r_dart_file_content += g__R_Font_Family_class_code;
 
-            String fileExtName = FlrUtil.getFileExtension(assetFile).toLowerCase();
-            if (supportedAssetImages.contains(fileExtName) == false) {
-                continue;
-            }
+        // ----- Step-19 End -----
 
-            String assetId = FlrUtil.generateAssetId(asset, ".png");
-            String assetComment = FlrUtil.generateAssetComment(asset, packageName);
 
-            String assetMethodCode = String.format("\n" +
-                    "  /// %s\n" +
-                    "  // ignore: non_constant_identifier_names\n" +
-                    "  AssetImage %s() {\n" +
-                    "    return AssetImage(asset.%s.keyName);\n" +
-                    "  }\n",
-                    assetComment, assetId, assetId);
-            rDartContent +=  assetMethodCode;
-        }
-
-        String rImageCodeFooter = "}\n";
-        rDartContent += rImageCodeFooter;
-
-        // -----  _R_Image End -----
-
-        // -----  _R_Svg Begin -----
-        // 生成 `class _R_Svg` 的代码
-
-        String rSvgCodeHeader = "\n" +
-                "/// This `_R_Svg` class is generated and contains references to static svg type image asset resources.\n" +
-                "// ignore: camel_case_types\n" +
-                "class _R_Svg {\n" +
-                "  const _R_Svg();\n" +
-                "\n" +
-                "  final asset = const _R_Svg_AssetResource();\n";
-        rDartContent += rSvgCodeHeader;
-
-        for(String asset: legalAssetList) {
-            File assetFile = new File(asset);
-
-            if (assetFile == null) {
-                continue;
-            }
-
-            String fileExtName = FlrUtil.getFileExtension(assetFile).toLowerCase();
-            if (fileExtName.equals(".svg") == false) {
-                continue;
-            }
-
-            String assetId = FlrUtil.generateAssetId(asset, ".svg");
-            String assetComment = FlrUtil.generateAssetComment(asset, packageName);
-
-            String assetMethodCode = String.format("\n" +
-                    "  /// %s\n" +
-                    "  // ignore: non_constant_identifier_names\n" +
-                    "  AssetSvg %s({@required double width, @required double height}) {\n" +
-                    "    final imageProvider = AssetSvg(asset.%s.keyName, width: width, height: height);\n" +
-                    "    return imageProvider;\n" +
-                    "  }\n", assetComment, assetId, assetId);
-            rDartContent += assetMethodCode;
-        }
-
-        String rSvgCodeFooter = "}\n";
-        rDartContent += rSvgCodeFooter;
-
-        // -----  _R_Svg End -----
-
-        // -----  _R_Text Begin -----
-        // 生成 `class _R_Text` 的代码
-
-        String rTextCodeHeader = "\n" +
-                "/// This `_R_Text` class is generated and contains references to static text asset resources.\n" +
-                "// ignore: camel_case_types\n" +
-                "class _R_Text {\n" +
-                "  const _R_Text();\n" +
-                "\n" +
-                "  final asset = const _R_Text_AssetResource();\n";
-        rDartContent += rTextCodeHeader;
-
-        for(String asset: legalAssetList) {
-            File assetFile = new File(asset);
-
-            if (assetFile == null) {
-                continue;
-            }
-
-            String fileExtName = FlrUtil.getFileExtension(assetFile).toLowerCase();
-            if (supportedAssetTexts.contains(fileExtName) == false) {
-                continue;
-            }
-
-            String assetId = FlrUtil.generateAssetId(asset, null);
-            String assetComment = FlrUtil.generateAssetComment(asset, packageName);
-
-            String assetMethodCode = String.format("\n" +
-                    "  /// %s\n" +
-                    "  // ignore: non_constant_identifier_names\n" +
-                    "  Future<String> %s() {\n" +
-                    "    final str = rootBundle.loadString(asset.%s.keyName);\n" +
-                    "    return str;\n" +
-                    "  }\n", assetComment, assetId, assetId);
-            rDartContent += assetMethodCode;
-        }
-
-        String rTextCodeFooter = "}\n";
-        rDartContent += rTextCodeFooter;
-
-        // ----- r.g.dart Begin -----
+        // ----- Step-20 Begin -----
+        // 结束操作，保存 r.g.dart
+        //
 
         // 把 rDartContent 写到 r.g.dart 中
-        String rDartFilePath = curProject.getBasePath() + "/lib/r.g.dart";
+        String rDartFilePath = flutterProjectRootDir + "/lib/r.g.dart";
         File rDartFile = new File(rDartFilePath);
         try {
-            FlrUtil.writeContentToFile(curProject, rDartContent, rDartFile);
+            FlrFileUtil.writeContentToFile(curProject, r_dart_file_content, rDartFile);
         } catch (FlrException e) {
-            String contentTitle = "[x]: generate failed !!!";
-            handleFlrException(contentTitle, e);
+            handleFlrException(flrExceptionTitle, e);
             return;
         }
+        // ----- Step-20 End -----
+
         indicatorMessage = String.format("generate for %s done!", curProject.getBasePath());
         flrLogConsole.println(indicatorMessage, indicatorType);
+
+
+        // ----- Step-21 Begin -----
+        // 调用 flutter 工具对 r.g.dart 进行格式化操作
+        //
 
         // 格式化 r.g.dart
         indicatorMessage = "format r.g.dart now ...";
@@ -580,6 +661,12 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "format r.g.dart done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
+        // ----- Step-21 End -----
+
+        // ----- Step-22 Begin -----
+        // 调用flutter工具，为flutter工程获取依赖
+        //
+
         // 执行 "Flutter Packages Get" action
         indicatorMessage = "running \"Flutter Packages Get\" action now ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
@@ -587,29 +674,20 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "running \"Flutter Packages Get\" action done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        // ----- r.g.dart End -----
+        // ----- Step-22 End -----
 
         indicatorMessage = "[√]: generate done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        int warningCount = 0;
+        // ----- Step-23 Begin -----
+        // 判断警告日志数组是否为空，若不为空，输出所有警告日志
+        //
 
-        String usedFlrVersion = FlrUtil.getFlrVersion();
-        if(flrVersion.equals(usedFlrVersion) == false) {
-            flrLogConsole.println("", indicatorType);
-            flrLogConsole.println(String.format("[!]: warning, the configured Flr version is %s, while the currently used Flr version is %s", flrVersion, usedFlrVersion), FlrLogConsole.LogType.warning);
-            flrLogConsole.println("[*]: to fix it, you should make sure that both versions are the same", FlrLogConsole.LogType.tips);
-            warningCount += 1;
-        }
-
-        if(illegalAssetList.isEmpty() == false) {
-            flrLogConsole.println("", indicatorType);
-            flrLogConsole.println("[!]: warning, find illegal assets who's file basename contains illegal characters:", FlrLogConsole.LogType.warning);
-            for(String illegalAsset: illegalAssetList) {
-                flrLogConsole.println(String.format("   - %s", illegalAsset), FlrLogConsole.LogType.warning);
+        int warningCount = warningMessages.size();
+        if(warningCount > 0) {
+            for (FlrColoredLogEntity coloredLogEntity : warningMessages) {
+                flrLogConsole.println(coloredLogEntity);
             }
-            flrLogConsole.println("[*]: to fix it, you should only use letters (a-z, A-Z), numbers (0-9), and the other legal characters ('_', '+', '-', '.', '·', '!', '@', '&', '$', '￥') to name the asset", FlrLogConsole.LogType.tips);
-            warningCount += 1;
         }
 
         String contentTitle = "[√]: generate done !!!";
@@ -623,7 +701,6 @@ public class FlrCommand implements Disposable {
         } else {
             showSuccessMessage(contentTitle, "", false);
         }
-
     }
 
     public Boolean startAssertMonitor(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
@@ -632,13 +709,13 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, titleLogType);
 
         List<String> allValidAssetDirPaths = null;
-        try {
-            allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
-        } catch (FlrException e) {
-            String contentTitle = "[x]: generate failed !!!";
-            handleFlrException(contentTitle, e);
-            return false;
-        }
+//        try {
+//            allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
+//        } catch (FlrException e) {
+//            String contentTitle = "[x]: generate failed !!!";
+//            handleFlrException(contentTitle, e);
+//            return false;
+//        }
 
         if(curFlrListener != null) {
             stopAssertMonitor(actionEvent, flrLogConsole);
@@ -782,103 +859,6 @@ public class FlrCommand implements Disposable {
         }
 
         return rDartLibraryVersion;
-    }
-
-    // MARK: Check Methods
-
-    /*
-    * 按照以下步骤检测是否符合执行创建任务的条件
-    * 1. 检测当前目录是否存在pubspec.yaml
-    * 2. 检测pubspec.yaml中是否存在flr的配置
-    * 3. 检测flr的配置中是否有配置了合法的资源目录路径
-     * 4. 返回所有合法的资源目录的路径数组
-    * */
-    private List<String> checkBeforeGenerate(@NotNull FlrLogConsole flrLogConsole) throws FlrException {
-        String flutterProjectRootDir = curProject.getBasePath();
-        String pubspecFilePath = flutterProjectRootDir + "/pubspec.yaml";
-        File pubspecFile = new File(pubspecFilePath);
-
-        // 检测当前目录是否存在 pubspec.yaml；
-        // 若不存在，说明当前目录不是一个flutter工程目录，这时直接终止当前任务，并抛出异常提示；
-        if(pubspecFile.exists() == false) {
-            flrLogConsole.println(String.format("[x]: %s not found", pubspecFilePath), FlrLogConsole.LogType.error);
-            flrLogConsole.println("[*]: please make sure current directory is a flutter project directory", FlrLogConsole.LogType.tips);
-
-            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
-            FlrException exception = new FlrException(contentMessage);
-            throw(exception);
-        }
-
-        // 读取 pubspec_yaml，判断是否有 flr 的配置信息；
-        // 若有，说明已经进行了初始化；然后检测是否配置了资源目录，若没有配置，这时直接终止当前任务，并提示开发者手动配置它
-        // 若没有，说明还没进行初始化，这时直接终止当前任务，并提示开发者手动配置它
-
-        Map<String, Object> pubspecMap = FlrUtil.loadPubspecConfigFromFile(pubspecFile);
-        if(pubspecMap == null) {
-            flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
-            flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
-
-            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
-            FlrException exception = new FlrException(contentMessage);
-            throw(exception);
-        }
-
-        Map<String, Object> flrMap = (Map<String, Object>)pubspecMap.get("flr");
-        if(flrMap == null) {
-            flrLogConsole.println("[x]: have no flr configuration in pubspec.yaml", FlrLogConsole.LogType.error);
-            flrLogConsole.println("[*]: please click menu \"Tools-Flr-Init\" to fix it", FlrLogConsole.LogType.tips);
-
-            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
-            FlrException exception = new FlrException(contentMessage);
-            throw(exception);
-        }
-
-        String flrVersion = (String) flrMap.get("version");
-        Object assetDirPaths = flrMap.get("assets");
-        if(assetDirPaths == null || !(assetDirPaths instanceof List)) {
-            flrLogConsole.println("[x]: have no valid asset directories configuration in pubspec.yaml", FlrLogConsole.LogType.error);
-            flrLogConsole.println(String.format(
-                            "[*]: please manually configure the asset directories to fix it, for example:\n" +
-                            "\u202D \n" +
-                            "\u202D     flr:\n" +
-                            "\u202D       version:%s\n" +
-                            "\u202D       assets:\n" +
-                            "\u202D       # config the asset directories that need to be scanned\n" +
-                            "\u202D         - lib/assets/images\n" +
-                            "\u202D         - lib/assets/texts\n",
-                    flrVersion
-            ), FlrLogConsole.LogType.tips);
-
-            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
-            FlrException exception = new FlrException(contentMessage);
-            throw(exception);
-        }
-
-        List<String> allValidAssetDirPaths = (List<String>)assetDirPaths;
-        allValidAssetDirPaths.remove("");
-        LinkedHashSet<String> tempSet = new LinkedHashSet<String>(allValidAssetDirPaths);
-        allValidAssetDirPaths = new ArrayList<String>(tempSet);
-
-        if(allValidAssetDirPaths.isEmpty()) {
-            flrLogConsole.println("[x]: have no valid asset directories configuration in pubspec.yaml", FlrLogConsole.LogType.error);
-            flrLogConsole.println(String.format(
-                    "[*]: please manually configure the asset directories to fix it, for example:\n" +
-                            "\u202D \n" +
-                            "\u202D     flr:\n" +
-                            "\u202D       version:%s\n" +
-                            "\u202D       assets:\n" +
-                            "\u202D       # config the asset directories that need to be scanned\n" +
-                            "\u202D         - lib/assets/images\n" +
-                            "\u202D         - lib/assets/texts\n",
-                    flrVersion
-            ), FlrLogConsole.LogType.tips);
-
-            String contentMessage = "[*]: have 1 error, you can get the details from Flr ToolWindow";
-            FlrException exception = new FlrException(contentMessage);
-            throw(exception);
-        }
-
-        return allValidAssetDirPaths;
     }
 
     // MARK: Exception Handler Methods
