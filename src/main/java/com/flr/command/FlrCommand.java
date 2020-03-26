@@ -117,12 +117,14 @@ public class FlrCommand implements Disposable {
         //
         // flr:
         //    - core_version: 1.0.0
+        //    - dartfmt_line_length: 80
         //    - assets: []
         //    - fonts: []
         //
         Map<String, Object> flrConfig = new LinkedHashMap<>();
         String usedFlrCoreLogicVersion = FlrConstant.CORE_VERSION;
         flrConfig.put("core_version", usedFlrCoreLogicVersion);
+        flrConfig.put("dartfmt_line_length", 80);
         List<String> assetResourceDirList = new ArrayList<String>();
         flrConfig.put("assets", assetResourceDirList);
         List<String> fontResourceDirList = new ArrayList<String>();

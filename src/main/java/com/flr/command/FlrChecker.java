@@ -1,5 +1,6 @@
 package com.flr.command;
 
+import com.flr.FlrConstant;
 import com.flr.FlrException;
 import com.flr.logConsole.FlrLogConsole;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public class FlrChecker {
     * ``` yaml
     * flr:
     *   core_version: 1.0.0
+    *   dartfmt_line_length: 80
     *   assets:
     *   fonts:
     * ```
@@ -68,7 +70,14 @@ public class FlrChecker {
     *
     * */
     public static List<List<String>> checkFlrAssetsIsLegal(@NotNull FlrLogConsole flrLogConsole, @NotNull Map<String, Object> flrConfig, @NotNull String flutterProjectRootDir) throws FlrException {
-        String flrCoreVersion = (String)flrConfig.get("core_version");
+        String flrCoreVersion = FlrConstant.CORE_VERSION;
+        if(flrConfig.containsKey("core_version")) {
+            flrCoreVersion = String.format("%s", flrConfig.get("core_version"));
+        }
+        String dartfmtLineLengthStr = "80";
+        if(flrConfig.containsKey("dartfmt_line_length")) {
+            dartfmtLineLengthStr = String.format("%s", flrConfig.get("dartfmt_line_length"));
+        }
         List<String> assetsResourceDirArray = (List<String>)flrConfig.get("assets");
         List<String> fontsResourceDirArray = (List<String>)flrConfig.get("fonts");
 
@@ -130,7 +139,8 @@ public class FlrChecker {
                 "[*]: please manually configure the asset directories to fix it, for example:\n" +
                         "\u202D \n" +
                         "\u202D     flr:\n" +
-                        "\u202D       core_version:%s\n" +
+                        "\u202D       core_version: %s\n" +
+                        "\u202D       dartfmt_line_length: %s\n" +
                         "\u202D       # config the image and text resource directories that need to be scanned\n" +
                         "\u202D       assets:\n" +
                         "\u202D         - lib/assets/images\n" +
@@ -138,7 +148,7 @@ public class FlrChecker {
                         "\u202D       # config the font resource directories that need to be scanned\n" +
                         "\u202D       fonts:\n" +
                         "\u202D         - lib/assets/fonts\n",
-                flrCoreVersion
+                flrCoreVersion, dartfmtLineLengthStr
         ), FlrLogConsole.LogType.tips);
 
         throw FlrException.ILLEGAL_ENV;
