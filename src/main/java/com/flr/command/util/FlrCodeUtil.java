@@ -47,8 +47,8 @@ public class FlrCodeUtil {
                 "  /// This `R.text` struct is generated, and contains static references to static text asset resources.\n" +
                 "  static const text = _R_Text();\n" +
                 "\n" +
-                "  /// This `R.fontFamily` struct is generated, and contains static references to static font resources.\n" +
-                "  static const fontFamily = _R_Font_Family();\n" +
+                "  /// This `R.fontFamily` struct is generated, and contains static references to static font asset resources.\n" +
+                "  static const fontFamily = _R_FontFamily();\n" +
                 "}",
                 packageName,
                 packageName);
@@ -410,9 +410,9 @@ public class FlrCodeUtil {
     }
 
     /*
-    * 根据模板，为 fontFamilyConfigArray（字体家族配置数组）生成 _R_Font_Family class 的代码
+    * 根据模板，为 fontFamilyConfigArray（字体家族配置数组）生成 _R_FontFamily class 的代码
      * */
-    public static String generate__R_Font_Family_class(@NotNull List<Map> fontFamilyConfigArray, @NotNull String packageName) {
+    public static String generate__R_FontFamily_class(@NotNull List<Map> fontFamilyConfigArray, @NotNull String packageName) {
         String all_g_AssetResource_property_code = "";
 
         for (Map fontFamilyConfig : fontFamilyConfigArray) {
@@ -433,7 +433,7 @@ public class FlrCodeUtil {
             all_g_AssetResource_property_code += g_AssetResource_property_code;
         }
 
-        String code = String.format("/// This `_R_Font_Family` class is generated and contains references to static font resources.\n" +
+        String code = String.format("/// This `_R_Font_Family` class is generated and contains references to static font asset resources.\n" +
                 "// ignore: camel_case_types\n" +
                 "class _R_Font_Family {\n" +
                 "  const _R_Font_Family();\n" +

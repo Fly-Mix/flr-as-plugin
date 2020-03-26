@@ -625,7 +625,7 @@ public class FlrCommand implements Disposable {
         // 遍历font_family_config数组，根据下面的模板生成_R_Font_Family类，追加写入r.g.dart。
 
         r_dart_file_content += "\n";
-        String g__R_Font_Family_class_code = FlrCodeUtil.generate__R_Font_Family_class(fontFamilyConfigArray, packageName);
+        String g__R_Font_Family_class_code = FlrCodeUtil.generate__R_FontFamily_class(fontFamilyConfigArray, packageName);
         r_dart_file_content += g__R_Font_Family_class_code;
 
         // ----- Step-19 End -----
