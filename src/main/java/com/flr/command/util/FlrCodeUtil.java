@@ -433,10 +433,10 @@ public class FlrCodeUtil {
             all_g_AssetResource_property_code += g_AssetResource_property_code;
         }
 
-        String code = String.format("/// This `_R_Font_Family` class is generated and contains references to static font asset resources.\n" +
+        String code = String.format("/// This `_R_FontFamily` class is generated and contains references to static font asset resources.\n" +
                 "// ignore: camel_case_types\n" +
-                "class _R_Font_Family {\n" +
-                "  const _R_Font_Family();\n" +
+                "class _R_FontFamily {\n" +
+                "  const _R_FontFamily();\n" +
                 "%s\n" +
                 "}", all_g_AssetResource_property_code);
         return code;
