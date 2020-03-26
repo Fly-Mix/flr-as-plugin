@@ -914,6 +914,24 @@ public class FlrCommand implements Disposable {
         showSuccessMessage(contentTitle, contentMessage, false);
     }
 
+    /*
+    * 显示版本信息，包括工具版本信息和核心逻辑板本信息
+    * */
+    public void displayVersion(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+        String indicatorMessage = "[Flr Version]";
+        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
+        flrLogConsole.println(indicatorMessage, titleLogType);
+
+        String flrVersion = FlrUtil.getFlrVersion();
+        String flrCoreVersion = FlrConstant.CORE_VERSION;
+
+        indicatorMessage = String.format("\nFlr version %s\n" +
+                "CoreLogic version %s\n",
+                flrVersion,
+                flrCoreVersion);
+        flrLogConsole.println(indicatorMessage, indicatorType);
+    }
+
     // MARK: pubspec.yaml Util Methods
 
     /*
