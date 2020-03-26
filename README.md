@@ -1,6 +1,6 @@
 # Flr Plugin
 
-![java](https://img.shields.io/badge/language-java-orange.svg) [![JetBrains Plugins](https://img.shields.io/jetbrains/plugin/v/13789-flr.svg)](https://plugins.jetbrains.com/plugin/13789-flr)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![java](https://img.shields.io/badge/language-java-orange.svg) [![jetbrains plugin version](https://img.shields.io/jetbrains/plugin/v/13789-flr) ![jetbrains plugin downloads](https://img.shields.io/jetbrains/plugin/d/13789-flr)](https://plugins.jetbrains.com/plugin/13789-flr)
 
 
 Flr (Flutter-R) Plugin: A Flutter Resource Manager Android Studio Plugin, which can help flutter developer to auto specify assets in `pubspec.yaml` and generate `r.g.dart` file after he changes the flutter project assets. With `r.g.dart`,  flutter developer can apply the asset in code by referencing it's asset ID function.

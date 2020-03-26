@@ -1,7 +1,6 @@
 # Flr Plugin
 
-![java](https://img.shields.io/badge/language-java-orange.svg) [![JetBrains Plugins](https://img.shields.io/jetbrains/plugin/v/13789-flr.svg)](https://plugins.jetbrains.com/plugin/13789-flr)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
+![java](https://img.shields.io/badge/language-java-orange.svg) [![jetbrains plugin version](https://img.shields.io/jetbrains/plugin/v/13789-flr) ![jetbrains plugin downloads](https://img.shields.io/jetbrains/plugin/d/13789-flr)](https://plugins.jetbrains.com/plugin/13789-flr)
 
 `Flr`（Flutter-R）Plugin：一个Flutter资源管理器AndroidStudio插件，用于帮助Flutter开发者在修改项目资源后，可以自动为资源添加声明到 `pubspec.yaml` 以及生成`r.g.dart`文件。借助`r.g.dart`，Flutter开发者可以在代码中通过资源ID函数的方式应用资源。
 
