@@ -711,18 +711,50 @@ public class FlrCommand implements Disposable {
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
 
-        List<String> allValidAssetDirPaths = null;
-//        try {
-//            allValidAssetDirPaths = checkBeforeGenerate(flrLogConsole);
-//        } catch (FlrException e) {
-//            String contentTitle = "[x]: generate failed !!!";
-//            handleFlrException(contentTitle, e);
-//            return false;
-//        }
+        String flrExceptionTitle = "[x]: generate failed !!!";
+
+        String flutterProjectRootDir = curProject.getBasePath();
+        String pubspecFilePath;
+        File pubspecFile;
+        Map<String, Object> pubspecConfig;
+        Map<String, Object> flrConfig;
+        List<List<String>> resourceDirResultTuple;
+
+        // ----- Step-1 Begin -----
+        // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程：
+        // - 检测当前flutter工程根目录是否存在pubspec.yaml
+        // - 检测当前pubspec.yaml中是否存在Flr的配置
+        // - 检测当前flr_config中的resource_dir配置是否合法：
+        //    判断合法的标准是：assets配置或者fonts配置了至少1个legal_resource_dir
+        //
+
+        try {
+            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
+
+            pubspecFilePath = getPubspecFilePath();
+            pubspecFile = new File(pubspecFilePath);
+            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
+
+            FlrChecker.checkFlrConfigIsExisted(flrLogConsole, pubspecConfig);
+            flrConfig = (Map<String, Object>)pubspecConfig.get("flr");
+
+            resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(flrLogConsole, flrConfig, flutterProjectRootDir);
+        } catch (FlrException e) {
+            handleFlrException(flrExceptionTitle, e);
+            return false;
+        }
+
+        // ----- Step-1 End -----
+
+        String packageName = (String) pubspecConfig.get("name");
 
         if(curFlrListener != null) {
             stopMonitor(actionEvent, flrLogConsole);
         }
+
+        // ----- Step-2 Begin -----
+        // 执行一次 flr generate 操作
+        //
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
         String nowStr = df.format(new Date());// new Date()为获取当前系统时间，也可使用当前时间戳
@@ -739,17 +771,41 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, indicatorType);
         flrLogConsole.println("", indicatorType);
 
+        // ----- Step-2 End -----
+
+        // ----- Step-3 Begin -----
+        // 获取legal_resource_dir数组：
+        // - 从flr_config中的assets配置获取assets_legal_resource_dir数组；
+        // - 从flr_config中的fonts配置获取fonts_legal_resource_dir数组；
+        // - 合并assets_legal_resource_dir数组和fonts_legal_resource_dir数组为legal_resource_dir数组。
+        //
+
+        // 合法的资源目录数组
+        List<String> assetsLegalResourceDirArray = resourceDirResultTuple.get(0);
+        List<String> fontsLegalResourceDirArray = resourceDirResultTuple.get(1);
+        List<String> legalResourceDirArray = new ArrayList<String>();
+        legalResourceDirArray.addAll(assetsLegalResourceDirArray);
+        legalResourceDirArray.addAll(fontsLegalResourceDirArray);
+        // 非法的资源目录数组
+        List<String> illegalResourceDirArray = resourceDirResultTuple.get(2);
+
+        // ----- Step-3 End -----
+
+        // ----- Step-4 Begin -----
+        // 启动资源监控服务
+        //  - 启动一个文件监控服务，对 legal_resource_dir 数组中的资源目录进行文件监控
+        //  - 若服务检测到资源变化（资源目录下的发生增/删/改文件），则执行一次 flr generate 操作
+        //
+
         nowStr = df.format(new Date());
         indicatorMessage = String.format("--------------------------- %s ---------------------------", nowStr);
         flrLogConsole.println(indicatorMessage, indicatorType);
+
         indicatorMessage = "launch a monitoring service now ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
+
         indicatorMessage = "launching ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
-
-        String terminateTipsMessage =
-                "<p>[*]: the monitoring service is monitoring the asset changes, and then auto scan assets, specifies assets and generates \"r.g.dart\" ...</p>" +
-                "<p>[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it</p>";
 
         FlrListener.AssetChangesEventCallback assetChangesEventCallback = new FlrListener.AssetChangesEventCallback() {
             @Override
@@ -764,15 +820,20 @@ public class FlrCommand implements Disposable {
 
                 indicatorMessage = String.format("--------------------------- %s ---------------------------", nowStr);
                 flrLogConsole.println(indicatorMessage, indicatorType);
+
                 indicatorMessage = "detect some asset changes, run Flr-Generate Action now";
                 flrLogConsole.println(indicatorMessage, indicatorType);
+
                 indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" now ...";
                 flrLogConsole.println(indicatorMessage, indicatorType);
+
                 flrLogConsole.println("", indicatorType);
                 generate(actionEvent, flrLogConsole);
+
                 flrLogConsole.println("", indicatorType);
                 indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" done!";
                 flrLogConsole.println(indicatorMessage, indicatorType);
+
                 indicatorMessage = "---------------------------------------------------------------------------------";
                 flrLogConsole.println(indicatorMessage, indicatorType);
                 flrLogConsole.println("", indicatorType);
@@ -782,22 +843,36 @@ public class FlrCommand implements Disposable {
                                 "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
                 flrLogConsole.println(indicatorMessage, indicatorType);
 
-
                 contentTitle = "[!]: invoke Flr-Generate Action done !!!";
                 contentMessage = "[*]: you can get the details from Flr ToolWindow";
                 showSuccessMessage(contentTitle, contentMessage, false);
             }
         };
-        curFlrListener = new FlrListener(curProject, allValidAssetDirPaths, assetChangesEventCallback);
+        curFlrListener = new FlrListener(curProject, legalResourceDirArray, assetChangesEventCallback);
         isMonitoringAssets = true;
 
         indicatorMessage = "launch a monitoring service done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
-        indicatorMessage = "the monitoring service is monitoring these asset directories:";
+
+        indicatorMessage = "the monitoring service is monitoring the following resource directory:";
         flrLogConsole.println(indicatorMessage, indicatorType);
-        for(String assetDirPath: allValidAssetDirPaths) {
-            indicatorMessage = String.format("  - %s", assetDirPath);
+
+        for(String resourceDir: legalResourceDirArray) {
+            indicatorMessage = String.format("  - %s", resourceDir);
             flrLogConsole.println(indicatorMessage, indicatorType);
+        }
+
+        if(illegalResourceDirArray.size() > 0) {
+            indicatorMessage = "";
+            flrLogConsole.println(indicatorMessage, indicatorType);
+
+            indicatorMessage = "[!]: warning, found the following resource directory which is not existed: ";
+            flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.warning);
+
+            for (String resourceDir : illegalResourceDirArray) {
+                indicatorMessage = String.format("  - %s", resourceDir);
+                flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.warning);
+            }
         }
         indicatorMessage = "---------------------------------------------------------------------------------";
         flrLogConsole.println(indicatorMessage, indicatorType);
