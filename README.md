@@ -16,6 +16,7 @@ Flr (Flutter-R) Plugin: A Flutter Resource Manager Android Studio Plugin, which 
 - Support `R.x` (such as`R.image.test()`, `R.svg.test(width: 100, height: 100)`, `R.txt.test_json()`) code struct 
 - Support for processing image assets ( `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.icon`, `.bmp`, `.wbmp`, `.svg` ) 
 - Support for processing text assets ( `.txt`, `.json`, `.yaml`, `.xml` ) 
+- Support for processing font assets ( `.ttf`, `.otf`, `.ttc`) 
 - Support for processing [image asset variants](https://flutter.dev/docs/development/ui/assets-and-images#asset-variants)
 - Support for processing asset which’s filename is bad:
    - filename has illegal character (such as  `blank`,  `~`, `@`, `#` ) which is outside the range of  valid characters (`0-9`, `A-Z`, `a-z`, `_`, `+`, `-`, `.`, `·`,  `!`,  `@`,  `&`, `$`, `￥`)
@@ -45,23 +46,69 @@ Use the IDE's plugin manager to install the latest version of the plugin:
 2. Open `pubspec.yaml` file, find the configuration item for `Flr`, and then configure the asset directory paths that needs to be scanned by `Flr`, such as:
 
    ```yaml
-    flr:
-      version: 0.1.1
-      # config the asset directories that need to be scanned
-      assets:
-      - lib/assets/images
-      - lib/assets/texts
+   flr:
+     core_version: 1.0.0
+     dartfmt_line_length: 80
+     # config the image and text resource directories that need to be scanned
+     assets:
+       - lib/assets/images
+       - lib/assets/texts
+     # config the font resource directories that need to be scanned
+     fonts:
+       - lib/assets/fonts
    ```
 
 3. Scan assets, specify assets, and generate `r.g.dart`: Click <kbd>Tools</kbd> > <kbd>Flr</kbd> > <kbd>Generate</kbd>
 
-     > After invoke `Flr Generate` action, `Flr` will scan the asset directories configured in `pubspec.yaml`, then specify scanned assets in `pubspec.yaml`, and generate `r.g.dart` file.
+     > After invoke `Flr Generate` action, `Flr` will scan the resource directories configured in `pubspec.yaml`, then specify scanned assets in `pubspec.yaml`, and generate `r.g.dart` file.
      > 
      > **If you want `Flr` to do the above operations automatically every time a asset changes, you can invoke `Flr Start Monitor` action.** (Click <kbd>Tools</kbd> > <kbd>Flr</kbd> > <kbd>Start Monitor</kbd> )
-     > Then `Flr` will launche a monitoring service that continuously monitors asset directories configured in `pubspec.yaml`. If the service detects any asset changes, `Flr` will automatically scan the asset directories, then specify scanned assets in pubspec.yaml, and generate "r.g.dart" file. 
+     > Then `Flr` will launche a monitoring service that continuously monitors resource directories configured in `pubspec.yaml`. If the service detects any asset changes, `Flr` will automatically scan the asset directories, then specify scanned assets in pubspec.yaml, and generate "r.g.dart" file. 
      >
      > **You can terminate this monitoring service by invoke `Flr Stop Monitor` action.** (Click <kbd>Tools</kbd> > <kbd>Flr</kbd> > <kbd>Stop Monitor</kbd> )
 
+## Recommended Flutter Resource Structure 
+
+ `Flr ` recommends the following resource structure:
+
+```
+flutter_project_root_dir
+├── build
+│   ├── ..
+├── lib
+│   ├── assets
+│   │   ├── moduleA_images // moduleA image resources root directory
+│   │   │   ├── testA.png
+│   │   │   ├── testASVG.svg
+│   │   │   ├── 2.0x
+│   │   │   │   ├── testA.png
+│   │   │   ├── 3.0x
+│   │   │   │   ├── testA.png
+│   │   ├── moduleB_images // moduleB image resources root directory
+│   │   │   ├── testB.png
+│   │   │   ├── testBSVG.svg
+│   │   │   ├── 2.0x
+│   │   │   │   ├── testB.png
+│   │   │   ├── 3.0x
+│   │   │   │   ├── testB.png
+│   │   ├── texts // text resources root directory 
+│   │   │   │     // (You can also break it down further by module)
+│   │   │   └── test.json
+│   │   │   └── test.yaml
+│   │   ├── fonts // font resources root directory
+│   │   │   ├── #{font_family_name} // The family name of a font
+│   │   │   │   ├── #{font_family_name}-#{font_weight_or_style}.ttf
+│   │   │   ├── Amiri
+│   │   │   │   ├── Amiri-Regular.ttf
+│   │   │   │   ├── Amiri-Bold.ttf
+│   │   │   │   ├── Amiri-Italic.ttf
+│   │   │   │   ├── Amiri-BoldItalic.ttf
+│   ├── ..
+```
+
+
+
+**Big Attention,  the resource structure in the root directory of the font resource MUST follow the structure described above:** name the subdirectory with a font family name, and place the font resources of the font family in the subdirectory. Otherwise, `Flr` may not scan the font resource correctly.
 
 ## r.g.dart
 
@@ -97,15 +144,18 @@ var jsonString = await R.text.test_json();
 // test.yaml
 var yamlString = await R.text.test_yaml();
 
+// Amiri Font Style
+var amiriTextStyle = TextStyle(fontFamily: R.fontFamily.amiri);
 ```
 
 ### `_R_X` class
 
-`r.g.dart` defines several private `_R_X` asset management classes: `R_Image`, `R_Svg`, `R_Text`. These private asset management classes are used to manage the asset IDs of the respective asset types:
+`r.g.dart` defines several private `_R_X` asset management classes: `_R_Image`, `_R_Svg`, `_R_Text`, `_R_FontFamily`. These private asset management classes are used to manage the asset IDs of the respective asset types:
 
 - `_R_Image`: manage the asset IDs of non-svg type image assets ( `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.icon`, `.bmp`, `.wbmp` )
 - `_R_Svg`: manage the asset IDs of svg type image assets
 - `_R_Text`: manage the asset IDs of text assets ( `.txt`, `.json`, `.yaml`, `.xml` ) 
+- `_R_FontFamily`: manage the asset IDs of font assets ( `.ttf`, `.otf`, `.ttc`) 
 
 ### `R` class and `R.x` struct
 
@@ -125,6 +175,10 @@ class R {
 
   /// This `R.text` struct is generated, and contains static references to static text asset resources.
   static const text = _R_Text();
+}
+
+  /// This `R.fontFamily` struct is generated, and contains static references to static font resources.
+  static const fontFamily = _R_FontFamily();
 }
 ```
 
