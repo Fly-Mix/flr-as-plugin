@@ -34,16 +34,21 @@ enum PlatformType {
 // 该值在完成一个新引擎版本开发后，手动更新
 String pluginEngineVersion = '1.0.0'
 
-// 当前插件需要支持的平台版本
+// 用于开发PluginEngine时使用平台版本
+// 一般使用最新平台版本
+PlatformType pluginEnginePlatform = PlatformType.IC_192
+
+// 用于开发PluginProduct时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
-PlatformType curPlatform = PlatformType.IC_192
+// 如切换到 191-master 分支后，该值更新为 PlatformType.IC_191
+PlatformType pluginProductPlatform = pluginEnginePlatform
 
 // 插件产品版本号
 // 关于其介绍，可看文档《flr_plugin_workflow》
 //
 // pluginProductVersion = #{branchNumber}.#{pluginEngineVersion}
 // example: 192.1.0.0
-String pluginProductVersion = curPlatform.branchNumber + '.' + pluginEngineVersion
+String pluginProductVersion = pluginProductPlatform.branchNumber + '.' + pluginEngineVersion
 
 repositories {
     mavenCentral()
@@ -60,7 +65,7 @@ intellij {
     String platformVersion = null
     List platformPlugins = null
 
-    switch (curPlatform) {
+    switch (pluginProductPlatform) {
         // Config for Android Studio v3.5
         case PlatformType.IC_191:
             platformVersion = '2019.1.4'
@@ -109,7 +114,7 @@ patchPluginXml {
     * - https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
     * - http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
     * */
-    sinceBuild = curPlatform.branchNumber
+    sinceBuild = pluginProductPlatform.branchNumber
     //untilBuild = '192.*'
 
     /*
