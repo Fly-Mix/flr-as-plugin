@@ -16,38 +16,46 @@
 
 #### 主分支类型
 
-从产品建立开始，代码仓库就持有一个具备无限生命周期特性的主分支：`master`。`master`分支主要用于实现`Flr-Core-Logic`（Flr核心逻辑）的代码以及修复相关bug，在该分支提交的commit都应该是与平台兼容性无关的。
+代码仓库中主要有2种主分支类型：
 
-而当Google发布大版本更新的`Android Studio`（大版本更新的定义是：`Android Studio`升级了使用的`IntelliJ IDEA Community Edition`）后，代码仓库会基于`master`分支创建一个具备无限生命周期特性的主分支：`platform-master`。
+- `master`分支
 
-所以在代码仓库中主要有2种主分支：
+   - `master`分支在仓库创建之初就创建，其生命周期是无限的。
+   - `master`分支主要用于`plugin-engine`（插件引擎）开发和发布；`plugin-engine`的开发内容包括：实现`Flr-Core-Logic`（Flr核心逻辑）和其他与平台无关的功能，以及修复与平台无关的bug。
 
-- master
-- platform-master
+- `platform-master`分支
 
-下面将会详细介绍`platform-master`：
+   - `platform-master`分支在`flr-as-plugin`需要为`新版本的Android Studio`进行新版本开发时创建，其生命周期也是无限的。
 
-- 分支作用：主要用于集成与平台兼容的commit和用于进行版本发布，以使`flr-as-plugin`能兼容新版本的`Android Studio`。
+      `新版本的Android Studio`的定义是：`Android Studio`升级了`IntelliJ IDEA Community Edition`内核版本。
 
-- 命名规则：`#{IC_Branch_Number}/master`。其中`#{IC_Branch_Number}`为用于构建当前版本的`Android Studio`的`IntelliJ IDEA Community Edition`的分支号（`Android Studio`是基于`IntelliJ IDEA Community Edition`构建开发的）。
+      > `Android Studio`是基于`IntelliJ IDEA Community Edition`构建开发的。
 
-  那么如何获取这个分支号呢？可以从`Android Studio`的版本信息获取。比如，`Android Studio v3.6`的版本信息是：
-  
-  ```
-  Android Studio 3.6
-  Build #AI-192.7142.36.36.6200805, built on February 12, 2020
-  ```
-  其中`#AI-`后跟随的第一个数字`192`就是构建`Android Studio v3.6`的`IntelliJ IDEA Community Edition`的分支号。
-  
-  所以，为`Android Studio v3.6`创建的`platform-master`的分支名为：`192/master`。
-  
-  > 关于`Branch_Number`的更多细节，可参考[《Build Number Ranges》](https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html)。
+   - `platform-master`分支主要用于`plugin-product`（插件产品）开发和发布；`plugin-product`的开发内容包括：进行平台适配和修复与平台相关的bug。
+
+   - `platform-master`分支的命名规则是：`#{IC_Branch_Number}/master`。其中`#{IC_Branch_Number}`为当前的`Android Studio`的`IntelliJ IDEA Community Edition`内核版本对应的分支号。
+
+      **Q：**如何获取`#{IC_Branch_Number}`？
+
+      **A：**从`Android Studio`的版本信息获取。比如，`Android Studio v3.6`的版本信息是：
+
+      ```
+      Android Studio 3.6
+      Build #AI-192.7142.36.36.6200805, built on February 12, 2020
+      ```
+
+      其中`#AI-`后跟随的第一个数字`192`就是`#{IC_Branch_Number}`。
+
+      所以，为`Android Studio v3.6`创建的`platform-master`的分支名为：`192/master`。
+
+      > 关于`Branch_Number`的更多细节，可参考[《Build Number Ranges》](https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html)。
+
 #### 版本开发、管理和发布流程
 
 当需要开发新版本时（功能升级或者兼容新版`Android Studio`），按照以下工作流进行代码开发提交和进行版本命名管理：
 
-- 使用[Git-Flow](https://nvie.com/posts/a-successful-git-branching-model/)或者[Github-Flow](https://guides.github.com/introduction/flow/)的工作流，在`master`分支上进行需求开发，直到可进行打tag并“发布”给`platform-master`使用
-- 使用`non-fast-forward`的方式合并`master`分支新“发布”的版本到各个`platform-master`分支
-- 在各个`platform-master`分支上，进行平台适配开发，然后打tag发布插件
-- 各个`platform-master`分支发布的插件的版本号命名如下：`#{IC_Branch_Number}.#{master_tag_verison}`，如当前`master`分支打tag发布的版本号为：`1.1.0`，在`192/master`分支打tag发布的版本号为：`192.1.1.0`
+- 使用[Git-Flow](https://nvie.com/posts/a-successful-git-branching-model/)或者[Github-Flow](https://guides.github.com/introduction/flow/)的工作流，在`master`分支上进行需求开发。完成需求开发后，打tag发布新版本的`plugin-engine`给`platform-master`使用；`plugin-engine`的版本号（`plugin_engine_verison`）的命名遵守[语义化版本semver 2.0](http://semver.org/)规范；
+- 使用`non-fast-forward`的方式合并`master`分支新发布的`plugin-engine`到各个`platform-master`分支；
+- 在各个`platform-master`分支上，进行平台适配开发。完成适配开发后，打tag发布`plugin-product`；
+- 各个`platform-master`分支发布的`plugin-product`的版本号（`plugin_product_verison`）的命名规则是：`#{IC_Branch_Number}.#{plugin_engine_verison}`，如当前最新发布的`plugin-engine`的版本号为：`1.1.0`，在`192/master`分支发布的`plugin-product`的版本号为：`192.1.1.0`。
 
