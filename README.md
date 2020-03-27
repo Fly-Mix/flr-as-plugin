@@ -48,6 +48,7 @@ Use the IDE's plugin manager to install the latest version of the plugin:
    ```yaml
    flr:
      core_version: 1.0.0
+     # just use for flr-cli
      dartfmt_line_length: 80
      # config the image and text resource directories that need to be scanned
      assets:
