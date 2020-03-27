@@ -10,9 +10,9 @@ sourceCompatibility = 1.8
 // 关于`Branch_Number`的更多细节，可参考 https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
 enum PlatformType {
     // Android Studio v3.5
-    IC_191 ("191"),
+    IC_191 ('191'),
     // Android Studio v3.6
-    IC_192 ("192"),
+    IC_192 ('192'),
 
     final String branchNumber
 
@@ -25,7 +25,7 @@ enum PlatformType {
     }
 
     String toString(){
-        "IC-" + branchNumber
+        'IC-' + branchNumber
     }
 }
 
@@ -47,8 +47,12 @@ PlatformType pluginProductPlatform = pluginEnginePlatform
 // 关于其介绍，可看文档《flr_plugin_workflow》
 //
 // pluginProductVersion = #{branchNumber}.#{pluginEngineVersion}
-// example: 192.1.0.0
+// example: 191.1.0.0
 String pluginProductVersion = pluginProductPlatform.branchNumber + '.' + pluginEngineVersion
+
+// 打包文件的基本名称
+// example: flr-as-plugin-191.1.0.0
+archivesBaseName = rootProject.name + '-' + pluginProductVersion
 
 repositories {
     mavenCentral()
