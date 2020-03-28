@@ -165,7 +165,7 @@ public class FlrCommand implements Disposable {
 
         // 检测 flutter 下的fonts配置是否有效（fonts要求为非空数组），若无效，则删除该配置，避免执行 flutter pub get 时会失败
         String flutterFontsKey = "fonts";
-        Object flutterFonts = flutterConfig.get(flutterAssetsKey);
+        Object flutterFonts = flutterConfig.get(flutterFontsKey);
         Boolean shouldRmFlutterFontsKey = true;
         if(flutterFonts instanceof List && ((List)flutterFonts).isEmpty() == false) {
             shouldRmFlutterFontsKey = false;
