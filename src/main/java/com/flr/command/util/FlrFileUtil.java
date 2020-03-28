@@ -2,6 +2,7 @@ package com.flr.command.util;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.logConsole.FlrLogConsole;
 import com.intellij.configurationStore.VirtualFileResolver;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -95,7 +96,7 @@ public class FlrFileUtil {
     * 若读取成功，返回一个字典对象pubspecConfig
     * 若读取失败，则返回null
     * */
-    public static Map<String, Object> loadPubspecConfigFromFile(File pubspecFile) {
+    public static Map<String, Object> loadPubspecConfigFromFile(@NotNull FlrLogConsole flrLogConsole, @NotNull File pubspecFile) throws FlrException {
         try {
             Yaml yaml = new Yaml();
             InputStream inputStream = new FileInputStream(pubspecFile);
@@ -108,10 +109,14 @@ public class FlrFileUtil {
                 }
             }
             return pubspecConfig;
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            flrLogConsole.println(e.getMessage(), FlrLogConsole.LogType.normal);
+            flrLogConsole.println("", FlrLogConsole.LogType.normal);
+            flrLogConsole.println("[x]: pubspec.yaml is damaged, maybe it has some syntax errors", FlrLogConsole.LogType.error);
+            flrLogConsole.println(String.format("[*]: please correct the pubspec.yaml file at %s", pubspecFile), FlrLogConsole.LogType.tips);
+            throw FlrException.ILLEGAL_ENV;
         }
-        return null;
     }
 
     /*

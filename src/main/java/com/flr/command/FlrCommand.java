@@ -77,6 +77,9 @@ public class FlrCommand implements Disposable {
         String flrExceptionTitle = "[x]: init failed !!!";
 
         String flutterProjectRootDir = curProject.getBasePath();
+        String pubspecFilePath;
+        File pubspecFile;
+        Map<String, Object> pubspecConfig;
 
         // ----- Step-1 Begin -----
         // 进行环境检测:
@@ -84,6 +87,11 @@ public class FlrCommand implements Disposable {
         //
         try {
             FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
+
+            pubspecFilePath = getPubspecFilePath();
+            pubspecFile = new File(pubspecFilePath);
+            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
+
         } catch (FlrException e) {
             handleFlrException(flrExceptionTitle, e);
             return;
@@ -91,25 +99,12 @@ public class FlrCommand implements Disposable {
 
         // ----- Step-1 End -----
 
-        String pubspecFilePath = getPubspecFilePath();
-        File pubspecFile = new File(pubspecFilePath);
+        indicatorMessage = String.format("init %s now ...", curProject.getBasePath());
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // ----- Step-2 Begin -----
         // 添加 flr_config 和 r_dart_library 的依赖声明到 pubspec.yaml
         //
-
-        // 读取pubspec.yaml，然后添加相关配置
-        Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
-        if(pubspecConfig == null || (pubspecConfig instanceof Map) == false) {
-            flrLogConsole.println(String.format("[x]: %s is a bad YAML file", pubspecFilePath), FlrLogConsole.LogType.error);
-            flrLogConsole.println("[*]: please make sure the pubspec.yaml is right", FlrLogConsole.LogType.tips);
-
-            handleFlrException(flrExceptionTitle, FlrException.ILLEGAL_ENV);
-            return;
-        }
-
-        indicatorMessage = String.format("init %s now ...", curProject.getBasePath());
-        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // 添加 flr_config 到 pubspec.yaml
         //
@@ -237,7 +232,7 @@ public class FlrCommand implements Disposable {
 
             pubspecFilePath = getPubspecFilePath();
             pubspecFile = new File(pubspecFilePath);
-            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
+            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
 
             FlrChecker.checkFlrConfigIsExisted(flrLogConsole, pubspecConfig);
             flrConfig = (Map<String, Object>)pubspecConfig.get("flr");
@@ -735,7 +730,7 @@ public class FlrCommand implements Disposable {
 
             pubspecFilePath = getPubspecFilePath();
             pubspecFile = new File(pubspecFilePath);
-            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(pubspecFile);
+            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
 
             FlrChecker.checkFlrConfigIsExisted(flrLogConsole, pubspecConfig);
             flrConfig = (Map<String, Object>)pubspecConfig.get("flr");
