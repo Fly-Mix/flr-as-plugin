@@ -925,7 +925,7 @@ public class FlrCommand implements Disposable {
         String flrVersion = FlrUtil.getFlrVersion();
         String flrCoreVersion = FlrConstant.CORE_VERSION;
 
-        indicatorMessage = String.format("\nFlr version %s\n" +
+        indicatorMessage = String.format("Flr version %s\n" +
                 "CoreLogic version %s\n",
                 flrVersion,
                 flrCoreVersion);
