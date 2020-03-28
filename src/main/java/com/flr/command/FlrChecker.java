@@ -134,9 +134,18 @@ public class FlrChecker {
             return resourceDirResultTuple;
         }
 
-        flrLogConsole.println("[x]: have no valid asset directories configuration in pubspec.yaml", FlrLogConsole.LogType.error);
+        if(illegalResourceDirArray.size() > 0) {
+            String warningText = "[!]: warning, found the following resource directory which is not existed: ";
+            for (String resourceDir : illegalResourceDirArray) {
+                warningText += "\n" + String.format("  - %s", resourceDir);
+            }
+            warningText += "\n";
+            flrLogConsole.println(warningText, FlrLogConsole.LogType.warning);
+        }
+
+        flrLogConsole.println("[x]: have no valid resource directories configuration in pubspec.yaml", FlrLogConsole.LogType.error);
         flrLogConsole.println(String.format(
-                "[*]: please manually configure the asset directories to fix it, for example:\n" +
+                "[*]: please manually configure the resource directories to fix it, for example:\n" +
                         "\u202D \n" +
                         "\u202D     flr:\n" +
                         "\u202D       core_version: %s\n" +
