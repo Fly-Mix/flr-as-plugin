@@ -123,11 +123,13 @@ patchPluginXml {
 
     /*
     * 设置版本更新日志
-    * 注意：最新版本号的标题样式改为h2，其他版本号的标题样式改为h3
+    * 注意：最新版本号的标题样式为h3，其他版本号的标题样式为h4
     */
     changeNotes = """
-<h1>PluginEngine Change Notes<h1>
-<h2>1.0.0<h2>
+<h2>Flr Change Notes<h2>
+
+<h2>PluginEngine Change Notes<h2>
+<h3>1.0.0<h3>
 <ul>
   <li>Automatically specify assets in pubspec.yaml and generate r.g.dart file</li>
   <li>Support for processing image assets (.png, .jpg, .jpeg, .gif, .webp, .icon, .bmp, .wbmp, .svg)</li>
