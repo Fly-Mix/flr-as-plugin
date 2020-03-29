@@ -27,12 +27,15 @@
         <!-- Add your actions here -->
         <group id="flr.group" text="Flr" description="Flutter Resource Manager Android Studio Plugin" icon="/icons/flr_16.png" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <action id="flr.init" class="com.flr.actions.FlrInitAction" text="Init" description="init Flutter project"/>
+            <action id="flr.init" class="com.flr.actions.FlrInitAction" text="Init" description="Init flutter project"/>
             <action id="flr.generate" class="com.flr.actions.FlrGenerateAction" text="Generate"
                     description="Scan assets, specify scanned assets in pubspec.yaml, generate r.g.dart"/>
             <action id="flr.monitor" class="com.flr.actions.FlrMonitorAction" text="Start Monitor"
                     description="start a monitoring service"/>
+            <action id="flr.version" class="com.flr.actions.FlrVersionAction" text="Version"
+                    description="Display the version of Flr."/>
         </group>
+
 
     </actions>
 </idea-plugin>

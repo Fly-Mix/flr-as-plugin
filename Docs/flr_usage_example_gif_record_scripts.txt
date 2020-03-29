@@ -1,4 +1,10 @@
+注意：录制前，请先还原pubspec.yaml
 ---------------------------------------------
+
+Flr Usage Example
+
+---------------------------------------------
+
 1. Click
 `Tools > Flr > Init`
 to init Flutter project
@@ -6,7 +12,7 @@ to init Flutter project
 ---------------------------------------------
 
 2. Edit pubspec.yaml
-to configure the asset directory paths
+to configure the resource directory paths
 
 ---------------------------------------------
 
@@ -39,3 +45,4 @@ to launch a monitoring service
 3. Click
 `Tools > Flr > Stop Monitor`
 to terminate the monitoring service if you want
+

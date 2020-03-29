@@ -62,6 +62,13 @@ public class FlrLogConsole {
         });
     }
 
+    public void println(@NotNull FlrColoredLogEntity coloredLogEntity) {
+        println("", LogType.normal);
+        for (FlrColoredLogEntity.Item item : coloredLogEntity.items) {
+            println(item.text, item.logType);
+        }
+    }
+
     public void clear() {
         if(curConsoleView == null) {
             System.out.println("FlrLogConsole: curConsoleView is null !!!");

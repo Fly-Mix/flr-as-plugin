@@ -1,7 +1,6 @@
 # Flr Plugin
 
-![java](https://img.shields.io/badge/language-java-orange.svg) [![JetBrains Plugins](https://img.shields.io/jetbrains/plugin/v/13789-flr.svg)](https://plugins.jetbrains.com/plugin/13789-flr)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
+![java](https://img.shields.io/badge/language-java-orange.svg) [![jetbrains plugin version](https://img.shields.io/jetbrains/plugin/v/13789-flr) ![jetbrains plugin downloads](https://img.shields.io/jetbrains/plugin/d/13789-flr)](https://plugins.jetbrains.com/plugin/13789-flr)
 
 `Flr`（Flutter-R）Plugin：一个Flutter资源管理器AndroidStudio插件，用于帮助Flutter开发者在修改项目资源后，可以自动为资源添加声明到 `pubspec.yaml` 以及生成`r.g.dart`文件。借助`r.g.dart`，Flutter开发者可以在代码中通过资源ID函数的方式应用资源。
 
@@ -15,6 +14,7 @@
 - 支持`R.x`（如`R.image.test()`，`R.svg.test(width: 100, height: 100)`，`R.txt.test_json()`）的代码结构
 - 支持处理图片资源（ `.png`、 `.jpg`、 `.jpeg`、`.gif`、 `.webp`、`.icon`、`.bmp`、`.wbmp`、`.svg` ）
 - 支持处理文本资源（`.txt`、`.json`、`.yaml`、`.xml`）
+- 支持处理字体资源（`.ttf`、`.otf`、`.ttc`）
 - 支持处理[图片资源变体](https://flutter.dev/docs/development/ui/assets-and-images#asset-variants)
 - 支持处理带有坏味道的文件名的资源：
 	- 文件名带有非法字符，如空格、`~`、`#` 等（非法字符是指不在合法字符集合内的字符；合法字符集合的字符有：`0-9`、`A-Z`、 `a-z`、 `_`、`+`、`-`、`.`、`·`、 `!`、 `@`、 `&`、`$`、`￥`）
@@ -44,11 +44,16 @@
 
    ```yaml
     flr:
-      version: 0.1.1
-      # config the asset directories that need to be scanned
-      assets:
-      - lib/assets/images
-      - lib/assets/texts
+     core_version: 1.0.0
+     # just use for flr-cli
+     dartfmt_line_length: 80
+     # config the image and text resource directories that need to be scanned
+     assets:
+       - lib/assets/images
+       - lib/assets/texts
+     # config the font resource directories that need to be scanned
+     fonts:
+       - lib/assets/fonts
    ```
 
 3. 扫描资源，声明资源以及生成`r.g.dart`：点击 <kbd>Tools</kbd> > <kbd>Flr</kbd> > <kbd>Generate</kbd>
@@ -60,6 +65,48 @@
     > 这时，`Flr`会启动一个对配置在`pubspec.yaml`中资源目录进行持续监控的服务。若该监控服务检测有资源变化，`Flr`将会自动扫描这些资源目录，然后为扫描到的资源添加声明到`pubspec.yaml`，并生成`r.g.dart`文件。
     >
     > **你可以通过调用以下这个动作来终止当前的监控服务：`Flr Stop Monitor`。**（点击<kbd>Tools</kbd> > <kbd>Flr</kbd> > <kbd>Stop Monitor</kbd>）
+
+## 推荐的flutter资源目录组织结构
+
+ `Flr`推荐如下的flutter资源目录组织结构：
+
+```
+flutter_project_root_dir
+├── build
+│   ├── ..
+├── lib
+│   ├── assets
+│   │   ├── moduleA_images // 模块A的图片资源总目录
+│   │   │   ├── testA.png
+│   │   │   ├── testASVG.svg
+│   │   │   ├── 2.0x
+│   │   │   │   ├── testA.png
+│   │   │   ├── 3.0x
+│   │   │   │   ├── testA.png
+│   │   ├── moduleB_images // 模块B的图片资源总目录
+│   │   │   ├── testB.png
+│   │   │   ├── testBSVG.svg
+│   │   │   ├── 2.0x
+│   │   │   │   ├── testB.png
+│   │   │   ├── 3.0x
+│   │   │   │   ├── testB.png
+│   │   ├── texts // 文本资源总目录（你也可以按照模块做进一步拆分）
+│   │   │   └── test.json
+│   │   │   └── test.yaml
+│   │   ├── fonts // 字体资源总目录
+│   │   │   ├── #{font_family_name} // 某个字体的家族名称
+│   │   │   │   ├── #{font_family_name}-#{font_weight_or_style}.ttf
+│   │   │   ├── Amiri
+│   │   │   │   ├── Amiri-Regular.ttf
+│   │   │   │   ├── Amiri-Bold.ttf
+│   │   │   │   ├── Amiri-Italic.ttf
+│   │   │   │   ├── Amiri-BoldItalic.ttf
+│   ├── ..
+```
+
+
+
+**需要注意的是，字体资源根目录下的组织结构必须（MUST）采用上述的组织结构：**以字体家族名称命名子目录，然后字体家族的字体资源放在子目录下。否则，`Flr`可能无法正确扫描字体资源。
 
 ## r.g.dart
 
@@ -95,15 +142,18 @@ var jsonString = await R.text.test_json();
 // test.yaml
 var yamlString = await R.text.test_yaml();
 
+// Amiri Font Style
+var amiriTextStyle = TextStyle(fontFamily: R.fontFamily.amiri);
 ```
 
 ### `_R_X` class
 
-`r.g.dart`中定义了几个私有的`_R_X`资源管理类：`_R_Image`、`_R_svg`、`_R_Text`。这些私有的资源管理类用于管理各自资源类型的资源ID：
+`r.g.dart`中定义了几个私有的`_R_X`资源管理类：`_R_Image`、`_R_svg`、`_R_Text`、`_R_FontFamily`。这些私有的资源管理类用于管理各自资源类型的资源ID：
 
 - `_R_Image`：管理非SVG类的图片资源（ `.png`、 `.jpg`、 `.jpeg`、`.gif`、 `.webp`、`.icon`、`.bmp`、`.wbmp`）的资源ID
 - `_R_Svg`：管理SVG类图片资源的资源ID
 - `_R_Text`：管理文本资源（`.txt`、`.json`、`.yaml`、`.xml`）的资源ID
+- `_R_FontFamily`：管理字体资源（`.ttf`、`.otf`、`.ttc`）的资源ID
 
 ### `R` class and `R.x` struct
 
@@ -124,6 +174,9 @@ class R {
   /// This `R.text` struct is generated, and contains static references to static text asset resources.
   static const text = _R_Text();
 }
+
+  /// This `R.fontFamily` struct is generated, and contains static references to static font resources.
+  static const fontFamily = _R_FontFamily();
 ```
 
 ## Example
