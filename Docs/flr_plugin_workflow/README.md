@@ -35,9 +35,9 @@
 
    - `platform-master`分支的命名规则是：`#{IC_branch_number}/master`。其中`#{IC_branch_number}`为当前的`Android Studio`的`IntelliJ IDEA Community Edition`内核版本对应的分支号。
 
-      **Q：**如何获取`#{IC_branch_number}`？
+      **Q：** 如何获取`#{IC_branch_number}`？
 
-      **A：**从`Android Studio`的版本信息获取。比如，`Android Studio v3.6`的版本信息是：
+      **A：** 从`Android Studio`的版本信息获取。比如，`Android Studio v3.6`的版本信息是：
 
       ```
       Android Studio 3.6
