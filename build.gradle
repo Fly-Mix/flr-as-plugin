@@ -6,8 +6,8 @@ plugins {
 sourceCompatibility = 1.8
 
 // 插件需要支持的 IntelliJ IDEA Community Edition平台版本
-// 平台版本使用其 Branch_Number 作为区分
-// 关于`Branch_Number`的更多细节，可参考 https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
+// 平台版本使用其 branch_number 作为区分
+// 关于`branch_number`的更多细节，可参考 https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
 enum PlatformType {
     // Android Studio v3.5
     IC_191 ('191'),
@@ -29,25 +29,30 @@ enum PlatformType {
     }
 }
 
-// 插件引擎版本号
-// 关于其介绍，可看文档《flr_plugin_workflow》
-// 该值在完成一个新引擎版本开发后，手动更新
+// flr-plugin-engine 的版本号
+// 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_engine_version）
+// 该值在完成一个新版本的 flr-plugin-engine 开发后，手动更新
 String pluginEngineVersion = '1.0.0'
 
-// 用于开发PluginEngine时使用平台版本
+// 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
 PlatformType pluginEnginePlatform = PlatformType.IC_192
 
-// 用于开发PluginProduct时使用平台版本
+// 用于开发 flr-plugin 时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
 // 如切换到 191-master 分支后，该值更新为 PlatformType.IC_191
 PlatformType pluginProductPlatform = pluginEnginePlatform
 
-// 插件产品版本号
-// 关于其介绍，可看文档《flr_plugin_workflow》
+// flr-plugin 的版本号
+// 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_product_version）
 //
-// pluginProductVersion = #{branchNumber}.#{pluginEngineVersion}
-// example: 191.1.0.0
+// plugin_product_version = #{IC_branch_number}.#{plugin_engine_version}
+//
+// example:
+// IC_branch_number = 191
+// plugin_engine_version = 1.0.0
+// plugin_product_version = 191.1.0.0
+//
 String pluginProductVersion = pluginProductPlatform.branchNumber + '.' + pluginEngineVersion
 
 // 打包文件的基本名称
@@ -119,16 +124,16 @@ patchPluginXml {
     * - http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
     * */
     sinceBuild = pluginProductPlatform.branchNumber
-    //untilBuild = '192.*'
+    //untilBuild = '191.*'
 
     /*
     * 设置版本更新日志
     * 注意：最新版本号的标题样式为h3，其他版本号的标题样式为h4
     */
     changeNotes = """
-<h2>Flr Change Notes<h2>
+<h2>Flr Plugin Change Notes<h2>
 
-<h2>PluginEngine Change Notes<h2>
+<h2>Flr Plugin Engine Change Notes<h2>
 <h3>1.0.0<h3>
 <ul>
   <li>Automatically specify assets in pubspec.yaml and generate r.g.dart file</li>
