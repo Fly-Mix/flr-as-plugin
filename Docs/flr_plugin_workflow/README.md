@@ -54,8 +54,8 @@
 
 当需要开发新版本时（功能升级或者兼容新版`Android Studio`），按照以下工作流进行代码开发提交和进行版本命名管理：
 
-- 使用[Git-Flow](https://nvie.com/posts/a-successful-git-branching-model/)或者[Github-Flow](https://guides.github.com/introduction/flow/)的工作流，在`master`分支上进行需求开发。完成需求开发后，打tag发布新版本的`flr-plugin-engine`给`platform-master`使用；`flr-plugin-engine`的版本号（`plugin_engine_verison`）的命名遵守[语义化版本semver 2.0](http://semver.org/)规范；
+- 使用[Git-Flow](https://nvie.com/posts/a-successful-git-branching-model/)或者[Github-Flow](https://guides.github.com/introduction/flow/)的工作流，在`master`分支上进行需求开发。完成需求开发后，打tag发布新版本的`flr-plugin-engine`给`platform-master`使用；`flr-plugin-engine`的版本号（`plugin_engine_version`）的命名遵守[语义化版本semver 2.0](http://semver.org/)规范；
 - 使用`non-fast-forward`的方式合并`master`分支新发布的`flr-plugin-engine`到各个`platform-master`分支；
 - 在各个`platform-master`分支上，进行平台适配开发。完成适配开发后，打tag发布`flr-plugin`；
-- 各个`platform-master`分支发布的`pflr-lugin`的版本号（`plugin_verison`）的命名规则是：`#{IC_branch_number}.#{plugin_engine_verison}`，如当前最新发布的`flr-plugin-engine`的版本号为：`1.1.0`，在`192/master`分支发布的`flr-plugin`的版本号为：`192.1.1.0`。
+- 各个`platform-master`分支发布的`pflr-lugin`的版本号（`plugin_product_version`）的命名规则是：`#{IC_branch_number}.#{plugin_engine_version}`，如当前最新发布的`flr-plugin-engine`的版本号为：`1.1.0`，在`192/master`分支发布的`flr-plugin`的版本号为：`192.1.1.0`。
 
