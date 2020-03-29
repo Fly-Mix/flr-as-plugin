@@ -5,6 +5,60 @@ plugins {
 
 sourceCompatibility = 1.8
 
+// 插件需要支持的 IntelliJ IDEA Community Edition平台版本
+// 平台版本使用其 branch_number 作为区分
+// 关于`branch_number`的更多细节，可参考 https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
+enum PlatformType {
+    // Android Studio v3.5
+    IC_191 ('191'),
+    // Android Studio v3.6
+    IC_192 ('192'),
+
+    final String branchNumber
+
+    PlatformType(String branchNumber) {
+        this.branchNumber = branchNumber
+    }
+
+    String getBranchNumber() {
+        return this.branchNumber
+    }
+
+    String toString(){
+        'IC-' + branchNumber
+    }
+}
+
+// flr-plugin-engine 的版本号
+// 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_engine_version）
+// 该值在完成一个新版本的 flr-plugin-engine 开发后，手动更新
+String pluginEngineVersion = '1.0.0'
+
+// 用于开发 flr-plugin-engine 时使用平台版本
+// 一般使用最新平台版本
+PlatformType pluginEnginePlatform = PlatformType.IC_192
+
+// 用于开发 flr-plugin 时使用平台版本
+// 该值在切换到 platform-master 分支后，手动更新
+// 如切换到 191-master 分支后，该值更新为 PlatformType.IC_191
+PlatformType pluginProductPlatform = pluginEnginePlatform
+
+// flr-plugin 的版本号
+// 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_product_version）
+//
+// plugin_product_version = #{IC_branch_number}.#{plugin_engine_version}
+//
+// example:
+// IC_branch_number = 191
+// plugin_engine_version = 1.0.0
+// plugin_product_version = 191.1.0.0
+//
+String pluginProductVersion = pluginProductPlatform.branchNumber + '.' + pluginEngineVersion
+
+// 打包文件的基本名称
+// example: flr-as-plugin-191.1.0.0
+archivesBaseName = rootProject.name + '-' + pluginProductVersion
+
 repositories {
     mavenCentral()
 }
@@ -16,15 +70,27 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
 intellij {
-    /*
-    // Config for Android Studio v3.5
-    version '2019.1.4'
-    plugins 'Dart:191.8593', 'io.flutter:43.0.1'
-    */
 
-    // Config for Android Studio v3.6
-    version '2019.2.4'
-    plugins 'Dart:192.7761', 'io.flutter:43.0.2'
+    String platformVersion = null
+    List platformPlugins = null
+
+    switch (pluginProductPlatform) {
+        // Config for Android Studio v3.5
+        case PlatformType.IC_191:
+            platformVersion = '2019.1.4'
+            platformPlugins =  ['Dart:191.8593', 'io.flutter:43.0.1']
+            break
+        // Config for Android Studio v3.6
+        case PlatformType.IC_192:
+            platformVersion = '2019.2.4'
+            platformPlugins = ['Dart:192.7761', 'io.flutter:43.0.2']
+            break
+    }
+
+    assert(platformVersion != null && platformPlugins != null)
+
+    version = platformVersion
+    plugins = platformPlugins
 
     /*
     * Use this property if you want to test your plugin in any non-IDEA JetBrains IDE such as WebStorm or Android Studio.
@@ -36,8 +102,9 @@ intellij {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
 patchPluginXml {
+
     // 设置插件的版本号
-    version = '0.2.0'
+    version = pluginProductVersion
 
     // 设置插件描述
     pluginDescription = """
@@ -56,27 +123,25 @@ patchPluginXml {
     * - https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
     * - http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
     * */
-    //sinceBuild = '192'
-    //untilBuild = '192.*'
+    sinceBuild = pluginProductPlatform.branchNumber
+    //untilBuild = '191.*'
 
     /*
     * 设置版本更新日志
-    * 注意：最新版本号的标题样式改为h2，其他版本号的标题样式改为h3
+    * 注意：最新版本号的标题样式为h3，其他版本号的标题样式为h4
     */
     changeNotes = """
-<h2>0.2.0</h2>
+<h2>Flr Plugin Change Notes<h2>
+
+<h2>Flr Plugin Engine Change Notes<h2>
+<h3>1.0.0<h3>
 <ul>
-  <li>support Android Studio v3.6</li>
-</ul>
-<h3>0.1.1</h3>
-<ul>
-  <li>optimize init and generate actions</li>
-  <li>optimize user interaction</li>
-  <li>fix some bugs</li>
-</ul>
-<h3>0.1.0</h3>
-<ul>
-  <li>initial release</li>
+  <li>Automatically specify assets in pubspec.yaml and generate r.g.dart file</li>
+  <li>Support for processing image assets (.png, .jpg, .jpeg, .gif, .webp, .icon, .bmp, .wbmp, .svg)</li>
+  <li>Support for processing image asset variants</li>
+  <li>Support for processing text assets (.txt, .json, .yaml, .xml)</li>
+  <li>Support for processing font assets (.ttf, .otf, .ttc)</li>
+  <li>Improved robustness</li>
 </ul>
     """
 }
