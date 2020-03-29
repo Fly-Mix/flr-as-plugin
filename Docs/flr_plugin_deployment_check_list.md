@@ -14,7 +14,7 @@
 1. 在项目根目录下运行脚本验证插件：`./gradlew verifyPlugin`
 1. 在项目根目录下运行脚本打包插件：`./gradlew buildPlugin`
 
-## Publish Flr Plugin to marketplace
+## Publish Flr Plugin To Marketplace
 
 前往[IntelliJ插件市场](https://plugins.jetbrains.com/)，手动上传Flr Plugin。
 
