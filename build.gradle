@@ -135,6 +135,7 @@ patchPluginXml {
 <h3>192.1.0.0<h3>
 <ul>
   <li>Update flr plugin engine</li>
+  <li>Support Android Studio 3.6</li>
 </ul>
 <h2>Flr Plugin Engine Change Notes<h2>
 <h3>1.0.0<h3>
