@@ -10,7 +10,7 @@
 
 生产`flr-plugin`的工作流整体如下：
 
-![flr-plugin-workflow-model.pdf](assets/flr-plugin-workflow-model.pdf)
+![flr-plugin-workflow-model.pdf](assets/flr-plugin-workflow-model.jpg)
 
 下面将会做进一步详细介绍。
 
