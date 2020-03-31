@@ -195,6 +195,9 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "[√]: init done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
+        indicatorMessage = "[*]: if you want to know how to make a good resource structure for your flutter project, please click menu \"Tools-Flr-Recommend\" ";
+        flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
+
         String contentTitle = "[√]: init done !!!";
         showSuccessMessage(contentTitle, "", false);
     }
