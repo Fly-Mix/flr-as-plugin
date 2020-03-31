@@ -73,35 +73,35 @@
 ```
 flutter_project_root_dir
 ├── build
-│   ├── ..
+│   ├── ..
 ├── lib
-│   ├── assets
-│   │   ├── moduleA_images // 模块A的图片资源总目录
-│   │   │   ├── testA.png
-│   │   │   ├── testASVG.svg
-│   │   │   ├── 2.0x
-│   │   │   │   ├── testA.png
-│   │   │   ├── 3.0x
-│   │   │   │   ├── testA.png
-│   │   ├── moduleB_images // 模块B的图片资源总目录
-│   │   │   ├── testB.png
-│   │   │   ├── testBSVG.svg
-│   │   │   ├── 2.0x
-│   │   │   │   ├── testB.png
-│   │   │   ├── 3.0x
-│   │   │   │   ├── testB.png
-│   │   ├── texts // 文本资源总目录（你也可以按照模块做进一步拆分）
-│   │   │   └── test.json
-│   │   │   └── test.yaml
-│   │   ├── fonts // 字体资源总目录
-│   │   │   ├── #{font_family_name} // 某个字体的家族名称
-│   │   │   │   ├── #{font_family_name}-#{font_weight_or_style}.ttf
-│   │   │   ├── Amiri
-│   │   │   │   ├── Amiri-Regular.ttf
-│   │   │   │   ├── Amiri-Bold.ttf
-│   │   │   │   ├── Amiri-Italic.ttf
-│   │   │   │   ├── Amiri-BoldItalic.ttf
-│   ├── ..
+│   ├── assets
+│   │   ├── #{module}-images // image resources root directory of a moudle
+│   │   │   ├── #{main_image_asset}
+│   │   │   ├── #{variant-dir} // image resources root directory of a variant
+│   │   │   │   ├── #{image_asset_variant}
+│   │   │   │
+│   │   ├── home-images // image resources root directory of home module
+│   │   │   ├── home_icon.png
+│   │   │   ├── home_badge.svg
+│   │   │   ├── 3.0x // image resources root directory of a 3.0x-ratio-variant
+│   │   │   │   ├── home_icon.png
+│   │   │   │
+│   │   ├── texts // text resources root directory
+│   │   │   │     // (you can also break it down further by module)
+│   │   │   └── test.json
+│   │   │   └── test.yaml
+│   │   │   │
+│   │   ├── fonts // font resources root directory of all font-family
+│   │   │   ├── #{font-family} // font resources root directory of a font-family
+│   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
+│   │   │   │
+│   │   │   ├── Amiri // font resources root directory of Amiri font-family
+│   │   │   │   ├── Amiri-Regular.ttf
+│   │   │   │   ├── Amiri-Bold.ttf
+│   │   │   │   ├── Amiri-Italic.ttf
+│   │   │   │   ├── Amiri-BoldItalic.ttf
+│   ├── ..
 ```
 
 
