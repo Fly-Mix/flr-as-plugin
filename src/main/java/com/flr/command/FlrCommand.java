@@ -261,8 +261,10 @@ public class FlrCommand implements Disposable {
         }
 
         if(flrCoreVersion.equals(FlrConstant.CORE_VERSION) == false) {
-            String warningText = String.format("[!]: warning, the core logic version of the configured Flr tool is %s, while the core logic version of the currently used Flr tool is %s", flrCoreVersion,FlrConstant.CORE_VERSION);
-            String tipsText = "[*]: to fix it, you should make sure that the core logic version of the Flr tool you are currently using is consistent with the configuration";
+            String warningText = String.format("[!]: warning, the \"core_version\"(CoreLogic version) of the configured Flr tool is %s, while the \"core_version\"(CoreLogic version) of the currently used Flr tool is %s", flrCoreVersion,FlrConstant.CORE_VERSION);
+            String tipsText = "[*]: to fix it, you should make sure that the core logic version of the Flr tool you are currently using is consistent with the configuration"
+                    + "\n"
+                    + "[*]: to get the value of \"core_version\"(CoreLogic version), just click menu \"Tools-Flr-Version\"";
 
             FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
             FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.tips);
