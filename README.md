@@ -75,36 +75,35 @@ Use the IDE's plugin manager to install the latest version of the plugin:
 ```
 flutter_project_root_dir
 ├── build
-│   ├── ..
+│   ├── ..
 ├── lib
-│   ├── assets
-│   │   ├── moduleA_images // moduleA image resources root directory
-│   │   │   ├── testA.png
-│   │   │   ├── testASVG.svg
-│   │   │   ├── 2.0x
-│   │   │   │   ├── testA.png
-│   │   │   ├── 3.0x
-│   │   │   │   ├── testA.png
-│   │   ├── moduleB_images // moduleB image resources root directory
-│   │   │   ├── testB.png
-│   │   │   ├── testBSVG.svg
-│   │   │   ├── 2.0x
-│   │   │   │   ├── testB.png
-│   │   │   ├── 3.0x
-│   │   │   │   ├── testB.png
-│   │   ├── texts // text resources root directory 
-│   │   │   │     // (You can also break it down further by module)
-│   │   │   └── test.json
-│   │   │   └── test.yaml
-│   │   ├── fonts // font resources root directory
-│   │   │   ├── #{font_family_name} // The family name of a font
-│   │   │   │   ├── #{font_family_name}-#{font_weight_or_style}.ttf
-│   │   │   ├── Amiri
-│   │   │   │   ├── Amiri-Regular.ttf
-│   │   │   │   ├── Amiri-Bold.ttf
-│   │   │   │   ├── Amiri-Italic.ttf
-│   │   │   │   ├── Amiri-BoldItalic.ttf
-│   ├── ..
+│   ├── assets
+│   │   ├── #{module}-images // image resources root directory of a moudle
+│   │   │   ├── #{main_image_asset}
+│   │   │   ├── #{variant-dir} // image resources root directory of a variant
+│   │   │   │   ├── #{image_asset_variant}
+│   │   │   │
+│   │   ├── home-images // image resources root directory of home module
+│   │   │   ├── home_icon.png
+│   │   │   ├── home_badge.svg
+│   │   │   ├── 3.0x // image resources root directory of a 3.0x-ratio-variant
+│   │   │   │   ├── home_icon.png
+│   │   │   │
+│   │   ├── texts // text resources root directory
+│   │   │   │     // (you can also break it down further by module)
+│   │   │   └── test.json
+│   │   │   └── test.yaml
+│   │   │   │
+│   │   ├── fonts // font resources root directory of all font-family
+│   │   │   ├── #{font-family} // font resources root directory of a font-family
+│   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
+│   │   │   │
+│   │   │   ├── Amiri // font resources root directory of Amiri font-family
+│   │   │   │   ├── Amiri-Regular.ttf
+│   │   │   │   ├── Amiri-Bold.ttf
+│   │   │   │   ├── Amiri-Italic.ttf
+│   │   │   │   ├── Amiri-BoldItalic.ttf
+│   ├── ..
 ```
 
 
