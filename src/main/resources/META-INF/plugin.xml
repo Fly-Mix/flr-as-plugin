@@ -34,8 +34,8 @@
                     description="start a monitoring service"/>
             <action id="flr.version" class="com.flr.actions.FlrVersionAction" text="Version"
                     description="Display the version of Flr."/>
+            <action id="flr.recommend" class="com.flr.actions.FlrRecommendAction" text="Recommend"
+                    description="Display the recommended flutter resource structure"/>
         </group>
-
-
     </actions>
 </idea-plugin>
