@@ -76,27 +76,27 @@ flutter_project_root_dir
 │   ├── ..
 ├── lib
 │   ├── assets
-│   │   ├── #{module}-images // image resources root directory of a moudle
+│   │   ├── #{module}-images // 某个模块的图片资源总目录
 │   │   │   ├── #{main_image_asset}
-│   │   │   ├── #{variant-dir} // image resources root directory of a variant
+│   │   │   ├── #{variant-dir} // 某个变体版本的图片资源总目录
 │   │   │   │   ├── #{image_asset_variant}
 │   │   │   │
-│   │   ├── home-images // image resources root directory of home module
+│   │   ├── home-images // home模块的图片资源总目录
 │   │   │   ├── home_icon.png
 │   │   │   ├── home_badge.svg
-│   │   │   ├── 3.0x // image resources root directory of a 3.0x-ratio-variant
+│   │   │   ├── 3.0x // 3.0倍分辨率版本的图片资源总目录
 │   │   │   │   ├── home_icon.png
 │   │   │   │
-│   │   ├── texts // text resources root directory
-│   │   │   │     // (you can also break it down further by module)
+│   │   ├── texts // 文本资源总目录
+│   │   │   │     // （你也可以根据模块进一步细分）
 │   │   │   └── test.json
 │   │   │   └── test.yaml
 │   │   │   │
-│   │   ├── fonts // font resources root directory of all font-family
-│   │   │   ├── #{font-family} // font resources root directory of a font-family
+│   │   ├── fonts // 所有字体家族的字体资源总目录
+│   │   │   ├── #{font-family} // 某个字体家族的字体资源总目录
 │   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
 │   │   │   │
-│   │   │   ├── Amiri // font resources root directory of Amiri font-family
+│   │   │   ├── Amiri // Amiri字体家族的字体资源总目录
 │   │   │   │   ├── Amiri-Regular.ttf
 │   │   │   │   ├── Amiri-Bold.ttf
 │   │   │   │   ├── Amiri-Italic.ttf
