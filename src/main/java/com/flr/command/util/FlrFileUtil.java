@@ -202,7 +202,8 @@ public class FlrFileUtil {
     }
 
     /*
-    * 扫描指定的资源目录和其第1级子目录，查找所有图片文件
+    * v1.0.0: 扫描指定的资源目录和其第1级子目录，查找所有图片文件
+    * v1.1.0: 放开图片资源扫描目录层级限制，以支持不标准的资源组织目录结构
     * 返回文本文件结果二元组 imageFileResultTuple
     * imageFileResultTuple = [legalImageFileArray, illegalImageFileArray]
     *
@@ -214,35 +215,22 @@ public class FlrFileUtil {
 
         String resourceDirFullPath = project.getBasePath() + "/" + resourceDir;
         File resourceDirFile = new File(resourceDirFullPath);
-        
-        VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
-        VirtualFile[] resourceDirChildren = resourceDirVirtualFile.getChildren();
-        for(VirtualFile resourceDirChild: resourceDirChildren) {
-            if(resourceDirChild.isDirectory()) {
-                VirtualFile[] subResourceDirChildren = resourceDirChild.getChildren();
-                for (VirtualFile subResourceDirChild: subResourceDirChildren) {
-                    if(subResourceDirChild.isDirectory()) {
-                        continue;
-                    }
 
-                    if(isImageResource(subResourceDirChild)) {
-                        if(isLegalResourceFile(subResourceDirChild)) {
-                            legalImageFileArray.add(subResourceDirChild);
-                        } else {
-                            illegalImageFileArray.add(subResourceDirChild);
-                        }
-                    }
-                }
-            } else {
-                if(isImageResource(resourceDirChild)) {
-                    if(isLegalResourceFile(resourceDirChild)) {
-                        legalImageFileArray.add(resourceDirChild);
+        VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
+        VfsUtilCore.visitChildrenRecursively(resourceDirVirtualFile, new VirtualFileVisitor<Object>(){
+            @Override
+            public boolean visitFile(@NotNull VirtualFile file) {
+                if (file.isDirectory() == false && isImageResource(file)) {
+                    if(isLegalResourceFile(file)) {
+                        legalImageFileArray.add(file);
                     } else {
-                        illegalImageFileArray.add(resourceDirChild);
+                        illegalImageFileArray.add(file);
                     }
+                    return true;
                 }
+                return super.visitFile(file);
             }
-        }
+        });
 
         List<List<VirtualFile>> imageFileResultTuple = new ArrayList<List<VirtualFile>>();
         imageFileResultTuple.add(legalImageFileArray);
