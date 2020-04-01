@@ -192,8 +192,11 @@ public class FlrCommand implements Disposable {
 
         // ----- Step-4 End -----
 
-        indicatorMessage = "[√]: init done !!!";
+        indicatorMessage = "[√]: init done !!!\n";
         flrLogConsole.println(indicatorMessage, indicatorType);
+
+        indicatorMessage = "[*]: if you want to know how to make a good resource structure for your flutter project, please click menu \"Tools-Flr-Recommend\" ";
+        flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
         String contentTitle = "[√]: init done !!!";
         showSuccessMessage(contentTitle, "", false);
@@ -258,8 +261,10 @@ public class FlrCommand implements Disposable {
         }
 
         if(flrCoreVersion.equals(FlrConstant.CORE_VERSION) == false) {
-            String warningText = String.format("[!]: warning, the core logic version of the configured Flr tool is %s, while the core logic version of the currently used Flr tool is %s", flrCoreVersion,FlrConstant.CORE_VERSION);
-            String tipsText = "[*]: to fix it, you should make sure that the core logic version of the Flr tool you are currently using is consistent with the configuration";
+            String warningText = String.format("[!]: warning, the \"core_version\"(CoreLogic version) of the configured Flr tool is %s, while the \"core_version\"(CoreLogic version) of the currently used Flr tool is %s", flrCoreVersion,FlrConstant.CORE_VERSION);
+            String tipsText = "[*]: to fix it, you should make sure that the core logic version of the Flr tool you are currently using is consistent with the configuration"
+                    + "\n"
+                    + "[*]: to get the value of \"core_version\"(CoreLogic version), just click menu \"Tools-Flr-Version\"";
 
             FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
             FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.tips);
@@ -838,7 +843,7 @@ public class FlrCommand implements Disposable {
                 indicatorMessage =
                         "[*]: the monitoring service is monitoring the asset changes, and then auto scan assets, specifies assets and generates \"r.g.dart\" ...\n" +
                                 "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
-                flrLogConsole.println(indicatorMessage, indicatorType);
+                flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
                 contentTitle = "[!]: invoke Flr-Generate Action done !!!";
                 contentMessage = "[*]: you can get the details from Flr ToolWindow";
@@ -878,7 +883,7 @@ public class FlrCommand implements Disposable {
         indicatorMessage =
                 "[*]: the monitoring service is monitoring the asset changes, and then auto scan assets, specifies assets and generates \"r.g.dart\" ...\n" +
                         "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
-        flrLogConsole.println(indicatorMessage, indicatorType);
+        flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
         String contentTitle = "[√]: start monitor done !!!";
         String contentMessage = "[*]: you can get the details from Flr ToolWindow";
@@ -925,6 +930,68 @@ public class FlrCommand implements Disposable {
                 flrVersion,
                 flrCoreVersion);
         flrLogConsole.println(indicatorMessage, indicatorType);
+    }
+
+    /*
+     * 显示推荐的flutter资源组织结构信息
+     * */
+    public void displayRecommendedFlutterResourceStructure(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+        String indicatorMessage = "[Flr Recommend]";
+        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
+        flrLogConsole.println(indicatorMessage, titleLogType);
+
+        indicatorMessage = "Flr recommends the following flutter resource structure:\n" +
+                "\n" +
+                "  flutter_project_root_dir\n" +
+                "  ├── build\n" +
+                "  │   ├── ..\n" +
+                "  ├── lib\n" +
+                "  │   ├── assets\n" +
+                "  │   │   ├── \\#{module}-images #{\"// image resources root directory of a moudle\".red}\n" +
+                "  │   │   │   ├── \\#{main_image_asset}\n" +
+                "  │   │   │   ├── \\#{variant-dir} #{\"// image resources root directory of a variant\".red}\n" +
+                "  │   │   │   │   ├── \\#{image_asset_variant}\n" +
+                "  │   │   │   │   \n" +
+                "  │   │   ├── home-images #{\"// image resources root directory of home module\".red}\n" +
+                "  │   │   │   ├── home_icon.png\n" +
+                "  │   │   │   ├── home_badge.svg\n" +
+                "  │   │   │   ├── 3.0x #{\"// image resources root directory of a 3.0x-ratio-variant\".red}\n" +
+                "  │   │   │   │   ├── home_icon.png\n" +
+                "  │   │   │   │   \n" +
+                "  │   │   ├── texts #{\"// text resources root directory\".red}\n" +
+                "  │   │   │   │     #{\"// (you can also break it down further by module)\".red}\n" +
+                "  │   │   │   └── test.json\n" +
+                "  │   │   │   └── test.yaml\n" +
+                "  │   │   │   │     \n" +
+                "  │   │   ├── fonts #{\"// font resources root directory of all font-family\".red}\n" +
+                "  │   │   │   ├── \\#{font-family} #{\"// font resources root directory of a font-family\".red}\n" +
+                "  │   │   │   │   ├── \\#{font-family}-\\#{font_weight_or_style}.ttf\n" +
+                "  │   │   │   │     \n" +
+                "  │   │   │   ├── Amiri #{\"// font resources root directory of Amiri font-family\".red}\n" +
+                "  │   │   │   │   ├── Amiri-Regular.ttf\n" +
+                "  │   │   │   │   ├── Amiri-Bold.ttf\n" +
+                "  │   │   │   │   ├── Amiri-Italic.ttf\n" +
+                "  │   │   │   │   ├── Amiri-BoldItalic.ttf\n" +
+                "  │   ├── ..\n";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        String flrCoreVersion = FlrConstant.CORE_VERSION;
+        indicatorMessage = String.format(
+                "[*]: Then config the resource directories that need to be scanned as follows：\n" +
+                "\n" +
+                "    flr:\n" +
+                "      core_version: %s\n" +
+                "      dartfmt_line_length: 80\n" +
+                "      # config the image and text resource directories that need to be scanned\n" +
+                "      assets:\n" +
+                "        - lib/assets/moduleX-images\n" +
+                "        - lib/assets/home-images\n" +
+                "        - lib/assets/texts\n" +
+                "      # config the font resource directories that need to be scanned\n" +
+                "      fonts:\n" +
+                "        - lib/assets/fonts\n", flrCoreVersion);
+        flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
+
     }
 
     // MARK: pubspec.yaml Util Methods
