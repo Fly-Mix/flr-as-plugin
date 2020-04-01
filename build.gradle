@@ -32,7 +32,7 @@ enum PlatformType {
 // flr-plugin-engine 的版本号
 // 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_engine_version）
 // 该值在完成一个新版本的 flr-plugin-engine 开发后，手动更新
-String pluginEngineVersion = '1.0.0'
+String pluginEngineVersion = '1.1.0'
 
 // 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
@@ -131,21 +131,27 @@ patchPluginXml {
     * 注意：最新版本号的标题样式为h3，其他版本号的标题样式为h4
     */
     changeNotes = """
-<h2>Flr Plugin Change Notes<h2>
+<h2>Flr Plugin Change Notes</h2>
 <h3>192.1.0.0<h3>
 <ul>
   <li>Update flr plugin engine</li>
   <li>Support Android Studio 3.6</li>
 </ul>
-<h2>Flr Plugin Engine Change Notes<h2>
-<h3>1.0.0<h3>
+<br/>
+<h2>Flr Plugin Engine Change Notes</h2>
+<h3>1.1.0</h3>
+<ul>
+  <li>Improve generate-capability to support nonstandard image resource structure</li>
+  <li>Add recommend-capability to display the recommended flutter resource structure</li>
+</ul>
+<h4>1.0.0</h4>
 <ul>
   <li>Automatically specify assets in pubspec.yaml and generate r.g.dart file</li>
   <li>Support for processing image assets (.png, .jpg, .jpeg, .gif, .webp, .icon, .bmp, .wbmp, .svg)</li>
   <li>Support for processing image asset variants</li>
   <li>Support for processing text assets (.txt, .json, .yaml, .xml)</li>
   <li>Support for processing font assets (.ttf, .otf, .ttc)</li>
-  <li>Improved robustness</li>
+  <li>Improve robustness</li>
 </ul>
     """
 }
