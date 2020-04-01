@@ -843,7 +843,7 @@ public class FlrCommand implements Disposable {
                 indicatorMessage =
                         "[*]: the monitoring service is monitoring the asset changes, and then auto scan assets, specifies assets and generates \"r.g.dart\" ...\n" +
                                 "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
-                flrLogConsole.println(indicatorMessage, indicatorType);
+                flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
                 contentTitle = "[!]: invoke Flr-Generate Action done !!!";
                 contentMessage = "[*]: you can get the details from Flr ToolWindow";
@@ -883,7 +883,7 @@ public class FlrCommand implements Disposable {
         indicatorMessage =
                 "[*]: the monitoring service is monitoring the asset changes, and then auto scan assets, specifies assets and generates \"r.g.dart\" ...\n" +
                         "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
-        flrLogConsole.println(indicatorMessage, indicatorType);
+        flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
         String contentTitle = "[√]: start monitor done !!!";
         String contentMessage = "[*]: you can get the details from Flr ToolWindow";
