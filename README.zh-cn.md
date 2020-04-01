@@ -73,35 +73,35 @@
 ```
 flutter_project_root_dir
 ├── build
-│   ├── ..
+│   ├── ..
 ├── lib
-│   ├── assets
-│   │   ├── moduleA_images // 模块A的图片资源总目录
-│   │   │   ├── testA.png
-│   │   │   ├── testASVG.svg
-│   │   │   ├── 2.0x
-│   │   │   │   ├── testA.png
-│   │   │   ├── 3.0x
-│   │   │   │   ├── testA.png
-│   │   ├── moduleB_images // 模块B的图片资源总目录
-│   │   │   ├── testB.png
-│   │   │   ├── testBSVG.svg
-│   │   │   ├── 2.0x
-│   │   │   │   ├── testB.png
-│   │   │   ├── 3.0x
-│   │   │   │   ├── testB.png
-│   │   ├── texts // 文本资源总目录（你也可以按照模块做进一步拆分）
-│   │   │   └── test.json
-│   │   │   └── test.yaml
-│   │   ├── fonts // 字体资源总目录
-│   │   │   ├── #{font_family_name} // 某个字体的家族名称
-│   │   │   │   ├── #{font_family_name}-#{font_weight_or_style}.ttf
-│   │   │   ├── Amiri
-│   │   │   │   ├── Amiri-Regular.ttf
-│   │   │   │   ├── Amiri-Bold.ttf
-│   │   │   │   ├── Amiri-Italic.ttf
-│   │   │   │   ├── Amiri-BoldItalic.ttf
-│   ├── ..
+│   ├── assets
+│   │   ├── #{module}-images // 某个模块的图片资源总目录
+│   │   │   ├── #{main_image_asset}
+│   │   │   ├── #{variant-dir} // 某个变体版本的图片资源总目录
+│   │   │   │   ├── #{image_asset_variant}
+│   │   │   │
+│   │   ├── home-images // home模块的图片资源总目录
+│   │   │   ├── home_icon.png
+│   │   │   ├── home_badge.svg
+│   │   │   ├── 3.0x // 3.0倍分辨率版本的图片资源总目录
+│   │   │   │   ├── home_icon.png
+│   │   │   │
+│   │   ├── texts // 文本资源总目录
+│   │   │   │     // （你也可以根据模块进一步细分）
+│   │   │   └── test.json
+│   │   │   └── test.yaml
+│   │   │   │
+│   │   ├── fonts // 所有字体家族的字体资源总目录
+│   │   │   ├── #{font-family} // 某个字体家族的字体资源总目录
+│   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
+│   │   │   │
+│   │   │   ├── Amiri // Amiri字体家族的字体资源总目录
+│   │   │   │   ├── Amiri-Regular.ttf
+│   │   │   │   ├── Amiri-Bold.ttf
+│   │   │   │   ├── Amiri-Italic.ttf
+│   │   │   │   ├── Amiri-BoldItalic.ttf
+│   ├── ..
 ```
 
 
