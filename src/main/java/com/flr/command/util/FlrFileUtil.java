@@ -303,28 +303,6 @@ public class FlrFileUtil {
         List<VirtualFile> legalFontFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
 
-        // 递归遍历
-//        VfsUtilCore.iterateChildrenRecursively(FontFamilyDirFile, new VirtualFileFilter() {
-//            @Override
-//            public boolean accept(VirtualFile file) {
-//                // 筛选字体文件
-//                if(file.isDirectory() == false && isFontResource(file)) {
-//                    return true;
-//                }
-//                return false;
-//            }
-//        }, new ContentIterator() {
-//            @Override
-//            public boolean processFile(@NotNull VirtualFile fileOrDir) {
-//                if(isLegalResourceFile(fileOrDir)) {
-//                    legalFontFileArray.add(fileOrDir);
-//                } else {
-//                    illegalFontFileArray.add(fileOrDir);
-//                }
-//                return true;
-//            }
-//        });
-
         VfsUtilCore.visitChildrenRecursively(FontFamilyDirFile, new VirtualFileVisitor<Object>(){
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
