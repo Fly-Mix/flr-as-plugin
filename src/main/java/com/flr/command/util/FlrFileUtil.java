@@ -3,11 +3,8 @@ package com.flr.command.util;
 import com.flr.FlrConstant;
 import com.flr.FlrException;
 import com.flr.logConsole.FlrLogConsole;
-import com.intellij.configurationStore.VirtualFileResolver;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.*;
-import gherkin.lexer.Fi;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -171,7 +168,7 @@ public class FlrFileUtil {
         return false;
     }
 
-    public static boolean isImageResource(@NotNull VirtualFile virtualFile) {
+    public static boolean isImageResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
         String virtualFileExtension = virtualFile.getExtension();
         String fullVirtualFileExtension = "." + virtualFileExtension;
@@ -181,7 +178,7 @@ public class FlrFileUtil {
         return false;
     }
 
-    public static boolean isTextResource(@NotNull VirtualFile virtualFile) {
+    public static boolean isTextResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
         String virtualFileExtension = virtualFile.getExtension();
         String fullVirtualFileExtension = "." + virtualFileExtension;
@@ -191,7 +188,7 @@ public class FlrFileUtil {
         return false;
     }
 
-    public static boolean isFontResource(@NotNull VirtualFile virtualFile) {
+    public static boolean isFontResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
         String virtualFileExtension = virtualFile.getExtension();
         String fullVirtualFileExtension = "." + virtualFileExtension;
@@ -220,7 +217,7 @@ public class FlrFileUtil {
         VfsUtilCore.visitChildrenRecursively(resourceDirVirtualFile, new VirtualFileVisitor<Object>(){
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
-                if (file.isDirectory() == false && isImageResource(file)) {
+                if (file.isDirectory() == false && isImageResourceFile(file)) {
                     if(isLegalResourceFile(file)) {
                         legalImageFileArray.add(file);
                     } else {
@@ -256,7 +253,7 @@ public class FlrFileUtil {
         VfsUtilCore.visitChildrenRecursively(resourceDirVirtualFile, new VirtualFileVisitor<Object>(){
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
-                if (file.isDirectory() == false && isTextResource(file)) {
+                if (file.isDirectory() == false && isTextResourceFile(file)) {
                     if(isLegalResourceFile(file)) {
                         legalTextFileArray.add(file);
                     } else {
@@ -331,7 +328,7 @@ public class FlrFileUtil {
         VfsUtilCore.visitChildrenRecursively(FontFamilyDirFile, new VirtualFileVisitor<Object>(){
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
-                if (file.isDirectory() == false && isFontResource(file)) {
+                if (file.isDirectory() == false && isFontResourceFile(file)) {
                     if(isLegalResourceFile(file)) {
                         legalFontFileArray.add(file);
                     } else {
