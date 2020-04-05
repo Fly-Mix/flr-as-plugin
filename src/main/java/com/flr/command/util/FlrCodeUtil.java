@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /*
 * 代码生成相关的工具类方法
@@ -124,10 +126,11 @@ public class FlrCodeUtil {
      * 这时候若asset为“packages/flutter_demo/assets/images/test.jpg”，这时其生成assetId为“test_jpg”，带有类型信息；
      *
      * @param asset 指定的资产
+     * @param usedAssetIdArray 已使用的assetId数组
      * @param priorAssetType 优先的资产类型，默认值为null，代表“.*”，意味生成的assetId总是带有资产类型信息
      * @return assetId 资产ID
      * */
-    public static String generateAssetId(@NotNull String asset, String priorAssetType) {
+    public static String generateAssetId(@NotNull String asset, List<String> usedAssetIdArray, String priorAssetType) {
         File assetFile = new File(asset);
         String fileExtName = FlrFileUtil.getFileExtension(assetFile).toLowerCase();
         String fileBasenameWithoutExtension = FlrFileUtil.getFileBasenameWithoutExtension(assetFile);
@@ -155,6 +158,33 @@ public class FlrCodeUtil {
             assetId = firstCharStr + assetId;
         }
 
+        // 处理 asset_id 重名的情况
+        if(usedAssetIdArray != null
+                && usedAssetIdArray.isEmpty() == false
+                && usedAssetIdArray.contains(assetId)) {
+            // 当前asset_id重名次数，初始值为1
+            int repeatCount = 1;
+
+            // 查找当前asset_id衍生出来的asset_id_brother（id兄弟）
+            // asset_id_brother = #{asset_id}$#{repeat_count}
+            // 其中，repeat_count >= 1
+            //
+            // Example：
+            // asset_id = test
+            // asset_id_brother = test$1
+            //
+
+            String idBrotherRegex = String.format("^%s\\$[1-9][0-9]*$", assetId);
+            Pattern pattern = Pattern.compile(idBrotherRegex);
+            List<String> curAssetIdBrothers = usedAssetIdArray.stream().filter(pattern.asPredicate()).collect(Collectors.toList());
+
+            if(curAssetIdBrothers != null && curAssetIdBrothers.isEmpty() == false) {
+                repeatCount += curAssetIdBrothers.size();
+            }
+
+            assetId = String.format("%s$%d",assetId, repeatCount);
+        }
+
         return assetId;
     }
 
@@ -171,8 +201,8 @@ public class FlrCodeUtil {
     /*
     * 为当前 asset 生成 AssetResource property 的代码
     * */
-    public static String generate_AssetResource_property(@NotNull String asset, @NotNull String packageName, String priorAssetType) {
-        String assetId = generateAssetId(asset, priorAssetType);
+    public static String generate_AssetResource_property(@NotNull String asset, @NotNull  Map<String, String> assetIdDict, @NotNull String packageName, String priorAssetType) {
+        String assetId = assetIdDict.get(asset);
         String assetComment = generateAssetComment(asset, packageName);
 
         File assetFile = new File(asset);
@@ -197,13 +227,13 @@ public class FlrCodeUtil {
     /*
     * 根据模板，为 nonSvgImageAssetArray（非svg类的图片资产数组）生成 _R_Image_AssetResource class 的代码
     * */
-    public static String generate__R_Image_AssetResource_class(@NotNull List<String> nonSvgImageAssetArray, @NotNull String packageName) {
+    public static String generate__R_Image_AssetResource_class(@NotNull List<String> nonSvgImageAssetArray, @NotNull Map<String, String> nonSvgImageAssetIdDict, @NotNull String packageName) {
 
         String all_g_AssetResource_property_code = "";
 
         for (String asset : nonSvgImageAssetArray) {
             all_g_AssetResource_property_code += "\n";
-            String g_AssetResource_property_code = generate_AssetResource_property(asset, packageName, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE);
+            String g_AssetResource_property_code = generate_AssetResource_property(asset, nonSvgImageAssetIdDict, packageName, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE);
             all_g_AssetResource_property_code += g_AssetResource_property_code;
         }
 
@@ -219,13 +249,13 @@ public class FlrCodeUtil {
     /*
      * 根据模板，为 svgImageAssetArray（svg类的图片资产数组）生成 _R_Svg_AssetResource class 的代码
      * */
-    public static String generate__R_Svg_AssetResource_class(@NotNull List<String> svgImageAssetArray, @NotNull String packageName) {
+    public static String generate__R_Svg_AssetResource_class(@NotNull List<String> svgImageAssetArray, @NotNull Map<String, String> svgImageAssetIdDict, @NotNull String packageName) {
 
         String all_g_AssetResource_property_code = "";
 
         for (String asset : svgImageAssetArray) {
             all_g_AssetResource_property_code += "\n";
-            String g_AssetResource_property_code = generate_AssetResource_property(asset, packageName, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE);
+            String g_AssetResource_property_code = generate_AssetResource_property(asset, svgImageAssetIdDict, packageName, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE);
             all_g_AssetResource_property_code += g_AssetResource_property_code;
         }
 
@@ -241,13 +271,13 @@ public class FlrCodeUtil {
     /*
      * 根据模板，为 textAssetArray（文本资产数组）生成 _R_Text_AssetResource class 的代码
      * */
-    public static String generate__R_Text_AssetResource_class(@NotNull List<String> textAssetArray, @NotNull String packageName) {
+    public static String generate__R_Text_AssetResource_class(@NotNull List<String> textAssetArray, @NotNull Map<String, String> textAssetIdDict, @NotNull String packageName) {
 
         String all_g_AssetResource_property_code = "";
 
         for (String asset : textAssetArray) {
             all_g_AssetResource_property_code += "\n";
-            String g_AssetResource_property_code = generate_AssetResource_property(asset, packageName, FlrConstant.PRIOR_TEXT_FILE_TYPE);
+            String g_AssetResource_property_code = generate_AssetResource_property(asset, textAssetIdDict, packageName, FlrConstant.PRIOR_TEXT_FILE_TYPE);
             all_g_AssetResource_property_code += g_AssetResource_property_code;
         }
 
@@ -263,13 +293,13 @@ public class FlrCodeUtil {
     /*
      * 根据模板，为 nonSvgImageAssetArray（非svg类的图片资产数组）生成 _R_Image class 的代码
      * */
-    public static String generate__R_Image_class(@NotNull List<String> nonSvgImageAssetArray, @NotNull String packageName) {
+    public static String generate__R_Image_class(@NotNull List<String> nonSvgImageAssetArray, @NotNull Map<String, String> nonSvgImageAssetIdDict, @NotNull String packageName) {
         String all_g_Asset_method_code = "";
 
         for (String asset : nonSvgImageAssetArray) {
             all_g_Asset_method_code += "\n";
 
-            String assetId = generateAssetId(asset, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE);
+            String assetId = nonSvgImageAssetIdDict.get(asset);
             String assetComment = generateAssetComment(asset, packageName);
 
             String g_Asset_method_code = String.format("  /// %s\n" +
@@ -300,13 +330,13 @@ public class FlrCodeUtil {
     /*
      * 根据模板，为 svgImageAssetArray（svg类的图片资产数组）生成 _R_Svg class 的代码
      * */
-    public static String generate__R_Svg_class(@NotNull List<String> svgImageAssetArray, @NotNull String packageName) {
+    public static String generate__R_Svg_class(@NotNull List<String> svgImageAssetArray, @NotNull Map<String, String> svgImageAssetIdDict, @NotNull String packageName) {
         String all_g_Asset_method_code = "";
 
         for (String asset : svgImageAssetArray) {
             all_g_Asset_method_code += "\n";
 
-            String assetId = generateAssetId(asset, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE);
+            String assetId = svgImageAssetIdDict.get(asset);
             String assetComment = generateAssetComment(asset, packageName);
 
             String g_Asset_method_code = String.format("  /// %s\n" +
@@ -338,13 +368,13 @@ public class FlrCodeUtil {
     /*
      * 根据模板，为 textAssetArray（文本资产数组）生成 _R_Text class 的代码
      * */
-    public static String generate__R_Text_class(@NotNull List<String> textAssetArray, @NotNull String packageName) {
+    public static String generate__R_Text_class(@NotNull List<String> textAssetArray, @NotNull Map<String, String> textAssetIdDict, @NotNull String packageName) {
         String all_g_Asset_method_code = "";
 
         for (String asset : textAssetArray) {
             all_g_Asset_method_code += "\n";
 
-            String assetId = generateAssetId(asset, FlrConstant.PRIOR_TEXT_FILE_TYPE);
+            String assetId = textAssetIdDict.get(asset);
             String assetComment = generateAssetComment(asset, packageName);
 
             String g_Asset_method_code = String.format("  /// %s\n" +
