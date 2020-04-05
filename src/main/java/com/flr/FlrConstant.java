@@ -41,4 +41,8 @@ public class FlrConstant {
     // Flr优先考虑的字体文件类型
     // 当前值为 ".*"， 意味所有文本文件类型的优先级都一样
     public static String PRIOR_FONT_FILE_TYPE = ".*";
+
+    // dartfmt工具的默认行长
+    // 仅用于flr-cli
+    public static int DARTFMT_LINE_LENGTH = 80;
 }

@@ -106,24 +106,59 @@ public class FlrCommand implements Disposable {
         // 添加 flr_config 和 r_dart_library 的依赖声明到 pubspec.yaml
         //
 
-        // 添加 flr_config 到 pubspec.yaml
+        // 添加flr_config到pubspec.yaml：检测当前是否存在flr_config；若不存在，则添加flr_config；若存在，则按照以下步骤处理：
+        //  - 读取dartfmt_line_length选项、assets选项和fonts选项的值（这些选项值若存在，则应用于新建的flr_config；需要注意，使用前需要判断选项值是否合法：dartfmt_line_length选项值 >=80；assets选项和fonts选项的值为数组）
+        //  - 新建flr_config，然后使用旧值或者默认值设置各个选项
         //
-        // flr_config:
-        //
+        // flr_config: Flr的配置信息
+        // ```yaml
         // flr:
-        //    - core_version: 1.0.0
-        //    - dartfmt_line_length: 80
-        //    - assets: []
-        //    - fonts: []
+        //  core_version: 1.0.0
+        //  dartfmt_line_length: 80
+        //  assets: []
+        //  fonts: []
+        // ```
         //
+
+        int dartfmtLineLength = FlrConstant.DARTFMT_LINE_LENGTH;
+        List<String> assetResourceDirArray = new ArrayList<String>();
+        List<String> fontResourceDirArray = new ArrayList<String>();
         Map<String, Object> flrConfig = new LinkedHashMap<>();
+
         String usedFlrCoreLogicVersion = FlrConstant.CORE_VERSION;
         flrConfig.put("core_version", usedFlrCoreLogicVersion);
-        flrConfig.put("dartfmt_line_length", 80);
-        List<String> assetResourceDirList = new ArrayList<String>();
-        flrConfig.put("assets", assetResourceDirList);
-        List<String> fontResourceDirList = new ArrayList<String>();
-        flrConfig.put("fonts", fontResourceDirList);
+
+        Map<String, Object> oldFlrConfig = (Map<String, Object>)pubspecConfig.get("flr");
+        if(flrConfig instanceof Map) {
+            if(oldFlrConfig.containsKey("dartfmt_line_length")) {
+                Object length = oldFlrConfig.get("dartfmt_line_length");
+                if(length instanceof  Integer) {
+                    dartfmtLineLength = (Integer)length;
+                    if(dartfmtLineLength < FlrConstant.DARTFMT_LINE_LENGTH) {
+                        dartfmtLineLength = FlrConstant.DARTFMT_LINE_LENGTH;
+                    }
+                }
+            }
+
+            if (oldFlrConfig.containsKey("assets")) {
+                Object assets = oldFlrConfig.get("assets");
+                if(assets instanceof List) {
+                    assetResourceDirArray = (List<String>)assets;
+                }
+            }
+
+            if (oldFlrConfig.containsKey("fonts")) {
+                Object fonts = oldFlrConfig.get("fonts");
+                if(fonts instanceof List) {
+                    fontResourceDirArray = (List<String>)fonts;
+                }
+            }
+        }
+
+
+        flrConfig.put("dartfmt_line_length", dartfmtLineLength);
+        flrConfig.put("assets", assetResourceDirArray);
+        flrConfig.put("fonts", fontResourceDirArray);
         pubspecConfig.put("flr", flrConfig);
 
         indicatorMessage = "add flr configuration into pubspec.yaml done!";
