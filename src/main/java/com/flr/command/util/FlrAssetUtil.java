@@ -29,8 +29,9 @@ public class FlrAssetUtil {
             VirtualFile parentDirFile =  legalResourceFile.getParent();
             String parentDirName = parentDirFile.getName();
 
-            Pattern ratioRegex = Pattern.compile("^((0\\.[0-9]+)|([1-9]+[0-9]*(\\.[0-9]+)?))[x]$");
-            if(ratioRegex.matcher(parentDirName).matches()) {
+            String ratioRegex = "^((0\\.[0-9]+)|([1-9]+[0-9]*(\\.[0-9]+)?))[x]$";
+            Pattern pattern = Pattern.compile(ratioRegex);
+            if(pattern.matcher(parentDirName).matches()) {
                 return true;
             }
         }
