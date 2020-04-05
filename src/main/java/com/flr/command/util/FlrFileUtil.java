@@ -168,6 +168,26 @@ public class FlrFileUtil {
         return false;
     }
 
+    public static boolean isNonSvgImageResourceFile(@NotNull VirtualFile virtualFile) {
+        // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
+        String virtualFileExtension = virtualFile.getExtension();
+        String fullVirtualFileExtension = "." + virtualFileExtension;
+        if(FlrConstant.NON_SVG_IMAGE_FILE_TYPES.contains(fullVirtualFileExtension)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isSvgImageResourceFile(@NotNull VirtualFile virtualFile) {
+        // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
+        String virtualFileExtension = virtualFile.getExtension();
+        String fullVirtualFileExtension = "." + virtualFileExtension;
+        if(FlrConstant.SVG_IMAGE_FILE_TYPES.contains(fullVirtualFileExtension)) {
+            return true;
+        }
+        return false;
+    }
+
     public static boolean isImageResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
         String virtualFileExtension = virtualFile.getExtension();

@@ -1,5 +1,6 @@
 package com.flr;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,8 +15,17 @@ public class FlrConstant {
     // 插件对外展示的名称
     public static String PLUGIN_DISPLAY_NAME = "Flr";
 
+    // Flr支持的非SVG类图片文件类型
+    public static List<String> NON_SVG_IMAGE_FILE_TYPES= Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".webp", ".icon", ".bmp", ".wbmp");
+    // Flr支持的SVG类图片文件类型
+    public static List<String> SVG_IMAGE_FILE_TYPES= Arrays.asList(".svg");
     // Flr支持的图片文件类型
-    public static List<String> IMAGE_FILE_TYPES= Arrays.asList(".png", ".jpg", ".jpeg", ".gif", ".webp", ".icon", ".bmp", ".wbmp", ".svg");
+    public static List<String> IMAGE_FILE_TYPES= new ArrayList<String>(){
+        {
+            addAll(NON_SVG_IMAGE_FILE_TYPES);
+            addAll(SVG_IMAGE_FILE_TYPES);
+        }
+    };
     // Flr支持的文本文件类型
     public static List<String> TEXT_FILE_TYPES= Arrays.asList(".txt", ".json", ".yaml", ".xml");
     // Flr支持的字体文件类型
