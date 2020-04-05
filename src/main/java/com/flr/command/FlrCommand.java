@@ -1044,7 +1044,7 @@ public class FlrCommand implements Disposable {
                 "\n" +
                 "    flr:\n" +
                 "      core_version: %s\n" +
-                "      dartfmt_line_length: 80\n" +
+                "      dartfmt_line_length: %d\n" +
                 "      # config the image and text resource directories that need to be scanned\n" +
                 "      assets:\n" +
                 "        - lib/assets/moduleX-images\n" +
@@ -1052,7 +1052,7 @@ public class FlrCommand implements Disposable {
                 "        - lib/assets/texts\n" +
                 "      # config the font resource directories that need to be scanned\n" +
                 "      fonts:\n" +
-                "        - lib/assets/fonts\n", flrCoreVersion);
+                "        - lib/assets/fonts\n", flrCoreVersion, FlrConstant.DARTFMT_LINE_LENGTH);
         flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
     }
