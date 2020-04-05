@@ -1010,49 +1010,49 @@ public class FlrCommand implements Disposable {
                 "  │   ├── ..\n" +
                 "  ├── lib\n" +
                 "  │   ├── assets\n" +
-                "  │   │   ├── \\#{module}-images #{\"// image resources root directory of a moudle\".red}\n" +
-                "  │   │   │   ├── \\#{main_image_asset}\n" +
-                "  │   │   │   ├── \\#{variant-dir} #{\"// image resources root directory of a variant\".red}\n" +
-                "  │   │   │   │   ├── \\#{image_asset_variant}\n" +
-                "  │   │   │   │   \n" +
-                "  │   │   ├── home-images #{\"// image resources root directory of home module\".red}\n" +
-                "  │   │   │   ├── home_icon.png\n" +
-                "  │   │   │   ├── home_badge.svg\n" +
-                "  │   │   │   ├── 3.0x #{\"// image resources root directory of a 3.0x-ratio-variant\".red}\n" +
+                "  │   │   ├── images // image resource directory of all modules\n" +
+                "  │   │   │   ├── #{module} // image resource directory of a module\n" +
+                "  │   │   │   │   ├── #{main_image_asset}\n" +
+                "  │   │   │   │   ├── #{variant-dir} // image resource directory of a variant\n" +
+                "  │   │   │   │   │   ├── #{image_asset_variant}\n" +
+                "  │   │   │   │\n" +
+                "  │   │   │   ├── home // image resource directory of home module\n" +
+                "  │   │   │   │   ├── home_badge.svg\n" +
                 "  │   │   │   │   ├── home_icon.png\n" +
-                "  │   │   │   │   \n" +
-                "  │   │   ├── texts #{\"// text resources root directory\".red}\n" +
-                "  │   │   │   │     #{\"// (you can also break it down further by module)\".red}\n" +
+                "  │   │   │   │   ├── 3.0x // image resource directory of a 3.0x-ratio-variant\n" +
+                "  │   │   │   │   │   ├── home_icon.png\n" +
+                "  │   │   │   │\t\t\n" +
+                "  │   │   ├── texts // text resource directory\n" +
+                "  │   │   │   │     // (you can also break it down further by module)\n" +
                 "  │   │   │   └── test.json\n" +
                 "  │   │   │   └── test.yaml\n" +
-                "  │   │   │   │     \n" +
-                "  │   │   ├── fonts #{\"// font resources root directory of all font-family\".red}\n" +
-                "  │   │   │   ├── \\#{font-family} #{\"// font resources root directory of a font-family\".red}\n" +
-                "  │   │   │   │   ├── \\#{font-family}-\\#{font_weight_or_style}.ttf\n" +
-                "  │   │   │   │     \n" +
-                "  │   │   │   ├── Amiri #{\"// font resources root directory of Amiri font-family\".red}\n" +
+                "  │   │   │   │\n" +
+                "  │   │   ├── fonts // font resource directory of all font-families\n" +
+                "  │   │   │   ├── #{font-family} // font resource directory of a font-family\n" +
+                "  │   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf\n" +
+                "  │   │   │   │\n" +
+                "  │   │   │   ├── Amiri // font resource directory of Amiri font-family\n" +
                 "  │   │   │   │   ├── Amiri-Regular.ttf\n" +
                 "  │   │   │   │   ├── Amiri-Bold.ttf\n" +
                 "  │   │   │   │   ├── Amiri-Italic.ttf\n" +
                 "  │   │   │   │   ├── Amiri-BoldItalic.ttf\n" +
-                "  │   ├── ..\n";
+                "  │   ├── ..  \n";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
         String flrCoreVersion = FlrConstant.CORE_VERSION;
         indicatorMessage = String.format(
                 "[*]: Then config the resource directories that need to be scanned as follows：\n" +
                 "\n" +
-                "    flr:\n" +
-                "      core_version: %s\n" +
-                "      dartfmt_line_length: %d\n" +
-                "      # config the image and text resource directories that need to be scanned\n" +
-                "      assets:\n" +
-                "        - lib/assets/moduleX-images\n" +
-                "        - lib/assets/home-images\n" +
-                "        - lib/assets/texts\n" +
-                "      # config the font resource directories that need to be scanned\n" +
-                "      fonts:\n" +
-                "        - lib/assets/fonts\n", flrCoreVersion, FlrConstant.DARTFMT_LINE_LENGTH);
+                "  flr:\n" +
+                "    core_version: %s\n" +
+                "    dartfmt_line_length: %d\n" +
+                "    # config the image and text resource directories that need to be scanned\n" +
+                "    assets:\n" +
+                "      - lib/assets/images\n" +
+                "      - lib/assets/texts\n" +
+                "    # config the font resource directories that need to be scanned\n" +
+                "    fonts:\n" +
+                "      - lib/assets/fonts\n", flrCoreVersion, FlrConstant.DARTFMT_LINE_LENGTH);
         flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
     }
