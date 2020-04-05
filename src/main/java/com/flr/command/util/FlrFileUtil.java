@@ -5,6 +5,7 @@ import com.flr.FlrException;
 import com.flr.logConsole.FlrLogConsole;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.*;
+import gherkin.lexer.Fi;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -170,7 +171,7 @@ public class FlrFileUtil {
 
     public static boolean isNonSvgImageResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
-        String virtualFileExtension = virtualFile.getExtension();
+        String virtualFileExtension = virtualFile.getExtension().toLowerCase();
         String fullVirtualFileExtension = "." + virtualFileExtension;
         if(FlrConstant.NON_SVG_IMAGE_FILE_TYPES.contains(fullVirtualFileExtension)) {
             return true;
@@ -178,9 +179,17 @@ public class FlrFileUtil {
         return false;
     }
 
+    public static boolean isNonSvgImageResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.NON_SVG_IMAGE_FILE_TYPES.contains(fileExtName)) {
+            return true;
+        }
+        return false;
+    }
+
     public static boolean isSvgImageResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
-        String virtualFileExtension = virtualFile.getExtension();
+        String virtualFileExtension = virtualFile.getExtension().toLowerCase();
         String fullVirtualFileExtension = "." + virtualFileExtension;
         if(FlrConstant.SVG_IMAGE_FILE_TYPES.contains(fullVirtualFileExtension)) {
             return true;
@@ -188,9 +197,17 @@ public class FlrFileUtil {
         return false;
     }
 
+    public static boolean isSvgImageResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.SVG_IMAGE_FILE_TYPES.contains(fileExtName)) {
+            return true;
+        }
+        return false;
+    }
+
     public static boolean isImageResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
-        String virtualFileExtension = virtualFile.getExtension();
+        String virtualFileExtension = virtualFile.getExtension().toLowerCase();
         String fullVirtualFileExtension = "." + virtualFileExtension;
         if(FlrConstant.IMAGE_FILE_TYPES.contains(fullVirtualFileExtension)) {
             return true;
@@ -198,9 +215,17 @@ public class FlrFileUtil {
         return false;
     }
 
+    public static boolean isImageResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.IMAGE_FILE_TYPES.contains(fileExtName)) {
+            return true;
+        }
+        return false;
+    }
+
     public static boolean isTextResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
-        String virtualFileExtension = virtualFile.getExtension();
+        String virtualFileExtension = virtualFile.getExtension().toLowerCase();
         String fullVirtualFileExtension = "." + virtualFileExtension;
         if(FlrConstant.TEXT_FILE_TYPES.contains(fullVirtualFileExtension)) {
             return true;
@@ -208,11 +233,27 @@ public class FlrFileUtil {
         return false;
     }
 
+    public static boolean isTextResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.TEXT_FILE_TYPES.contains(fileExtName)) {
+            return true;
+        }
+        return false;
+    }
+
     public static boolean isFontResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
-        String virtualFileExtension = virtualFile.getExtension();
+        String virtualFileExtension = virtualFile.getExtension().toLowerCase();
         String fullVirtualFileExtension = "." + virtualFileExtension;
         if(FlrConstant.FONT_FILE_TYPES.contains(fullVirtualFileExtension)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isFontResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.FONT_FILE_TYPES.contains(fileExtName)) {
             return true;
         }
         return false;
