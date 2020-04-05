@@ -252,7 +252,10 @@ public class FlrCommand implements Disposable {
 
         // ----- Step-2 Begin -----
         // 进行核心逻辑版本检测：
-        // 检测Flr配置中的核心逻辑版本号和当前工具的核心逻辑版本号是否一致；若不一致，则生成“核心逻辑版本不一致”的警告日志，存放到警告日志数组
+        // 检测flr_config中的core_version和当前工具的core_version是否一致；若不一致，则按照以下规则处理：
+        //  - 更新flr_config中的core_version的值为当前工具的core_version；
+        //  - 生成“核心逻辑版本不一致”的警告日志，存放到警告日志数组。
+        //
 
         String flrCoreVersion = (String)flrConfig.get("core_version");
 
@@ -261,10 +264,12 @@ public class FlrCommand implements Disposable {
         }
 
         if(flrCoreVersion.equals(FlrConstant.CORE_VERSION) == false) {
-            String warningText = String.format("[!]: warning, the \"core_version\"(CoreLogic version) of the configured Flr tool is %s, while the \"core_version\"(CoreLogic version) of the currently used Flr tool is %s", flrCoreVersion,FlrConstant.CORE_VERSION);
-            String tipsText = "[*]: to fix it, you should make sure that the core logic version of the Flr tool you are currently using is consistent with the configuration"
+            flrConfig.put("core_version", FlrConstant.CORE_VERSION);
+
+            String warningText = String.format("[!]: warning, some team members may be using Flr tool with core_version %s, while you are using Flr tool with core_version %s", flrCoreVersion,FlrConstant.CORE_VERSION);
+            String tipsText = "[*]: to fix it, you and your team members should use the Flr tool with same core_version"
                     + "\n"
-                    + "[*]: to get the value of \"core_version\"(CoreLogic version), just click menu \"Tools-Flr-Version\"";
+                    + "[*]: \"core_version\" is the core logic version of Flr tool, you can click menu \"Tools-Flr-Version\" to get it";
 
             FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
             FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.tips);
