@@ -74,7 +74,7 @@ public class FlrChecker {
         if(flrConfig.containsKey("core_version")) {
             flrCoreVersion = String.format("%s", flrConfig.get("core_version"));
         }
-        String dartfmtLineLengthStr = "80";
+        String dartfmtLineLengthStr = String.format("%d",FlrConstant.DARTFMT_LINE_LENGTH);
         if(flrConfig.containsKey("dartfmt_line_length")) {
             dartfmtLineLengthStr = String.format("%s", flrConfig.get("dartfmt_line_length"));
         }
