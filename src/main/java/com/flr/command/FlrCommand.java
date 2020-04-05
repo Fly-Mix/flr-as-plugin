@@ -307,16 +307,18 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, indicatorType);
 
         // ----- Step-4 Begin -----
-        // 扫描assets_legal_resource_dir数组中的legal_resource_dir，输出image_asset数组和illegal_image_file数组：
+        // 扫描assets_legal_resource_dir数组中的legal_resource_dir，输出有序的image_asset数组、non_svg_image_asset数组、svg_image_asset数组、illegal_image_file数组：
         // - 创建image_asset数组、illegal_image_file数组；
         // - 遍历assets_legal_resource_dir数组，按照如下处理每个资源目录：
-        //  - 扫描当前资源目录和其第1级的子目录，查找所有image_file；
+        //  - 扫描当前资源目录和其所有层级的子目录，查找所有image_file；
         //  - 根据legal_resource_file的标准，筛选查找结果生成legal_image_file子数组和illegal_image_file子数组；illegal_image_file子数组合并到illegal_image_file数组；
         //  - 根据image_asset的定义，遍历legal_image_file子数组，生成image_asset子数；组；image_asset子数组合并到image_asset数组。
         // - 对image_asset数组做去重处理；
         // - 按照字典顺序对image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
-        // - 输出image_asset数组和illegal_image_file数组。
-        //
+        // - 按照SVG分类，从image_asset数组筛选得到有序的non_svg_image_asset数组和svg_image_asset数组：
+        //  - 按照SVG分类，从image_asset数组筛选得到non_svg_image_asset数组和svg_image_asset数组；
+        //  - 按照字典顺序对non_svg_image_asset数组和svg_image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
+        // - 输出有序的image_asset数组、non_svg_image_asset数组、svg_image_asset数组、illegal_image_file数组。
 
         List<String> imageAssetArray = new ArrayList<String>();
         List<VirtualFile> illegalImageFileArray = new ArrayList<VirtualFile>();
@@ -336,6 +338,23 @@ public class FlrCommand implements Disposable {
         imageAssetArray = new ArrayList<String>(new HashSet<String>(imageAssetArray));
         // sort
         Collections.sort(imageAssetArray);
+
+        List<String> nonSvgImageAssetArray = new ArrayList<String>();
+        List<String> svgImageAssetArray = new ArrayList<String>();
+
+        for (String asset : imageAssetArray) {
+            File assetFile = new File(asset);
+            String fileExtName = FlrFileUtil.getFileExtension(assetFile).toLowerCase();
+
+            if(FlrFileUtil.isSvgImageResourceFile(assetFile)) {
+                svgImageAssetArray.add(asset);
+            } else {
+                nonSvgImageAssetArray.add(asset);
+            }
+        }
+
+        Collections.sort(nonSvgImageAssetArray);
+        Collections.sort(svgImageAssetArray);
 
         // ----- Step-4 End -----
 
@@ -504,27 +523,31 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, indicatorType);
 
         // ----- Step-9 Begin -----
-        // 按照SVG分类，从image_asset数组筛选得到有序的non_svg_image_asset数组和svg_image_asset数组：
-        //  - 按照SVG分类，从image_asset数组筛选得到non_svg_image_asset数组和svg_image_asset数组；
-        //  - 按照字典顺序对non_svg_image_asset数组和svg_image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
+        // 分别遍历non_svg_image_asset数组、svg_image_asset数组、text_asset数组，
+        // 根据asset_id生成算法，分别输出non_svg_image_asset_id字典、svg_image_asset_id 字典、text_asset_id字典。
+        // 字典的key为asset，value为asset_id。
         //
+        Map<String, String> nonSvgImageAssetIdDict = new HashMap<>();
+        Map<String, String> svgImageAssetIdDict = new HashMap<>();
+        Map<String, String> textAssetIdDict = new HashMap<>();
 
-        List<String> nonSvgImageAssetArray = new ArrayList<String>();
-        List<String> svgImageAssetArray = new ArrayList<String>();
-
-        for (String asset : imageAssetArray) {
-            File assetFile = new File(asset);
-            String fileExtName = FlrFileUtil.getFileExtension(assetFile).toLowerCase();
-
-            if(fileExtName.equals(".svg")) {
-                svgImageAssetArray.add(asset);
-            } else {
-                nonSvgImageAssetArray.add(asset);
-            }
+        for (String asset : nonSvgImageAssetArray) {
+            List<String> usedAssetIdArray = new ArrayList<>(nonSvgImageAssetIdDict.values());
+            String assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE);
+            nonSvgImageAssetIdDict.put(asset, assetId);
         }
 
-        Collections.sort(nonSvgImageAssetArray);
-        Collections.sort(svgImageAssetArray);
+        for (String asset : svgImageAssetArray) {
+            List<String> usedAssetIdArray = new ArrayList<>(svgImageAssetIdDict.values());
+            String assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE);
+            svgImageAssetIdDict.put(asset, assetId);
+        }
+
+        for (String asset : textAssetArray) {
+            List<String> usedAssetIdArray = new ArrayList<>(textAssetIdDict.values());
+            String assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_TEXT_FILE_TYPE);
+            textAssetIdDict.put(asset, assetId);
+        }
 
         // ----- Step-9 End -----
 
@@ -567,7 +590,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, packageName);
+        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName);
         r_dart_file_content += g__R_Image_AssetResource_class_code;
 
         // ----- Step-13 End -----
@@ -578,7 +601,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, packageName);
+        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, svgImageAssetIdDict, packageName);
         r_dart_file_content += g__R_Svg_AssetResource_class_code;
 
         // ----- Step-14 End -----
@@ -588,7 +611,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, packageName);
+        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, textAssetIdDict, packageName);
         r_dart_file_content += g__R_Text_AssetResource_class_code;
 
         // ----- Step-15 End -----
@@ -598,7 +621,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Image_class_code = FlrCodeUtil.generate__R_Image_class(nonSvgImageAssetArray, packageName);
+        String g__R_Image_class_code = FlrCodeUtil.generate__R_Image_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName);
         r_dart_file_content += g__R_Image_class_code;
 
         // ----- Step-16 End -----
@@ -608,7 +631,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Svg_class_code = FlrCodeUtil.generate__R_Svg_class(svgImageAssetArray, packageName);
+        String g__R_Svg_class_code = FlrCodeUtil.generate__R_Svg_class(svgImageAssetArray, svgImageAssetIdDict, packageName);
         r_dart_file_content += g__R_Svg_class_code;
 
         // ----- Step-17 End -----
@@ -618,7 +641,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Text_class_code = FlrCodeUtil.generate__R_Text_class(textAssetArray, packageName);
+        String g__R_Text_class_code = FlrCodeUtil.generate__R_Text_class(textAssetArray, textAssetIdDict, packageName);
         r_dart_file_content += g__R_Text_class_code;
 
         // ----- Step-18 End -----
