@@ -205,10 +205,6 @@ public class FlrCodeUtil {
         String assetId = assetIdDict.get(asset);
         String assetComment = generateAssetComment(asset, packageName);
 
-        File assetFile = new File(asset);
-        String fileExtName = FlrFileUtil.getFileExtension(assetFile).toLowerCase();
-        String fileBasename = FlrFileUtil.getFileBasename(assetFile);
-
         String packageInfo = "packages/" + packageName + "/";
         String assetName = asset.replaceFirst(packageInfo, "");
         // 对字符串中的 '$' 进行转义处理：'$' -> '\$'
