@@ -347,21 +347,21 @@ public class FlrFileUtil {
      *
      * === Examples
      * resourceDir = "~/path/to/flutter_project/lib/assets/fonts"
-     * TopChildDirs = ["~/path/to/flutter_project/lib/assets/fonts/Amiri", "~/path/to/flutter_project/lib/assets/fonts/Open_Sans"]
+     * topChildDirArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri", "~/path/to/flutter_project/lib/assets/fonts/Open_Sans"]
      * */
     public static List<VirtualFile> findTopChildDirs(@NotNull String resourceDir) {
-        List<VirtualFile> resourceDirFileArray = new ArrayList<VirtualFile>();
+        List<VirtualFile> topChildDirArray = new ArrayList<VirtualFile>();
 
         File resourceDirFile = new File(resourceDir);
         VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
         VirtualFile[] resourceDirChildren = resourceDirVirtualFile.getChildren();
         for(VirtualFile resourceDirChild: resourceDirChildren) {
             if(resourceDirChild.isDirectory()) {
-                resourceDirFileArray.add(resourceDirChild);
+                topChildDirArray.add(resourceDirChild);
             }
         }
 
-        return resourceDirFileArray;
+        return topChildDirArray;
     }
 
     /*
@@ -370,12 +370,17 @@ public class FlrFileUtil {
      * textFileResultTuple = [legalFontFileArray, illegalFontFileArray]
      *
      * 判断资源文件合法的标准参考：isLegalResourceFile 方法
+     *
+     * === Examples
+     * fontFamilyDirFile = "~/path/to/flutter_project/lib/assets/fonts/Amiri"
+     * legalFontFileArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri/Amiri-Regular.ttf"]
+     * illegalFontFileArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri/~.ttf"]
      * */
-    public static List<List<VirtualFile>> findFontFilesInFontFamilyDir(@NotNull VirtualFile FontFamilyDirFile) {
+    public static List<List<VirtualFile>> findFontFilesInFontFamilyDir(@NotNull VirtualFile fontFamilyDirFile) {
         List<VirtualFile> legalFontFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
 
-        VfsUtilCore.visitChildrenRecursively(FontFamilyDirFile, new VirtualFileVisitor<Object>(){
+        VfsUtilCore.visitChildrenRecursively(fontFamilyDirFile, new VirtualFileVisitor<Object>(){
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
                 if (file.isDirectory() == false && isFontResourceFile(file)) {
