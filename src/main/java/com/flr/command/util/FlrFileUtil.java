@@ -265,20 +265,22 @@ public class FlrFileUtil {
     }
 
     /*
-    * v1.0.0: 扫描指定的资源目录和其第1级子目录，查找所有图片文件
-    * v1.1.0: 放开图片资源扫描目录层级限制，以支持不标准的资源组织目录结构
+    * 扫描指定的资源目录和其所有层级的子目录，查找所有图片文件
     * 返回文本文件结果二元组 imageFileResultTuple
     * imageFileResultTuple = [legalImageFileArray, illegalImageFileArray]
     *
     * 判断资源文件合法的标准参考：isLegalResourceFile 方法
+    *
+    * === Examples
+    * resourceDir = "~/path/to/flutter_project/lib/assets/images"
+    * legalImageFileArray = ["~/path/to/flutter_project/lib/assets/images/test.png", "~/path/to/flutter_project/lib/assets/images/2.0x/test.png"]
+    * illegalImageFileArray = ["~/path/to/flutter_project/lib/assets/images/~.png"]
     * */
-    public static List<List<VirtualFile>> findImageFiles(@NotNull Project project,@NotNull String resourceDir) {
+    public static List<List<VirtualFile>> findImageFiles(@NotNull String resourceDir) {
         List<VirtualFile> legalImageFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalImageFileArray = new ArrayList<VirtualFile>();
 
-        String resourceDirFullPath = project.getBasePath() + "/" + resourceDir;
-        File resourceDirFile = new File(resourceDirFullPath);
-
+        File resourceDirFile = new File(resourceDir);
         VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
         VfsUtilCore.visitChildrenRecursively(resourceDirVirtualFile, new VirtualFileVisitor<Object>(){
             @Override
@@ -307,14 +309,17 @@ public class FlrFileUtil {
      * textFileResultTuple = [legalTextFileArray, illegalTextFileArray]
      *
      * 判断资源文件合法的标准参考：isLegalResourceFile 方法
+     *
+     * === Examples
+     * resourceDir = "~/path/to/flutter_project/lib/assets/jsons"
+     * legalTextFileArray = ["~/path/to/flutter_project/lib/assets/jsons/city.json", "~/path/to/flutter_project/lib/assets/jsons/mock/city.json"]
+     * illegalTextFileArray = ["~/path/to/flutter_project/lib/assets/jsons/~.json"]
      * */
-    public static List<List<VirtualFile>> findTextFiles(@NotNull Project project,@NotNull String resourceDir) {
+    public static List<List<VirtualFile>> findTextFiles(@NotNull String resourceDir) {
         List<VirtualFile> legalTextFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalTextFileArray = new ArrayList<VirtualFile>();
 
-        String resourceDirFullPath = project.getBasePath() + "/" + resourceDir;
-        File resourceDirFile = new File(resourceDirFullPath);
-
+        File resourceDirFile = new File(resourceDir);
         VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
         VfsUtilCore.visitChildrenRecursively(resourceDirVirtualFile, new VirtualFileVisitor<Object>(){
             @Override
@@ -340,13 +345,14 @@ public class FlrFileUtil {
     /*
      * 扫描指定的资源目录，返回其所有第一级子目录
      *
+     * === Examples
+     * resourceDir = "~/path/to/flutter_project/lib/assets/fonts"
+     * TopChildDirs = ["~/path/to/flutter_project/lib/assets/fonts/Amiri", "~/path/to/flutter_project/lib/assets/fonts/Open_Sans"]
      * */
-    public static List<VirtualFile> findTopChildDirs(@NotNull Project project,@NotNull String resourceDir) {
+    public static List<VirtualFile> findTopChildDirs(@NotNull String resourceDir) {
         List<VirtualFile> resourceDirFileArray = new ArrayList<VirtualFile>();
 
-        String resourceDirFullPath = project.getBasePath() + "/" + resourceDir;
-        File resourceDirFile = new File(resourceDirFullPath);
-
+        File resourceDirFile = new File(resourceDir);
         VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
         VirtualFile[] resourceDirChildren = resourceDirVirtualFile.getChildren();
         for(VirtualFile resourceDirChild: resourceDirChildren) {
@@ -365,7 +371,7 @@ public class FlrFileUtil {
      *
      * 判断资源文件合法的标准参考：isLegalResourceFile 方法
      * */
-    public static List<List<VirtualFile>> findFontFilesInFontFamilyDir(@NotNull Project project,@NotNull VirtualFile FontFamilyDirFile) {
+    public static List<List<VirtualFile>> findFontFilesInFontFamilyDir(@NotNull VirtualFile FontFamilyDirFile) {
         List<VirtualFile> legalFontFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
 
