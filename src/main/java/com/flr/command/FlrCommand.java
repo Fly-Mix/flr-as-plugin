@@ -364,13 +364,13 @@ public class FlrCommand implements Disposable {
         List<VirtualFile> illegalImageFileArray = new ArrayList<VirtualFile>();
 
         for (String resourceDir : assetsLegalResourceDirArray) {
-            List<List<VirtualFile>> imageFileResultTuple = FlrFileUtil.findImageFiles(curProject, resourceDir);
+            List<List<VirtualFile>> imageFileResultTuple = FlrFileUtil.findImageFiles(resourceDir);
             List<VirtualFile> legalImageFileSubArray = imageFileResultTuple.get(0);
             List<VirtualFile> illegalImageFileSubArray = imageFileResultTuple.get(1);
 
             illegalImageFileArray.addAll(illegalImageFileSubArray);
 
-            List<String> imageAssetSubArray = FlrAssetUtil.generateImageAssets(legalImageFileSubArray, flutterProjectRootDir, resourceDir, packageName);
+            List<String> imageAssetSubArray = FlrAssetUtil.generateImageAssets(flutterProjectRootDir, packageName, legalImageFileSubArray);
             imageAssetArray.addAll(imageAssetSubArray);
         }
 
@@ -414,13 +414,13 @@ public class FlrCommand implements Disposable {
         List<VirtualFile> illegalTextFileArray = new ArrayList<VirtualFile>();
 
         for (String resourceDir : assetsLegalResourceDirArray) {
-            List<List<VirtualFile>> textFileResultTuple = FlrFileUtil.findTextFiles(curProject, resourceDir);
+            List<List<VirtualFile>> textFileResultTuple = FlrFileUtil.findTextFiles(resourceDir);
             List<VirtualFile> legalTextFileSubArray = textFileResultTuple.get(0);
             List<VirtualFile> illegalTextFileSubArray = textFileResultTuple.get(1);
 
             illegalTextFileArray.addAll(illegalTextFileSubArray);
 
-            List<String> textAssetSubArray = FlrAssetUtil.generateTextAssets(legalTextFileSubArray, flutterProjectRootDir, resourceDir, packageName);
+            List<String> textAssetSubArray = FlrAssetUtil.generateTextAssets(flutterProjectRootDir, packageName, legalTextFileSubArray);
             textAssetArray.addAll(textAssetSubArray);
         }
 
@@ -451,12 +451,12 @@ public class FlrCommand implements Disposable {
         List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
 
         for (String resourceDir : fontsLegalResourceDirArray) {
-            List<VirtualFile> fontFamilyDirArray = FlrFileUtil.findTopChildDirs(curProject, resourceDir);
+            List<VirtualFile> fontFamilyDirArray = FlrFileUtil.findTopChildDirs(resourceDir);
 
             for (VirtualFile fontFamilyDirFile : fontFamilyDirArray) {
                String fontFamilyName = fontFamilyDirFile.getName();
 
-                List<List<VirtualFile>> fontFileResultTuple = FlrFileUtil.findFontFilesInFontFamilyDir(curProject, fontFamilyDirFile);
+                List<List<VirtualFile>> fontFileResultTuple = FlrFileUtil.findFontFilesInFontFamilyDir(fontFamilyDirFile);
                 List<VirtualFile> legalFontFileArray = fontFileResultTuple.get(0);
                 List<VirtualFile> illegalFontFileSubArray = fontFileResultTuple.get(1);
 
@@ -466,7 +466,7 @@ public class FlrCommand implements Disposable {
                     continue;
                 }
 
-                List<Map> fontAssetConfigArray = FlrAssetUtil.generateFontAssetConfigs(legalFontFileArray, flutterProjectRootDir, resourceDir, packageName);
+                List<Map> fontAssetConfigArray = FlrAssetUtil.generateFontAssetConfigs(flutterProjectRootDir, packageName, legalFontFileArray);
                 fontAssetConfigArray.sort(new Comparator<Map>() {
                     @Override
                     public int compare(Map o1, Map o2) {
