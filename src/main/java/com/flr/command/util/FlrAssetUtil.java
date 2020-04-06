@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 public class FlrAssetUtil {
 
     /*
-     * 判断当前的资源文件是不是资产变体（asset_variant）类型*
+     * 判断当前的资源文件是不是资产变体（asset_variant）类型
      *
      * 判断的核心算法是：
      * - 获取资源文件的父目录；
@@ -43,27 +43,27 @@ public class FlrAssetUtil {
      * 为当前资源文件生成 main_asset
      *
      * === Examples
-     * flutterProjectRootDir =  ~/path/to/flutter_r_demo
-     * package_name = "flutter_r_demo"
+     * flutterDir =  ~/path/to/flutter_r_demo
+     * packageName = "flutter_r_demo"
      *
      * === Example-1
-     * legal_resource_file = " ~/path/to/flutter_r_demo/lib/assets/images/test.png"
-     * main_asset = "packages/flutter_r_demo/assets/images/test.png"
+     * legalResourceFile = " ~/path/to/flutter_r_demo/lib/assets/images/test.png"
+     * mainAsset = "packages/flutter_r_demo/assets/images/test.png"
      *
      * === Example-2
-     * legal_resource_file = " ~/path/to/flutter_r_demo/lib/assets/images/3.0x/test.png"
-     * main_asset = "packages/flutter_r_demo/assets/images/test.png"
+     * legalResourceFile = " ~/path/to/flutter_r_demo/lib/assets/images/3.0x/test.png"
+     * mainAsset = "packages/flutter_r_demo/assets/images/test.png"
      *
      * === Example-3
-     * legal_resource_file = "~/path/to/flutter_r_demo/lib/assets/texts/3.0x/test.json"
-     * main_asset = "packages/flutter_r_demo/assets/texts/3.0x/test.json"
+     * legalResourceFile = "~/path/to/flutter_r_demo/lib/assets/texts/3.0x/test.json"
+     * mainAsset = "packages/flutter_r_demo/assets/texts/3.0x/test.json"
      *
      * === Example-3
-     * legal_resource_file = "~/path/to/flutter_r_demo/lib/assets/fonts/Amiri/Amiri-Regular.ttf"
-     * main_asset = "packages/flutter_r_demo/fonts/Amiri/Amiri-Regular.ttf"
+     * legalResourceFile = "~/path/to/flutter_r_demo/lib/assets/fonts/Amiri/Amiri-Regular.ttf"
+     * mainAsset = "packages/flutter_r_demo/fonts/Amiri/Amiri-Regular.ttf"
      *
      * */
-    public static String generateMainAsset(@NotNull String flutterProjectRootDir, @NotNull String packageName, @NotNull VirtualFile legalResourceFile) {
+    public static String generateMainAsset(@NotNull String flutterDir, @NotNull String packageName, @NotNull VirtualFile legalResourceFile) {
         // legalResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/3.0x/test.png
         // to get mainResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/test.png
         String mainResourceFile = legalResourceFile.getPath();
@@ -84,7 +84,7 @@ public class FlrAssetUtil {
         // mainResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/test.png
         // mainRelativeResourceFile: lib/assets/images/test.png
         // mainImpliedRelativeResourceFile: assets/images/test.png
-        String mainRelativeResourceFile = mainResourceFile.replaceFirst(flutterProjectRootDir + "/", "");
+        String mainRelativeResourceFile = mainResourceFile.replaceFirst(flutterDir + "/", "");
         String mainImpliedRelativeResourceFile = mainRelativeResourceFile.replaceFirst("lib/", "");
 
         // mainAsset: packages/flutter_r_demo/assets/images/test.png
@@ -95,11 +95,11 @@ public class FlrAssetUtil {
     /*
     * 遍历指定资源目录下扫描找到的legalImageFile数组生成imageAsset数组
     * */
-    public static List<String> generateImageAssets(@NotNull String flutterProjectRootDir, @NotNull String packageName, @NotNull List<VirtualFile> legalImageFileArray) {
+    public static List<String> generateImageAssets(@NotNull String flutterDir, @NotNull String packageName, @NotNull List<VirtualFile> legalImageFileArray) {
         Set<String> imageAssetSet = new LinkedHashSet<String>();
 
         for (VirtualFile imageVirtualFile : legalImageFileArray) {
-            String imageAsset = generateMainAsset(flutterProjectRootDir, packageName, imageVirtualFile);
+            String imageAsset = generateMainAsset(flutterDir, packageName, imageVirtualFile);
             imageAssetSet.add(imageAsset);
         }
 
@@ -110,11 +110,11 @@ public class FlrAssetUtil {
     /*
      * 遍历指定资源目录下扫描找到的legalTextFile数组生成textAsset数组
      * */
-    public static List<String> generateTextAssets(@NotNull String flutterProjectRootDir, @NotNull String packageName, @NotNull List<VirtualFile> legalTextFileArray) {
+    public static List<String> generateTextAssets(@NotNull String flutterDir, @NotNull String packageName, @NotNull List<VirtualFile> legalTextFileArray) {
         Set<String> textAssetSet = new LinkedHashSet<String>();
 
         for (VirtualFile textVirtualFile : legalTextFileArray) {
-            String textAsset = generateMainAsset(flutterProjectRootDir, packageName, textVirtualFile);
+            String textAsset = generateMainAsset(flutterDir, packageName, textVirtualFile);
             textAssetSet.add(textAsset);
         }
 
@@ -127,11 +127,11 @@ public class FlrAssetUtil {
     *
     * fontAssetConfig = {"asset": "packages/flutter_r_demo/assets/fonts/Amiri/Amiri-Regular.ttf"}
     * */
-    public static List<Map> generateFontAssetConfigs(@NotNull String flutterProjectRootDir, @NotNull String packageName, @NotNull List<VirtualFile> legalFontFileArray) {
+    public static List<Map> generateFontAssetConfigs(@NotNull String flutterDir, @NotNull String packageName, @NotNull List<VirtualFile> legalFontFileArray) {
         List<Map> fontAssetConfigArray = new ArrayList<Map>();
 
         for (VirtualFile fontVirtualFile : legalFontFileArray) {
-            String fontAsset = generateMainAsset(flutterProjectRootDir, packageName, fontVirtualFile);
+            String fontAsset = generateMainAsset(flutterDir, packageName, fontVirtualFile);
 
             Map<String, String> fontAssetConfig = new LinkedHashMap<String, String>();
             fontAssetConfig.put("asset", fontAsset);
