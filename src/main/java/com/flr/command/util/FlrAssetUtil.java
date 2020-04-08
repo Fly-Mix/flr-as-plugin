@@ -43,15 +43,15 @@ public class FlrAssetUtil {
      * 为当前资源文件生成 main_asset
      *
      * === Examples
-     * flutterDir =  ~/path/to/flutter_r_demo
+     * flutterDir =  "~/path/to/flutter_r_demo"
      * packageName = "flutter_r_demo"
      *
      * === Example-1
-     * legalResourceFile = " ~/path/to/flutter_r_demo/lib/assets/images/test.png"
+     * legalResourceFile = "~/path/to/flutter_r_demo/lib/assets/images/test.png"
      * mainAsset = "packages/flutter_r_demo/assets/images/test.png"
      *
      * === Example-2
-     * legalResourceFile = " ~/path/to/flutter_r_demo/lib/assets/images/3.0x/test.png"
+     * legalResourceFile = "~/path/to/flutter_r_demo/lib/assets/images/3.0x/test.png"
      * mainAsset = "packages/flutter_r_demo/assets/images/test.png"
      *
      * === Example-3
