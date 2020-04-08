@@ -384,8 +384,6 @@ public class FlrCommand implements Disposable {
 
         for (String asset : imageAssetArray) {
             File assetFile = new File(asset);
-            String fileExtName = FlrFileUtil.getFileExtension(assetFile).toLowerCase();
-
             if(FlrFileUtil.isSvgImageResourceFile(assetFile)) {
                 svgImageAssetArray.add(asset);
             } else {
