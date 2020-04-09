@@ -129,7 +129,7 @@ public class FlrCommand implements Disposable {
         flrConfig.put("core_version", usedFlrCoreLogicVersion);
 
         Map<String, Object> oldFlrConfig = (Map<String, Object>)pubspecConfig.get("flr");
-        if(flrConfig instanceof Map) {
+        if(oldFlrConfig instanceof Map) {
             if(oldFlrConfig.containsKey("dartfmt_line_length")) {
                 Object length = oldFlrConfig.get("dartfmt_line_length");
                 if(length instanceof  Integer) {
