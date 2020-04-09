@@ -135,7 +135,13 @@ patchPluginXml {
 
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
-<h3>1.1.0</h3>
+<h3>2.0.0</h3>
+<ul>
+  <li>New asset generation algorithm to support all kinds of standard or nonstandard image/text resource structure</li>
+  <li>New asset-id generation algorithm to support assets with the same filename but different path</li>
+  <li>New recommended flutter resource structure</li>
+</ul>
+<h4>1.1.0</h4>
 <ul>
   <li>Improve generate-capability to support nonstandard image resource structure</li>
   <li>Add recommend-capability to display the recommended flutter resource structure</li>
