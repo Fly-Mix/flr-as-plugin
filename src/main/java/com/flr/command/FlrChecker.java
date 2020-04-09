@@ -66,7 +66,11 @@ public class FlrChecker {
     * 若合法，返回资源目录结果三元组 resourceDirResultTuple
     * 否则抛出异常
     *
+    * flutterProjectRootDir = "~/path/to/flutter_r_demo"
     * resourceDirResultTuple = [assetsLegalResourceDirArray, fontsLegalResourceDirArray, illegalResourceDirArray]
+    * assetsLegalResourceDirArray = ["~/path/to/flutter_r_demo/lib/assets/images", "~/path/to/flutter_r_demo/lib/assets/texts"]
+    * fontsLegalResourceDirArray = ["~/path/to/flutter_r_demo/lib/assets/fonts"]
+    * illegalResourceDirArray = ["~/path/to/flutter_r_demo/to/non-existed_folder"]
     *
     * */
     public static List<List<String>> checkFlrAssetsIsLegal(@NotNull FlrLogConsole flrLogConsole, @NotNull Map<String, Object> flrConfig, @NotNull String flutterProjectRootDir) throws FlrException {
@@ -74,7 +78,7 @@ public class FlrChecker {
         if(flrConfig.containsKey("core_version")) {
             flrCoreVersion = String.format("%s", flrConfig.get("core_version"));
         }
-        String dartfmtLineLengthStr = "80";
+        String dartfmtLineLengthStr = String.format("%d",FlrConstant.DARTFMT_LINE_LENGTH);
         if(flrConfig.containsKey("dartfmt_line_length")) {
             dartfmtLineLengthStr = String.format("%s", flrConfig.get("dartfmt_line_length"));
         }
@@ -104,19 +108,19 @@ public class FlrChecker {
         List<String> fontsLegalResourceDirArray = new ArrayList<String>();
         List<String> illegalResourceDirArray = new ArrayList<String>();
 
-        for (String resourceDir : assetsResourceDirArray) {
-            String resourceDirFullPath = flutterProjectRootDir + "/" + resourceDir;
-            File dir = new File(resourceDirFullPath);
+        for (String relativeResourceDir : assetsResourceDirArray) {
+            String resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+            File dir = new File(resourceDir);
             if(dir.isDirectory() && dir.exists()) {
-             assetsLegalResourceDirArray.add(resourceDir);
+                assetsLegalResourceDirArray.add(resourceDir);
             } else {
                 illegalResourceDirArray.add(resourceDir);
             }
         }
 
-        for (String resourceDir : fontsResourceDirArray) {
-            String resourceDirFullPath = flutterProjectRootDir + "/" + resourceDir;
-            File dir = new File(resourceDirFullPath);
+        for (String relativeResourceDir : fontsResourceDirArray) {
+            String resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
+            File dir = new File(resourceDir);
             if(dir.isDirectory() && dir.exists()) {
                 fontsLegalResourceDirArray.add(resourceDir);
             } else {
