@@ -112,7 +112,7 @@ public class FlrChecker {
             String resourceDir = flutterProjectRootDir + "/" + relativeResourceDir;
             File dir = new File(resourceDir);
             if(dir.isDirectory() && dir.exists()) {
-             assetsLegalResourceDirArray.add(resourceDir);
+                assetsLegalResourceDirArray.add(resourceDir);
             } else {
                 illegalResourceDirArray.add(resourceDir);
             }
