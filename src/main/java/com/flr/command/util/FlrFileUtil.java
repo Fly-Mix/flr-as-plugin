@@ -3,9 +3,7 @@ package com.flr.command.util;
 import com.flr.FlrConstant;
 import com.flr.FlrException;
 import com.flr.logConsole.FlrLogConsole;
-import com.intellij.configurationStore.VirtualFileResolver;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.*;
 import gherkin.lexer.Fi;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +53,36 @@ public class FlrFileUtil {
         }
         String fileExtension = fileBasename.substring(lastIndexOf);
         return fileExtension;
+    }
+
+    /*
+    * 把resourceDir转换为relativeResourceDir
+    *
+    * === Examples
+    * flutterDir =  "~/path/to/flutter_r_demo"
+    * resourceDir = "~/path/to/flutter_r_demo/lib/assets/images"
+    * relativeResourceDir = "lib/assets/images"
+    * */
+    public static String convertToRelativeResourceDir(@NotNull String flutterDir, @NotNull String resourceDir) {
+        String relativeResourceDir = resourceDir.replaceFirst(flutterDir + "/", "");
+        return relativeResourceDir;
+    }
+
+    /*
+     * 把resourceDir数组转换为relativeResourceDir数组
+     *
+     * === Examples
+     * flutterDir =  "~/path/to/flutter_r_demo"
+     * resourceDirArray = ["~/path/to/flutter_r_demo/lib/assets/images"]
+     * relativeResourceDirArray = ["lib/assets/images"]
+     * */
+    public static List<String> convertToRelativeResourceDirs(@NotNull String flutterDir, @NotNull List<String> resourceDirs) {
+        List<String> relativeResourceDirArray = new ArrayList<>();
+        for(String resourceDir : resourceDirs) {
+            String relativeResourceDir = convertToRelativeResourceDir(flutterDir, resourceDir);
+            relativeResourceDirArray.add(relativeResourceDir);
+        }
+        return relativeResourceDirArray;
     }
 
     /*
@@ -171,56 +199,123 @@ public class FlrFileUtil {
         return false;
     }
 
-    public static boolean isImageResource(@NotNull VirtualFile virtualFile) {
+    public static boolean isNonSvgImageResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
         String virtualFileExtension = virtualFile.getExtension();
         String fullVirtualFileExtension = "." + virtualFileExtension;
+        fullVirtualFileExtension = fullVirtualFileExtension.toLowerCase();
+        if(FlrConstant.NON_SVG_IMAGE_FILE_TYPES.contains(fullVirtualFileExtension)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isNonSvgImageResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.NON_SVG_IMAGE_FILE_TYPES.contains(fileExtName)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isSvgImageResourceFile(@NotNull VirtualFile virtualFile) {
+        // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
+        String virtualFileExtension = virtualFile.getExtension();
+        String fullVirtualFileExtension = "." + virtualFileExtension;
+        fullVirtualFileExtension = fullVirtualFileExtension.toLowerCase();
+        if(FlrConstant.SVG_IMAGE_FILE_TYPES.contains(fullVirtualFileExtension)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isSvgImageResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.SVG_IMAGE_FILE_TYPES.contains(fileExtName)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isImageResourceFile(@NotNull VirtualFile virtualFile) {
+        // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
+        String virtualFileExtension = virtualFile.getExtension();
+        String fullVirtualFileExtension = "." + virtualFileExtension;
+        fullVirtualFileExtension = fullVirtualFileExtension.toLowerCase();
         if(FlrConstant.IMAGE_FILE_TYPES.contains(fullVirtualFileExtension)) {
             return true;
         }
         return false;
     }
 
-    public static boolean isTextResource(@NotNull VirtualFile virtualFile) {
+    public static boolean isImageResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.IMAGE_FILE_TYPES.contains(fileExtName)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isTextResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
         String virtualFileExtension = virtualFile.getExtension();
         String fullVirtualFileExtension = "." + virtualFileExtension;
+        fullVirtualFileExtension = fullVirtualFileExtension.toLowerCase();
         if(FlrConstant.TEXT_FILE_TYPES.contains(fullVirtualFileExtension)) {
             return true;
         }
         return false;
     }
 
-    public static boolean isFontResource(@NotNull VirtualFile virtualFile) {
+    public static boolean isTextResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.TEXT_FILE_TYPES.contains(fileExtName)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isFontResourceFile(@NotNull VirtualFile virtualFile) {
         // virtualFileExtension 不带“.”，如 path_to/test.png 的 virtualFileExtension 是 png
         String virtualFileExtension = virtualFile.getExtension();
         String fullVirtualFileExtension = "." + virtualFileExtension;
+        fullVirtualFileExtension = fullVirtualFileExtension.toLowerCase();
         if(FlrConstant.FONT_FILE_TYPES.contains(fullVirtualFileExtension)) {
             return true;
         }
         return false;
     }
 
+    public static boolean isFontResourceFile(@NotNull File file) {
+        String fileExtName = getFileExtension(file).toLowerCase();
+        if(FlrConstant.FONT_FILE_TYPES.contains(fileExtName)) {
+            return true;
+        }
+        return false;
+    }
+
     /*
-    * v1.0.0: 扫描指定的资源目录和其第1级子目录，查找所有图片文件
-    * v1.1.0: 放开图片资源扫描目录层级限制，以支持不标准的资源组织目录结构
+    * 扫描指定的资源目录和其所有层级的子目录，查找所有图片文件
     * 返回文本文件结果二元组 imageFileResultTuple
     * imageFileResultTuple = [legalImageFileArray, illegalImageFileArray]
     *
     * 判断资源文件合法的标准参考：isLegalResourceFile 方法
+    *
+    * === Examples
+    * resourceDir = "~/path/to/flutter_project/lib/assets/images"
+    * legalImageFileArray = ["~/path/to/flutter_project/lib/assets/images/test.png", "~/path/to/flutter_project/lib/assets/images/2.0x/test.png"]
+    * illegalImageFileArray = ["~/path/to/flutter_project/lib/assets/images/~.png"]
     * */
-    public static List<List<VirtualFile>> findImageFiles(@NotNull Project project,@NotNull String resourceDir) {
+    public static List<List<VirtualFile>> findImageFiles(@NotNull String resourceDir) {
         List<VirtualFile> legalImageFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalImageFileArray = new ArrayList<VirtualFile>();
 
-        String resourceDirFullPath = project.getBasePath() + "/" + resourceDir;
-        File resourceDirFile = new File(resourceDirFullPath);
-
+        File resourceDirFile = new File(resourceDir);
         VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
         VfsUtilCore.visitChildrenRecursively(resourceDirVirtualFile, new VirtualFileVisitor<Object>(){
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
-                if (file.isDirectory() == false && isImageResource(file)) {
+                if (file.isDirectory() == false && isImageResourceFile(file)) {
                     if(isLegalResourceFile(file)) {
                         legalImageFileArray.add(file);
                     } else {
@@ -244,19 +339,22 @@ public class FlrFileUtil {
      * textFileResultTuple = [legalTextFileArray, illegalTextFileArray]
      *
      * 判断资源文件合法的标准参考：isLegalResourceFile 方法
+     *
+     * === Examples
+     * resourceDir = "~/path/to/flutter_project/lib/assets/jsons"
+     * legalTextFileArray = ["~/path/to/flutter_project/lib/assets/jsons/city.json", "~/path/to/flutter_project/lib/assets/jsons/mock/city.json"]
+     * illegalTextFileArray = ["~/path/to/flutter_project/lib/assets/jsons/~.json"]
      * */
-    public static List<List<VirtualFile>> findTextFiles(@NotNull Project project,@NotNull String resourceDir) {
+    public static List<List<VirtualFile>> findTextFiles(@NotNull String resourceDir) {
         List<VirtualFile> legalTextFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalTextFileArray = new ArrayList<VirtualFile>();
 
-        String resourceDirFullPath = project.getBasePath() + "/" + resourceDir;
-        File resourceDirFile = new File(resourceDirFullPath);
-
+        File resourceDirFile = new File(resourceDir);
         VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
         VfsUtilCore.visitChildrenRecursively(resourceDirVirtualFile, new VirtualFileVisitor<Object>(){
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
-                if (file.isDirectory() == false && isTextResource(file)) {
+                if (file.isDirectory() == false && isTextResourceFile(file)) {
                     if(isLegalResourceFile(file)) {
                         legalTextFileArray.add(file);
                     } else {
@@ -277,22 +375,23 @@ public class FlrFileUtil {
     /*
      * 扫描指定的资源目录，返回其所有第一级子目录
      *
+     * === Examples
+     * resourceDir = "~/path/to/flutter_project/lib/assets/fonts"
+     * topChildDirArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri", "~/path/to/flutter_project/lib/assets/fonts/Open_Sans"]
      * */
-    public static List<VirtualFile> findTopChildDirs(@NotNull Project project,@NotNull String resourceDir) {
-        List<VirtualFile> resourceDirFileArray = new ArrayList<VirtualFile>();
+    public static List<VirtualFile> findTopChildDirs(@NotNull String resourceDir) {
+        List<VirtualFile> topChildDirArray = new ArrayList<VirtualFile>();
 
-        String resourceDirFullPath = project.getBasePath() + "/" + resourceDir;
-        File resourceDirFile = new File(resourceDirFullPath);
-
+        File resourceDirFile = new File(resourceDir);
         VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
         VirtualFile[] resourceDirChildren = resourceDirVirtualFile.getChildren();
         for(VirtualFile resourceDirChild: resourceDirChildren) {
             if(resourceDirChild.isDirectory()) {
-                resourceDirFileArray.add(resourceDirChild);
+                topChildDirArray.add(resourceDirChild);
             }
         }
 
-        return resourceDirFileArray;
+        return topChildDirArray;
     }
 
     /*
@@ -301,37 +400,20 @@ public class FlrFileUtil {
      * textFileResultTuple = [legalFontFileArray, illegalFontFileArray]
      *
      * 判断资源文件合法的标准参考：isLegalResourceFile 方法
+     *
+     * === Examples
+     * fontFamilyDirFile = "~/path/to/flutter_project/lib/assets/fonts/Amiri"
+     * legalFontFileArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri/Amiri-Regular.ttf"]
+     * illegalFontFileArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri/~.ttf"]
      * */
-    public static List<List<VirtualFile>> findFontFilesInFontFamilyDir(@NotNull Project project,@NotNull VirtualFile FontFamilyDirFile) {
+    public static List<List<VirtualFile>> findFontFilesInFontFamilyDir(@NotNull VirtualFile fontFamilyDirFile) {
         List<VirtualFile> legalFontFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
 
-        // 递归遍历
-//        VfsUtilCore.iterateChildrenRecursively(FontFamilyDirFile, new VirtualFileFilter() {
-//            @Override
-//            public boolean accept(VirtualFile file) {
-//                // 筛选字体文件
-//                if(file.isDirectory() == false && isFontResource(file)) {
-//                    return true;
-//                }
-//                return false;
-//            }
-//        }, new ContentIterator() {
-//            @Override
-//            public boolean processFile(@NotNull VirtualFile fileOrDir) {
-//                if(isLegalResourceFile(fileOrDir)) {
-//                    legalFontFileArray.add(fileOrDir);
-//                } else {
-//                    illegalFontFileArray.add(fileOrDir);
-//                }
-//                return true;
-//            }
-//        });
-
-        VfsUtilCore.visitChildrenRecursively(FontFamilyDirFile, new VirtualFileVisitor<Object>(){
+        VfsUtilCore.visitChildrenRecursively(fontFamilyDirFile, new VirtualFileVisitor<Object>(){
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
-                if (file.isDirectory() == false && isFontResource(file)) {
+                if (file.isDirectory() == false && isFontResourceFile(file)) {
                     if(isLegalResourceFile(file)) {
                         legalFontFileArray.add(file);
                     } else {
