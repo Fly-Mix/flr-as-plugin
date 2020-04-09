@@ -106,24 +106,59 @@ public class FlrCommand implements Disposable {
         // 添加 flr_config 和 r_dart_library 的依赖声明到 pubspec.yaml
         //
 
-        // 添加 flr_config 到 pubspec.yaml
+        // 添加flr_config到pubspec.yaml：检测当前是否存在flr_config；若不存在，则添加flr_config；若存在，则按照以下步骤处理：
+        //  - 读取dartfmt_line_length选项、assets选项和fonts选项的值（这些选项值若存在，则应用于新建的flr_config；需要注意，使用前需要判断选项值是否合法：dartfmt_line_length选项值 >=80；assets选项和fonts选项的值为数组）
+        //  - 新建flr_config，然后使用旧值或者默认值设置各个选项
         //
-        // flr_config:
-        //
+        // flr_config: Flr的配置信息
+        // ```yaml
         // flr:
-        //    - core_version: 1.0.0
-        //    - dartfmt_line_length: 80
-        //    - assets: []
-        //    - fonts: []
+        //  core_version: 1.0.0
+        //  dartfmt_line_length: 80
+        //  assets: []
+        //  fonts: []
+        // ```
         //
+
+        int dartfmtLineLength = FlrConstant.DARTFMT_LINE_LENGTH;
+        List<String> assetResourceDirArray = new ArrayList<String>();
+        List<String> fontResourceDirArray = new ArrayList<String>();
         Map<String, Object> flrConfig = new LinkedHashMap<>();
+
         String usedFlrCoreLogicVersion = FlrConstant.CORE_VERSION;
         flrConfig.put("core_version", usedFlrCoreLogicVersion);
-        flrConfig.put("dartfmt_line_length", 80);
-        List<String> assetResourceDirList = new ArrayList<String>();
-        flrConfig.put("assets", assetResourceDirList);
-        List<String> fontResourceDirList = new ArrayList<String>();
-        flrConfig.put("fonts", fontResourceDirList);
+
+        Map<String, Object> oldFlrConfig = (Map<String, Object>)pubspecConfig.get("flr");
+        if(oldFlrConfig instanceof Map) {
+            if(oldFlrConfig.containsKey("dartfmt_line_length")) {
+                Object length = oldFlrConfig.get("dartfmt_line_length");
+                if(length instanceof  Integer) {
+                    dartfmtLineLength = (Integer)length;
+                    if(dartfmtLineLength < FlrConstant.DARTFMT_LINE_LENGTH) {
+                        dartfmtLineLength = FlrConstant.DARTFMT_LINE_LENGTH;
+                    }
+                }
+            }
+
+            if (oldFlrConfig.containsKey("assets")) {
+                Object assets = oldFlrConfig.get("assets");
+                if(assets instanceof List) {
+                    assetResourceDirArray = (List<String>)assets;
+                }
+            }
+
+            if (oldFlrConfig.containsKey("fonts")) {
+                Object fonts = oldFlrConfig.get("fonts");
+                if(fonts instanceof List) {
+                    fontResourceDirArray = (List<String>)fonts;
+                }
+            }
+        }
+
+
+        flrConfig.put("dartfmt_line_length", dartfmtLineLength);
+        flrConfig.put("assets", assetResourceDirArray);
+        flrConfig.put("fonts", fontResourceDirArray);
         pubspecConfig.put("flr", flrConfig);
 
         indicatorMessage = "add flr configuration into pubspec.yaml done!";
@@ -252,7 +287,10 @@ public class FlrCommand implements Disposable {
 
         // ----- Step-2 Begin -----
         // 进行核心逻辑版本检测：
-        // 检测Flr配置中的核心逻辑版本号和当前工具的核心逻辑版本号是否一致；若不一致，则生成“核心逻辑版本不一致”的警告日志，存放到警告日志数组
+        // 检测flr_config中的core_version和当前工具的core_version是否一致；若不一致，则按照以下规则处理：
+        //  - 更新flr_config中的core_version的值为当前工具的core_version；
+        //  - 生成“核心逻辑版本不一致”的警告日志，存放到警告日志数组。
+        //
 
         String flrCoreVersion = (String)flrConfig.get("core_version");
 
@@ -261,10 +299,12 @@ public class FlrCommand implements Disposable {
         }
 
         if(flrCoreVersion.equals(FlrConstant.CORE_VERSION) == false) {
-            String warningText = String.format("[!]: warning, the \"core_version\"(CoreLogic version) of the configured Flr tool is %s, while the \"core_version\"(CoreLogic version) of the currently used Flr tool is %s", flrCoreVersion,FlrConstant.CORE_VERSION);
-            String tipsText = "[*]: to fix it, you should make sure that the core logic version of the Flr tool you are currently using is consistent with the configuration"
+            flrConfig.put("core_version", FlrConstant.CORE_VERSION);
+
+            String warningText = String.format("[!]: warning, some team members may be using Flr tool with core_version %s, while you are using Flr tool with core_version %s", flrCoreVersion,FlrConstant.CORE_VERSION);
+            String tipsText = "[*]: to fix it, you and your team members should use the Flr tool with same core_version"
                     + "\n"
-                    + "[*]: to get the value of \"core_version\"(CoreLogic version), just click menu \"Tools-Flr-Version\"";
+                    + "[*]: \"core_version\" is the core logic version of Flr tool, you can click menu \"Tools-Flr-Version\" to get it";
 
             FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
             FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.tips);
@@ -307,28 +347,30 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, indicatorType);
 
         // ----- Step-4 Begin -----
-        // 扫描assets_legal_resource_dir数组中的legal_resource_dir，输出image_asset数组和illegal_image_file数组：
+        // 扫描assets_legal_resource_dir数组中的legal_resource_dir，输出有序的image_asset数组、non_svg_image_asset数组、svg_image_asset数组、illegal_image_file数组：
         // - 创建image_asset数组、illegal_image_file数组；
         // - 遍历assets_legal_resource_dir数组，按照如下处理每个资源目录：
-        //  - 扫描当前资源目录和其第1级的子目录，查找所有image_file；
+        //  - 扫描当前资源目录和其所有层级的子目录，查找所有image_file；
         //  - 根据legal_resource_file的标准，筛选查找结果生成legal_image_file子数组和illegal_image_file子数组；illegal_image_file子数组合并到illegal_image_file数组；
         //  - 根据image_asset的定义，遍历legal_image_file子数组，生成image_asset子数；组；image_asset子数组合并到image_asset数组。
         // - 对image_asset数组做去重处理；
         // - 按照字典顺序对image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
-        // - 输出image_asset数组和illegal_image_file数组。
-        //
+        // - 按照SVG分类，从image_asset数组筛选得到有序的non_svg_image_asset数组和svg_image_asset数组：
+        //  - 按照SVG分类，从image_asset数组筛选得到non_svg_image_asset数组和svg_image_asset数组；
+        //  - 按照字典顺序对non_svg_image_asset数组和svg_image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
+        // - 输出有序的image_asset数组、non_svg_image_asset数组、svg_image_asset数组、illegal_image_file数组。
 
         List<String> imageAssetArray = new ArrayList<String>();
         List<VirtualFile> illegalImageFileArray = new ArrayList<VirtualFile>();
 
         for (String resourceDir : assetsLegalResourceDirArray) {
-            List<List<VirtualFile>> imageFileResultTuple = FlrFileUtil.findImageFiles(curProject, resourceDir);
+            List<List<VirtualFile>> imageFileResultTuple = FlrFileUtil.findImageFiles(resourceDir);
             List<VirtualFile> legalImageFileSubArray = imageFileResultTuple.get(0);
             List<VirtualFile> illegalImageFileSubArray = imageFileResultTuple.get(1);
 
             illegalImageFileArray.addAll(illegalImageFileSubArray);
 
-            List<String> imageAssetSubArray = FlrAssetUtil.generateImageAssets(legalImageFileSubArray, flutterProjectRootDir, resourceDir, packageName);
+            List<String> imageAssetSubArray = FlrAssetUtil.generateImageAssets(flutterProjectRootDir, packageName, legalImageFileSubArray);
             imageAssetArray.addAll(imageAssetSubArray);
         }
 
@@ -336,6 +378,21 @@ public class FlrCommand implements Disposable {
         imageAssetArray = new ArrayList<String>(new HashSet<String>(imageAssetArray));
         // sort
         Collections.sort(imageAssetArray);
+
+        List<String> nonSvgImageAssetArray = new ArrayList<String>();
+        List<String> svgImageAssetArray = new ArrayList<String>();
+
+        for (String asset : imageAssetArray) {
+            File assetFile = new File(asset);
+            if(FlrFileUtil.isSvgImageResourceFile(assetFile)) {
+                svgImageAssetArray.add(asset);
+            } else {
+                nonSvgImageAssetArray.add(asset);
+            }
+        }
+
+        Collections.sort(nonSvgImageAssetArray);
+        Collections.sort(svgImageAssetArray);
 
         // ----- Step-4 End -----
 
@@ -355,13 +412,13 @@ public class FlrCommand implements Disposable {
         List<VirtualFile> illegalTextFileArray = new ArrayList<VirtualFile>();
 
         for (String resourceDir : assetsLegalResourceDirArray) {
-            List<List<VirtualFile>> textFileResultTuple = FlrFileUtil.findTextFiles(curProject, resourceDir);
+            List<List<VirtualFile>> textFileResultTuple = FlrFileUtil.findTextFiles(resourceDir);
             List<VirtualFile> legalTextFileSubArray = textFileResultTuple.get(0);
             List<VirtualFile> illegalTextFileSubArray = textFileResultTuple.get(1);
 
             illegalTextFileArray.addAll(illegalTextFileSubArray);
 
-            List<String> textAssetSubArray = FlrAssetUtil.generateTextAssets(legalTextFileSubArray, flutterProjectRootDir, resourceDir, packageName);
+            List<String> textAssetSubArray = FlrAssetUtil.generateTextAssets(flutterProjectRootDir, packageName, legalTextFileSubArray);
             textAssetArray.addAll(textAssetSubArray);
         }
 
@@ -392,12 +449,12 @@ public class FlrCommand implements Disposable {
         List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
 
         for (String resourceDir : fontsLegalResourceDirArray) {
-            List<VirtualFile> fontFamilyDirArray = FlrFileUtil.findTopChildDirs(curProject, resourceDir);
+            List<VirtualFile> fontFamilyDirArray = FlrFileUtil.findTopChildDirs(resourceDir);
 
             for (VirtualFile fontFamilyDirFile : fontFamilyDirArray) {
                String fontFamilyName = fontFamilyDirFile.getName();
 
-                List<List<VirtualFile>> fontFileResultTuple = FlrFileUtil.findFontFilesInFontFamilyDir(curProject, fontFamilyDirFile);
+                List<List<VirtualFile>> fontFileResultTuple = FlrFileUtil.findFontFilesInFontFamilyDir(fontFamilyDirFile);
                 List<VirtualFile> legalFontFileArray = fontFileResultTuple.get(0);
                 List<VirtualFile> illegalFontFileSubArray = fontFileResultTuple.get(1);
 
@@ -407,7 +464,7 @@ public class FlrCommand implements Disposable {
                     continue;
                 }
 
-                List<Map> fontAssetConfigArray = FlrAssetUtil.generateFontAssetConfigs(legalFontFileArray, flutterProjectRootDir, resourceDir, packageName);
+                List<Map> fontAssetConfigArray = FlrAssetUtil.generateFontAssetConfigs(flutterProjectRootDir, packageName, legalFontFileArray);
                 fontAssetConfigArray.sort(new Comparator<Map>() {
                     @Override
                     public int compare(Map o1, Map o2) {
@@ -504,27 +561,31 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, indicatorType);
 
         // ----- Step-9 Begin -----
-        // 按照SVG分类，从image_asset数组筛选得到有序的non_svg_image_asset数组和svg_image_asset数组：
-        //  - 按照SVG分类，从image_asset数组筛选得到non_svg_image_asset数组和svg_image_asset数组；
-        //  - 按照字典顺序对non_svg_image_asset数组和svg_image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
+        // 分别遍历non_svg_image_asset数组、svg_image_asset数组、text_asset数组，
+        // 根据asset_id生成算法，分别输出non_svg_image_asset_id字典、svg_image_asset_id 字典、text_asset_id字典。
+        // 字典的key为asset，value为asset_id。
         //
+        Map<String, String> nonSvgImageAssetIdDict = new HashMap<>();
+        Map<String, String> svgImageAssetIdDict = new HashMap<>();
+        Map<String, String> textAssetIdDict = new HashMap<>();
 
-        List<String> nonSvgImageAssetArray = new ArrayList<String>();
-        List<String> svgImageAssetArray = new ArrayList<String>();
-
-        for (String asset : imageAssetArray) {
-            File assetFile = new File(asset);
-            String fileExtName = FlrFileUtil.getFileExtension(assetFile).toLowerCase();
-
-            if(fileExtName.equals(".svg")) {
-                svgImageAssetArray.add(asset);
-            } else {
-                nonSvgImageAssetArray.add(asset);
-            }
+        for (String asset : nonSvgImageAssetArray) {
+            List<String> usedAssetIdArray = new ArrayList<>(nonSvgImageAssetIdDict.values());
+            String assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE);
+            nonSvgImageAssetIdDict.put(asset, assetId);
         }
 
-        Collections.sort(nonSvgImageAssetArray);
-        Collections.sort(svgImageAssetArray);
+        for (String asset : svgImageAssetArray) {
+            List<String> usedAssetIdArray = new ArrayList<>(svgImageAssetIdDict.values());
+            String assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE);
+            svgImageAssetIdDict.put(asset, assetId);
+        }
+
+        for (String asset : textAssetArray) {
+            List<String> usedAssetIdArray = new ArrayList<>(textAssetIdDict.values());
+            String assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_TEXT_FILE_TYPE);
+            textAssetIdDict.put(asset, assetId);
+        }
 
         // ----- Step-9 End -----
 
@@ -567,7 +628,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, packageName);
+        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName);
         r_dart_file_content += g__R_Image_AssetResource_class_code;
 
         // ----- Step-13 End -----
@@ -578,7 +639,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, packageName);
+        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, svgImageAssetIdDict, packageName);
         r_dart_file_content += g__R_Svg_AssetResource_class_code;
 
         // ----- Step-14 End -----
@@ -588,7 +649,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, packageName);
+        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, textAssetIdDict, packageName);
         r_dart_file_content += g__R_Text_AssetResource_class_code;
 
         // ----- Step-15 End -----
@@ -598,7 +659,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Image_class_code = FlrCodeUtil.generate__R_Image_class(nonSvgImageAssetArray, packageName);
+        String g__R_Image_class_code = FlrCodeUtil.generate__R_Image_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName);
         r_dart_file_content += g__R_Image_class_code;
 
         // ----- Step-16 End -----
@@ -608,7 +669,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Svg_class_code = FlrCodeUtil.generate__R_Svg_class(svgImageAssetArray, packageName);
+        String g__R_Svg_class_code = FlrCodeUtil.generate__R_Svg_class(svgImageAssetArray, svgImageAssetIdDict, packageName);
         r_dart_file_content += g__R_Svg_class_code;
 
         // ----- Step-17 End -----
@@ -618,7 +679,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Text_class_code = FlrCodeUtil.generate__R_Text_class(textAssetArray, packageName);
+        String g__R_Text_class_code = FlrCodeUtil.generate__R_Text_class(textAssetArray, textAssetIdDict, packageName);
         r_dart_file_content += g__R_Text_class_code;
 
         // ----- Step-18 End -----
@@ -850,7 +911,8 @@ public class FlrCommand implements Disposable {
                 showSuccessMessage(contentTitle, contentMessage, false);
             }
         };
-        curFlrListener = new FlrListener(curProject, legalResourceDirArray, assetChangesEventCallback);
+        List<String> legalRelativeResourceDirArray = FlrFileUtil.convertToRelativeResourceDirs(flutterProjectRootDir, legalResourceDirArray);
+        curFlrListener = new FlrListener(curProject, legalRelativeResourceDirArray, assetChangesEventCallback);
         isMonitoringAssets = true;
 
         indicatorMessage = "launch a monitoring service done !!!";
@@ -947,49 +1009,49 @@ public class FlrCommand implements Disposable {
                 "  │   ├── ..\n" +
                 "  ├── lib\n" +
                 "  │   ├── assets\n" +
-                "  │   │   ├── \\#{module}-images #{\"// image resources root directory of a moudle\".red}\n" +
-                "  │   │   │   ├── \\#{main_image_asset}\n" +
-                "  │   │   │   ├── \\#{variant-dir} #{\"// image resources root directory of a variant\".red}\n" +
-                "  │   │   │   │   ├── \\#{image_asset_variant}\n" +
-                "  │   │   │   │   \n" +
-                "  │   │   ├── home-images #{\"// image resources root directory of home module\".red}\n" +
-                "  │   │   │   ├── home_icon.png\n" +
-                "  │   │   │   ├── home_badge.svg\n" +
-                "  │   │   │   ├── 3.0x #{\"// image resources root directory of a 3.0x-ratio-variant\".red}\n" +
+                "  │   │   ├── images // image resource directory of all modules\n" +
+                "  │   │   │   ├── #{module} // image resource directory of a module\n" +
+                "  │   │   │   │   ├── #{main_image_asset}\n" +
+                "  │   │   │   │   ├── #{variant-dir} // image resource directory of a variant\n" +
+                "  │   │   │   │   │   ├── #{image_asset_variant}\n" +
+                "  │   │   │   │\n" +
+                "  │   │   │   ├── home // image resource directory of home module\n" +
+                "  │   │   │   │   ├── home_badge.svg\n" +
                 "  │   │   │   │   ├── home_icon.png\n" +
-                "  │   │   │   │   \n" +
-                "  │   │   ├── texts #{\"// text resources root directory\".red}\n" +
-                "  │   │   │   │     #{\"// (you can also break it down further by module)\".red}\n" +
+                "  │   │   │   │   ├── 3.0x // image resource directory of a 3.0x-ratio-variant\n" +
+                "  │   │   │   │   │   ├── home_icon.png\n" +
+                "  │   │   │   │\t\t\n" +
+                "  │   │   ├── texts // text resource directory\n" +
+                "  │   │   │   │     // (you can also break it down further by module)\n" +
                 "  │   │   │   └── test.json\n" +
                 "  │   │   │   └── test.yaml\n" +
-                "  │   │   │   │     \n" +
-                "  │   │   ├── fonts #{\"// font resources root directory of all font-family\".red}\n" +
-                "  │   │   │   ├── \\#{font-family} #{\"// font resources root directory of a font-family\".red}\n" +
-                "  │   │   │   │   ├── \\#{font-family}-\\#{font_weight_or_style}.ttf\n" +
-                "  │   │   │   │     \n" +
-                "  │   │   │   ├── Amiri #{\"// font resources root directory of Amiri font-family\".red}\n" +
+                "  │   │   │   │\n" +
+                "  │   │   ├── fonts // font resource directory of all font-families\n" +
+                "  │   │   │   ├── #{font-family} // font resource directory of a font-family\n" +
+                "  │   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf\n" +
+                "  │   │   │   │\n" +
+                "  │   │   │   ├── Amiri // font resource directory of Amiri font-family\n" +
                 "  │   │   │   │   ├── Amiri-Regular.ttf\n" +
                 "  │   │   │   │   ├── Amiri-Bold.ttf\n" +
                 "  │   │   │   │   ├── Amiri-Italic.ttf\n" +
                 "  │   │   │   │   ├── Amiri-BoldItalic.ttf\n" +
-                "  │   ├── ..\n";
+                "  │   ├── ..  \n";
         flrLogConsole.println(indicatorMessage, indicatorType);
 
         String flrCoreVersion = FlrConstant.CORE_VERSION;
         indicatorMessage = String.format(
                 "[*]: Then config the resource directories that need to be scanned as follows：\n" +
                 "\n" +
-                "    flr:\n" +
-                "      core_version: %s\n" +
-                "      dartfmt_line_length: 80\n" +
-                "      # config the image and text resource directories that need to be scanned\n" +
-                "      assets:\n" +
-                "        - lib/assets/moduleX-images\n" +
-                "        - lib/assets/home-images\n" +
-                "        - lib/assets/texts\n" +
-                "      # config the font resource directories that need to be scanned\n" +
-                "      fonts:\n" +
-                "        - lib/assets/fonts\n", flrCoreVersion);
+                "  flr:\n" +
+                "    core_version: %s\n" +
+                "    dartfmt_line_length: %d\n" +
+                "    # config the image and text resource directories that need to be scanned\n" +
+                "    assets:\n" +
+                "      - lib/assets/images\n" +
+                "      - lib/assets/texts\n" +
+                "    # config the font resource directories that need to be scanned\n" +
+                "    fonts:\n" +
+                "      - lib/assets/fonts\n", flrCoreVersion, FlrConstant.DARTFMT_LINE_LENGTH);
         flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
     }
