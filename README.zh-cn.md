@@ -19,6 +19,7 @@
 - 支持处理带有坏味道的文件名的资源：
 	- 文件名带有非法字符，如空格、`~`、`#` 等（非法字符是指不在合法字符集合内的字符；合法字符集合的字符有：`0-9`、`A-Z`、 `a-z`、 `_`、`+`、`-`、`.`、`·`、 `!`、 `@`、 `&`、`$`、`￥`）
 	- 文件名以数字或者`_`或者`$`字符开头
+- 支持处理文件名相同但路径不同的资源
 
 ## Install Flr plugin
 
@@ -45,7 +46,7 @@
    ```yaml
     flr:
      core_version: 1.0.0
-     # just use for flr-cli
+     # just use for flr-cli and flr-vscode-extension
      dartfmt_line_length: 80
      # config the image and text resource directories that need to be scanned
      assets:
