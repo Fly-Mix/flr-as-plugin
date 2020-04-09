@@ -911,7 +911,8 @@ public class FlrCommand implements Disposable {
                 showSuccessMessage(contentTitle, contentMessage, false);
             }
         };
-        curFlrListener = new FlrListener(curProject, legalResourceDirArray, assetChangesEventCallback);
+        List<String> legalRelativeResourceDirArray = FlrFileUtil.convertToRelativeResourceDirs(flutterProjectRootDir, legalResourceDirArray);
+        curFlrListener = new FlrListener(curProject, legalRelativeResourceDirArray, assetChangesEventCallback);
         isMonitoringAssets = true;
 
         indicatorMessage = "launch a monitoring service done !!!";

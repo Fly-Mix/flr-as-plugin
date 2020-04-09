@@ -56,6 +56,36 @@ public class FlrFileUtil {
     }
 
     /*
+    * 把resourceDir转换为relativeResourceDir
+    *
+    * === Examples
+    * flutterDir =  "~/path/to/flutter_r_demo"
+    * resourceDir = "~/path/to/flutter_r_demo/lib/assets/images"
+    * relativeResourceDir = "lib/assets/images"
+    * */
+    public static String convertToRelativeResourceDir(@NotNull String flutterDir, @NotNull String resourceDir) {
+        String relativeResourceDir = resourceDir.replaceFirst(flutterDir + "/", "");
+        return relativeResourceDir;
+    }
+
+    /*
+     * 把resourceDir数组转换为relativeResourceDir数组
+     *
+     * === Examples
+     * flutterDir =  "~/path/to/flutter_r_demo"
+     * resourceDirArray = ["~/path/to/flutter_r_demo/lib/assets/images"]
+     * relativeResourceDirArray = ["lib/assets/images"]
+     * */
+    public static List<String> convertToRelativeResourceDirs(@NotNull String flutterDir, @NotNull List<String> resourceDirs) {
+        List<String> relativeResourceDirArray = new ArrayList<>();
+        for(String resourceDir : resourceDirs) {
+            String relativeResourceDir = convertToRelativeResourceDir(flutterDir, resourceDir);
+            relativeResourceDirArray.add(relativeResourceDir);
+        }
+        return relativeResourceDirArray;
+    }
+
+    /*
     * 写文件，并刷新文件
     * */
     public static void writeContentToFile(@com.sun.istack.NotNull Project project, @com.sun.istack.NotNull String content, @com.sun.istack.NotNull File file) throws FlrException {
