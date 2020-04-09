@@ -22,6 +22,7 @@ Flr (Flutter-R) Plugin: A Flutter Resource Manager Android Studio Plugin, which 
    - filename has illegal character (such as  `blank`,  `~`, `@`, `#` ) which is outside the range of  valid characters (`0-9`, `A-Z`, `a-z`, `_`, `+`, `-`, `.`, `·`,  `!`,  `@`,  `&`, `$`, `￥`)
    - filename begins with a number or character `_`  or character`$`
    
+- Support for processing assets with the same filename but different path
 
 ## Install Flr plugin
 
@@ -48,7 +49,7 @@ Use the IDE's plugin manager to install the latest version of the plugin:
    ```yaml
    flr:
      core_version: 1.0.0
-     # just use for flr-cli
+     # just use for flr-cli and flr-vscode-extension
      dartfmt_line_length: 80
      # config the image and text resource directories that need to be scanned
      assets:
