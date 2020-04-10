@@ -11,7 +11,7 @@
 
 ## Feature
 - 支持“自动添加资源声明到 `pubspec.yaml` 和自动生成`r.g.dart`文件”的自动化服务，该服务可以通过手动触发，也可以通过监控资源变化触发
-- 支持`R.x`（如`R.image.test()`，`R.svg.test(width: 100, height: 100)`，`R.txt.test_json()`）的代码结构
+- 支持`R.x`（如 `R.image.test()`，`R.svg.test(width: 100, height: 100)`，`R.txt.test_json()`）的代码结构
 - 支持处理图片资源（ `.png`、 `.jpg`、 `.jpeg`、`.gif`、 `.webp`、`.icon`、`.bmp`、`.wbmp`、`.svg` ）
 - 支持处理文本资源（`.txt`、`.json`、`.yaml`、`.xml`）
 - 支持处理字体资源（`.ttf`、`.otf`、`.ttc`）
