@@ -88,7 +88,7 @@ public class FlrCommand implements Disposable {
         try {
             FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
 
-            pubspecFilePath = getPubspecFilePath();
+            pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
             pubspecFile = new File(pubspecFilePath);
             pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
 
@@ -268,7 +268,7 @@ public class FlrCommand implements Disposable {
         try {
             FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
 
-            pubspecFilePath = getPubspecFilePath();
+            pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
             pubspecFile = new File(pubspecFilePath);
             pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
 
@@ -794,7 +794,7 @@ public class FlrCommand implements Disposable {
         try {
             FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
 
-            pubspecFilePath = getPubspecFilePath();
+            pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
             pubspecFile = new File(pubspecFilePath);
             pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
 
@@ -1057,15 +1057,6 @@ public class FlrCommand implements Disposable {
     }
 
     // MARK: pubspec.yaml Util Methods
-
-    /*
-    * get the path of pubspec.yaml
-    * */
-    private String getPubspecFilePath() {
-        String flutterProjectRootDir = curProject.getBasePath();
-        String pubspecFilePath = flutterProjectRootDir + "/pubspec.yaml";
-        return pubspecFilePath;
-    }
 
     /*
      * get the right version of r_dart_library package based on flutter's version
