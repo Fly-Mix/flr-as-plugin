@@ -67,12 +67,12 @@ public class FlrFileUtil {
     * 把resourceDir转换为relativeResourceDir
     *
     * === Examples
-    * flutterDir =  "~/path/to/flutter_r_demo"
+    * flutterProjectDir =  "~/path/to/flutter_r_demo"
     * resourceDir = "~/path/to/flutter_r_demo/lib/assets/images"
     * relativeResourceDir = "lib/assets/images"
     * */
-    public static String convertToRelativeResourceDir(@NotNull String flutterDir, @NotNull String resourceDir) {
-        String relativeResourceDir = resourceDir.replaceFirst(flutterDir + "/", "");
+    public static String convertToRelativeResourceDir(@NotNull String flutterProjectDir, @NotNull String resourceDir) {
+        String relativeResourceDir = resourceDir.replaceFirst(flutterProjectDir + "/", "");
         return relativeResourceDir;
     }
 
@@ -80,14 +80,14 @@ public class FlrFileUtil {
      * 把resourceDir数组转换为relativeResourceDir数组
      *
      * === Examples
-     * flutterDir =  "~/path/to/flutter_r_demo"
+     * flutterProjectDir =  "~/path/to/flutter_r_demo"
      * resourceDirArray = ["~/path/to/flutter_r_demo/lib/assets/images"]
      * relativeResourceDirArray = ["lib/assets/images"]
      * */
-    public static List<String> convertToRelativeResourceDirs(@NotNull String flutterDir, @NotNull List<String> resourceDirs) {
+    public static List<String> convertToRelativeResourceDirs(@NotNull String flutterProjectDir, @NotNull List<String> resourceDirs) {
         List<String> relativeResourceDirArray = new ArrayList<>();
         for(String resourceDir : resourceDirs) {
-            String relativeResourceDir = convertToRelativeResourceDir(flutterDir, resourceDir);
+            String relativeResourceDir = convertToRelativeResourceDir(flutterProjectDir, resourceDir);
             relativeResourceDirArray.add(relativeResourceDir);
         }
         return relativeResourceDirArray;
