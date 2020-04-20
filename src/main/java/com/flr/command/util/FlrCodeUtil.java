@@ -189,47 +189,104 @@ public class FlrCodeUtil {
     }
 
     /*
-     * 为asset生成对应的注释；注释内容为资产在pubspec.yaml中的对应声明
+     * 为当前asset生成注释
+     *
+     * === Examples
+     * packageName = "flutter_r_demo"
+     *
+     * === Example-1
+     * asset = "packages/flutter_r_demo/assets/images/test.png"
+     * assetComment = "asset: lib/assets/images/test.png"
+     *
+     * === Example-2
+     * asset = "assets/images/test.png"
+     * assetComment = "asset: assets/images/test.png"
+     *
      * */
     public static String generateAssetComment(@NotNull String asset,@NotNull String packageName) {
-        String packageInfo = "packages/" + packageName + "/";
-        String assetName = asset.replaceFirst(packageInfo, "");
-        String assetComment = "asset: " + assetName;
-        return assetComment;
+        String packagesPrefix = "packages/" + packageName + "/";
+
+        if(asset.startsWith(packagesPrefix)) {
+            // asset: packages/flutter_r_demo/assets/images/test.png
+            // to get assetName: assets/images/test.png
+            String assetName = asset.replaceFirst(packagesPrefix, "");
+
+            String assetComment = "asset: lib/" + assetName;
+            return assetComment;
+        } else {
+            // asset: assets/images/test.png
+            // to get assetName: assets/images/test.png
+            String assetName = asset;
+
+            String assetComment = "asset: " + assetName;
+            return assetComment;
+        }
     }
 
     /*
     * 为当前 asset 生成 AssetResource property 的代码
     * */
-    public static String generate_AssetResource_property(@NotNull String asset, @NotNull  Map<String, String> assetIdDict, @NotNull String packageName, String priorAssetType) {
+    public static String generate_AssetResource_property(@NotNull String asset, @NotNull  Map<String, String> assetIdDict, @NotNull String packageName, boolean isPackageProjectType, String priorAssetType) {
         String assetId = assetIdDict.get(asset);
         String assetComment = generateAssetComment(asset, packageName);
 
-        String packageInfo = "packages/" + packageName + "/";
-        String assetName = asset.replaceFirst(packageInfo, "");
+        String assetName = "";
+        boolean needPackage = false;
+
+        String packagesPrefix = "packages/" + packageName + "/";
+        if(asset.startsWith(packagesPrefix)) {
+            // asset: packages/flutter_r_demo/assets/images/test.png
+            // to get assetName: assets/images/test.png
+            assetName = asset.replaceFirst(packagesPrefix, "");;
+            needPackage = true;
+        } else {
+            // asset: assets/images/test.png
+            // to get assetName: assets/images/test.png
+            assetName = asset;
+
+            if (isPackageProjectType) {
+                needPackage = true;
+            } else {
+                needPackage = false;
+            }
+        }
+
         // 对字符串中的 '$' 进行转义处理：'$' -> '\$'
+        // assetName: assets/images/test$.png
+        // to get escapedAssetName: assets/images/test\$.png
         String escapedAssetName = assetName.replace("$", "\\$");
 
-        String code = String.format("  /// %s\n" +
-                        "  // ignore: non_constant_identifier_names\n" +
-                        "  final %s = const AssetResource(\"%s\", packageName: R.package);",
-                assetComment,
-                assetId,
-                escapedAssetName) ;
+        if(needPackage) {
+            String code = String.format("  /// %s\n" +
+                            "  // ignore: non_constant_identifier_names\n" +
+                            "  final %s = const AssetResource(\"%s\", packageName: R.package);",
+                    assetComment,
+                    assetId,
+                    escapedAssetName) ;
 
-        return code;
+            return code;
+        } else {
+            String code = String.format("  /// %s\n" +
+                            "  // ignore: non_constant_identifier_names\n" +
+                            "  final %s = const AssetResource(\"%s\", packageName: null);",
+                    assetComment,
+                    assetId,
+                    escapedAssetName) ;
+
+            return code;
+        }
     }
 
     /*
     * 根据模板，为 nonSvgImageAssetArray（非svg类的图片资产数组）生成 _R_Image_AssetResource class 的代码
     * */
-    public static String generate__R_Image_AssetResource_class(@NotNull List<String> nonSvgImageAssetArray, @NotNull Map<String, String> nonSvgImageAssetIdDict, @NotNull String packageName) {
+    public static String generate__R_Image_AssetResource_class(@NotNull List<String> nonSvgImageAssetArray, @NotNull Map<String, String> nonSvgImageAssetIdDict, @NotNull String packageName, boolean isPackageProjectType) {
 
         String all_g_AssetResource_property_code = "";
 
         for (String asset : nonSvgImageAssetArray) {
             all_g_AssetResource_property_code += "\n";
-            String g_AssetResource_property_code = generate_AssetResource_property(asset, nonSvgImageAssetIdDict, packageName, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE);
+            String g_AssetResource_property_code = generate_AssetResource_property(asset, nonSvgImageAssetIdDict, packageName, isPackageProjectType, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE);
             all_g_AssetResource_property_code += g_AssetResource_property_code;
         }
 
@@ -245,13 +302,13 @@ public class FlrCodeUtil {
     /*
      * 根据模板，为 svgImageAssetArray（svg类的图片资产数组）生成 _R_Svg_AssetResource class 的代码
      * */
-    public static String generate__R_Svg_AssetResource_class(@NotNull List<String> svgImageAssetArray, @NotNull Map<String, String> svgImageAssetIdDict, @NotNull String packageName) {
+    public static String generate__R_Svg_AssetResource_class(@NotNull List<String> svgImageAssetArray, @NotNull Map<String, String> svgImageAssetIdDict, @NotNull String packageName, boolean isPackageProjectType) {
 
         String all_g_AssetResource_property_code = "";
 
         for (String asset : svgImageAssetArray) {
             all_g_AssetResource_property_code += "\n";
-            String g_AssetResource_property_code = generate_AssetResource_property(asset, svgImageAssetIdDict, packageName, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE);
+            String g_AssetResource_property_code = generate_AssetResource_property(asset, svgImageAssetIdDict, packageName, isPackageProjectType, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE);
             all_g_AssetResource_property_code += g_AssetResource_property_code;
         }
 
@@ -267,13 +324,13 @@ public class FlrCodeUtil {
     /*
      * 根据模板，为 textAssetArray（文本资产数组）生成 _R_Text_AssetResource class 的代码
      * */
-    public static String generate__R_Text_AssetResource_class(@NotNull List<String> textAssetArray, @NotNull Map<String, String> textAssetIdDict, @NotNull String packageName) {
+    public static String generate__R_Text_AssetResource_class(@NotNull List<String> textAssetArray, @NotNull Map<String, String> textAssetIdDict, @NotNull String packageName, boolean isPackageProjectType) {
 
         String all_g_AssetResource_property_code = "";
 
         for (String asset : textAssetArray) {
             all_g_AssetResource_property_code += "\n";
-            String g_AssetResource_property_code = generate_AssetResource_property(asset, textAssetIdDict, packageName, FlrConstant.PRIOR_TEXT_FILE_TYPE);
+            String g_AssetResource_property_code = generate_AssetResource_property(asset, textAssetIdDict, packageName, isPackageProjectType, FlrConstant.PRIOR_TEXT_FILE_TYPE);
             all_g_AssetResource_property_code += g_AssetResource_property_code;
         }
 

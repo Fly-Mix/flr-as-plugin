@@ -629,7 +629,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName);
+        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName, isPackageProjectType);
         r_dart_file_content += g__R_Image_AssetResource_class_code;
 
         // ----- Step-13 End -----
@@ -640,7 +640,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, svgImageAssetIdDict, packageName);
+        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, svgImageAssetIdDict, packageName, isPackageProjectType);
         r_dart_file_content += g__R_Svg_AssetResource_class_code;
 
         // ----- Step-14 End -----
@@ -650,7 +650,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, textAssetIdDict, packageName);
+        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, textAssetIdDict, packageName, isPackageProjectType);
         r_dart_file_content += g__R_Text_AssetResource_class_code;
 
         // ----- Step-15 End -----
