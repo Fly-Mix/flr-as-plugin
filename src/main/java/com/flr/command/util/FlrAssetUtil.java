@@ -62,6 +62,14 @@ public class FlrAssetUtil {
      * legalResourceFile = "~/path/to/flutter_r_demo/lib/assets/fonts/Amiri/Amiri-Regular.ttf"
      * mainAsset = "packages/flutter_r_demo/fonts/Amiri/Amiri-Regular.ttf"
      *
+     * === Example-4
+     * legalResourceFile = "~/path/to/flutter_r_demo/assets/images/test.png"
+     * mainAsset = "assets/images/test.png"
+     *
+     * === Example-5
+     * legalResourceFile = "~/path/to/flutter_r_demo/assets/images/3.0x/test.png"
+     * mainAsset = "assets/images/test.png"
+     *
      * */
     public static String generateMainAsset(@NotNull String flutterProjectDir, @NotNull String packageName, @NotNull VirtualFile legalResourceFile) {
         // legalResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/3.0x/test.png
@@ -82,14 +90,34 @@ public class FlrAssetUtil {
         }
 
         // mainResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/test.png
-        // mainRelativeResourceFile: lib/assets/images/test.png
-        // mainImpliedRelativeResourceFile: assets/images/test.png
+        // to get mainRelativeResourceFile: lib/assets/images/test.png
         String mainRelativeResourceFile = mainResourceFile.replaceFirst(flutterProjectDir + "/", "");
-        String mainImpliedRelativeResourceFile = mainRelativeResourceFile.replaceFirst("lib/", "");
 
-        // mainAsset: packages/flutter_r_demo/assets/images/test.png
-        String mainAsset = "packages/" + packageName + "/" + mainImpliedRelativeResourceFile;
-        return mainAsset;
+        // 判断 mainRelativeResourceFile 是不是 impliedResourceFile 类型
+        // impliedResourceFile 的定义是：放置在 "lib/" 目录内 resource_file
+        // 具体实现是：mainRelativeResourceFile 的前缀若是 "lib/" ，则其是 impliedResourceFile 类型；
+        //
+        // impliedResourceFile 生成 mainAsset 的算法是： mainAsset = "packages/#{packageName}/#{assetName}"
+        // non-impliedResourceFile 生成 mainAsset 的算法是： mainAsset = "#{assetName}"
+        //
+        String libPrefix = "lib/";
+        if(mainRelativeResourceFile.startsWith(libPrefix)) {
+            // mainRelativeResourceFile: lib/assets/images/test.png
+            // to get assetName: assets/images/test.png
+            String assetName = mainRelativeResourceFile.replaceFirst("lib/", "");
+
+            // mainAsset: packages/flutter_r_demo/assets/images/test.png
+            String mainAsset = "packages/" + packageName + "/" + assetName;
+            return mainAsset;
+        } else {
+            // mainRelativeResourceFile: assets/images/test.png
+            // to get assetName: assets/images/test.png
+            String assetName = mainRelativeResourceFile;
+
+            // mainAsset: assets/images/test.png
+            String mainAsset = assetName;
+            return mainAsset;
+        }
     }
 
     /*
