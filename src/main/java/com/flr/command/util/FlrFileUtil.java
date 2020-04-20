@@ -23,6 +23,14 @@ import java.util.regex.Pattern;
 * */
 public class FlrFileUtil {
 
+    /*
+     * 获取当前flutter工程的pubspec.yaml文件的路径
+     * */
+    public static String getPubspecFilePath(@NotNull String flutterProjectDir) {
+        String pubspecFilePath = flutterProjectDir + "/pubspec.yaml";
+        return pubspecFilePath;
+    }
+
     public static String getFileBasename(File file) {
         return file.getName();
     }
