@@ -32,7 +32,7 @@ enum PlatformType {
 // flr-plugin-engine 的版本号
 // 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_engine_version）
 // 该值在完成一个新版本的 flr-plugin-engine 开发后，手动更新
-String pluginEngineVersion = '2.0.0'
+String pluginEngineVersion = '3.0.0'
 
 // 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
