@@ -5,7 +5,6 @@ import com.flr.FlrException;
 import com.flr.logConsole.FlrLogConsole;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.*;
-import gherkin.lexer.Fi;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -29,6 +28,74 @@ public class FlrFileUtil {
     public static String getPubspecFilePath(@NotNull String flutterProjectDir) {
         String pubspecFilePath = flutterProjectDir + "/pubspec.yaml";
         return pubspecFilePath;
+    }
+
+    /*
+     * 判断当前flutter工程的工程类型是不是Package工程类型
+     *
+     * flutter工程共有4种工程类型：
+     * - app：Flutter App工程，用于开发纯Flutter的App
+     * - module：Flutter Component工程，用于开发Flutter组件以嵌入iOS和Android原生工程
+     * - package：General Dart Package工程，用于开发一个供应用层开发者使用的包
+     * - plugin：Plugin Package工程（属于特殊的Dart Package工程），用于开发一个调用特定平台API的包*
+     *
+     * flutter工程的工程类型可从flutter工程目录的 .metadata 文件中读取获得
+     * 如果不存在 .metadata 文件，则判断 pubspec.yaml 是否存在 author 配置，若存在，说明是一个 Package工程
+     * */
+    public static boolean isPackageProjectType(@NotNull FlrLogConsole flrLogConsole, @NotNull String flutterProjectDir) {
+        String metadataFilePath = flutterProjectDir + "/.metadata";
+        File metadataFile = new File(metadataFilePath);
+
+        if(metadataFile.exists()) {
+            try {
+                Yaml yaml = new Yaml();
+                InputStream inputStream = new FileInputStream(metadataFile);
+                Iterable<Object> itr = yaml.loadAll(inputStream);
+                Map<String, Object> metadataConfig = null;
+                for (Object obj : itr) {
+                    if(obj instanceof Map) {
+                        metadataConfig = (Map<String, Object>)obj;
+                        break;
+                    }
+                }
+
+                String projectType = (String) metadataConfig.get("project_type");
+                if(projectType instanceof String == false) {
+                    projectType = "unknown";
+                }
+
+                if(projectType.equals("package") || projectType.equals("plugin")) {
+                    return true;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                flrLogConsole.println(e.getMessage(), FlrLogConsole.LogType.normal);
+                flrLogConsole.println("", FlrLogConsole.LogType.normal);
+            }
+        } else {
+            String warningStr = "[!]: warning, metadata file is missed, flr can not make sure to get a right project type of this flutter project"
+                    + "\n"
+                    + "[!]: then flr maybe generate buggy r.g.dart";
+            flrLogConsole.println(warningStr, FlrLogConsole.LogType.warning);
+            String tipsStr = String.format("[*]: to fix it, you can manually copy the metadata file of a flutter project with same project type to %s", metadataFilePath);
+            flrLogConsole.println(tipsStr, FlrLogConsole.LogType.tips);
+
+
+            String pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectDir);
+            File pubspecFile = new File(pubspecFilePath);
+            try {
+                Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
+                if(pubspecConfig.containsKey("author")) {
+                    return true;
+                }
+            } catch (FlrException e) {
+                e.printStackTrace();
+                flrLogConsole.println(e.getMessage(), FlrLogConsole.LogType.normal);
+                flrLogConsole.println("", FlrLogConsole.LogType.normal);
+            }
+        }
+
+        return false;
     }
 
     public static String getFileBasename(File file) {

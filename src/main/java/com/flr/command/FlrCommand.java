@@ -282,6 +282,7 @@ public class FlrCommand implements Disposable {
         }
 
         String packageName = (String) pubspecConfig.get("name");
+        boolean isPackageProjectType = FlrFileUtil.isPackageProjectType(flrLogConsole, flutterProjectRootDir);
 
         // ----- Step-1 End -----
 
