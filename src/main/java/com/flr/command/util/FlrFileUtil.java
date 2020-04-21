@@ -77,7 +77,7 @@ public class FlrFileUtil {
                     + "\n"
                     + "[!]: then flr maybe generate buggy r.g.dart";
             flrLogConsole.println(warningStr, FlrLogConsole.LogType.warning);
-            String tipsStr = String.format("[*]: to fix it, you can manually copy the metadata file of a flutter project with same project type to %s", metadataFilePath);
+            String tipsStr = String.format("[*]: to fix it, you can manually copy the metadata file of a flutter project with same project type to %s\n", metadataFilePath);
             flrLogConsole.println(tipsStr, FlrLogConsole.LogType.tips);
 
 
