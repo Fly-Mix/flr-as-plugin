@@ -135,7 +135,12 @@ patchPluginXml {
 
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
-<h3>2.0.0</h3>
+<h3>3.0.0</h3>
+<ul>
+  <li>Support for processing non-implied resource file which is outside of "lib/" directory (such as "~/path/to/flutter_r_demo/assets/images/test.png")</li>
+  <li>New recommended flutter resource structure</li>
+</ul>
+<h4>2.0.0</h4>
 <ul>
   <li>New asset generation algorithm to support all kinds of standard or nonstandard image/text resource structure</li>
   <li>New asset-id generation algorithm to support assets with the same filename but different path</li>
