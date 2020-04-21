@@ -43,7 +43,7 @@ public class FlrAssetUtil {
      * 为当前资源文件生成 main_asset
      *
      * === Examples
-     * flutterDir =  "~/path/to/flutter_r_demo"
+     * flutterProjectDir =  "~/path/to/flutter_r_demo"
      * packageName = "flutter_r_demo"
      *
      * === Example-1
@@ -62,8 +62,16 @@ public class FlrAssetUtil {
      * legalResourceFile = "~/path/to/flutter_r_demo/lib/assets/fonts/Amiri/Amiri-Regular.ttf"
      * mainAsset = "packages/flutter_r_demo/fonts/Amiri/Amiri-Regular.ttf"
      *
+     * === Example-4
+     * legalResourceFile = "~/path/to/flutter_r_demo/assets/images/test.png"
+     * mainAsset = "assets/images/test.png"
+     *
+     * === Example-5
+     * legalResourceFile = "~/path/to/flutter_r_demo/assets/images/3.0x/test.png"
+     * mainAsset = "assets/images/test.png"
+     *
      * */
-    public static String generateMainAsset(@NotNull String flutterDir, @NotNull String packageName, @NotNull VirtualFile legalResourceFile) {
+    public static String generateMainAsset(@NotNull String flutterProjectDir, @NotNull String packageName, @NotNull VirtualFile legalResourceFile) {
         // legalResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/3.0x/test.png
         // to get mainResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/test.png
         String mainResourceFile = legalResourceFile.getPath();
@@ -82,24 +90,44 @@ public class FlrAssetUtil {
         }
 
         // mainResourceFile:  ~/path/to/flutter_r_demo/lib/assets/images/test.png
-        // mainRelativeResourceFile: lib/assets/images/test.png
-        // mainImpliedRelativeResourceFile: assets/images/test.png
-        String mainRelativeResourceFile = mainResourceFile.replaceFirst(flutterDir + "/", "");
-        String mainImpliedRelativeResourceFile = mainRelativeResourceFile.replaceFirst("lib/", "");
+        // to get mainRelativeResourceFile: lib/assets/images/test.png
+        String mainRelativeResourceFile = mainResourceFile.replaceFirst(flutterProjectDir + "/", "");
 
-        // mainAsset: packages/flutter_r_demo/assets/images/test.png
-        String mainAsset = "packages/" + packageName + "/" + mainImpliedRelativeResourceFile;
-        return mainAsset;
+        // 判断 mainRelativeResourceFile 是不是 impliedResourceFile 类型
+        // impliedResourceFile 的定义是：放置在 "lib/" 目录内 resource_file
+        // 具体实现是：mainRelativeResourceFile 的前缀若是 "lib/" ，则其是 impliedResourceFile 类型；
+        //
+        // impliedResourceFile 生成 mainAsset 的算法是： mainAsset = "packages/#{packageName}/#{assetName}"
+        // non-impliedResourceFile 生成 mainAsset 的算法是： mainAsset = "#{assetName}"
+        //
+        String libPrefix = "lib/";
+        if(mainRelativeResourceFile.startsWith(libPrefix)) {
+            // mainRelativeResourceFile: lib/assets/images/test.png
+            // to get assetName: assets/images/test.png
+            String assetName = mainRelativeResourceFile.replaceFirst("lib/", "");
+
+            // mainAsset: packages/flutter_r_demo/assets/images/test.png
+            String mainAsset = "packages/" + packageName + "/" + assetName;
+            return mainAsset;
+        } else {
+            // mainRelativeResourceFile: assets/images/test.png
+            // to get assetName: assets/images/test.png
+            String assetName = mainRelativeResourceFile;
+
+            // mainAsset: assets/images/test.png
+            String mainAsset = assetName;
+            return mainAsset;
+        }
     }
 
     /*
     * 遍历指定资源目录下扫描找到的legalImageFile数组生成imageAsset数组
     * */
-    public static List<String> generateImageAssets(@NotNull String flutterDir, @NotNull String packageName, @NotNull List<VirtualFile> legalImageFileArray) {
+    public static List<String> generateImageAssets(@NotNull String flutterProjectDir, @NotNull String packageName, @NotNull List<VirtualFile> legalImageFileArray) {
         Set<String> imageAssetSet = new LinkedHashSet<String>();
 
         for (VirtualFile imageVirtualFile : legalImageFileArray) {
-            String imageAsset = generateMainAsset(flutterDir, packageName, imageVirtualFile);
+            String imageAsset = generateMainAsset(flutterProjectDir, packageName, imageVirtualFile);
             imageAssetSet.add(imageAsset);
         }
 
@@ -110,11 +138,11 @@ public class FlrAssetUtil {
     /*
      * 遍历指定资源目录下扫描找到的legalTextFile数组生成textAsset数组
      * */
-    public static List<String> generateTextAssets(@NotNull String flutterDir, @NotNull String packageName, @NotNull List<VirtualFile> legalTextFileArray) {
+    public static List<String> generateTextAssets(@NotNull String flutterProjectDir, @NotNull String packageName, @NotNull List<VirtualFile> legalTextFileArray) {
         Set<String> textAssetSet = new LinkedHashSet<String>();
 
         for (VirtualFile textVirtualFile : legalTextFileArray) {
-            String textAsset = generateMainAsset(flutterDir, packageName, textVirtualFile);
+            String textAsset = generateMainAsset(flutterProjectDir, packageName, textVirtualFile);
             textAssetSet.add(textAsset);
         }
 
@@ -127,11 +155,11 @@ public class FlrAssetUtil {
     *
     * fontAssetConfig = {"asset": "packages/flutter_r_demo/assets/fonts/Amiri/Amiri-Regular.ttf"}
     * */
-    public static List<Map> generateFontAssetConfigs(@NotNull String flutterDir, @NotNull String packageName, @NotNull List<VirtualFile> legalFontFileArray) {
+    public static List<Map> generateFontAssetConfigs(@NotNull String flutterProjectDir, @NotNull String packageName, @NotNull List<VirtualFile> legalFontFileArray) {
         List<Map> fontAssetConfigArray = new ArrayList<Map>();
 
         for (VirtualFile fontVirtualFile : legalFontFileArray) {
-            String fontAsset = generateMainAsset(flutterDir, packageName, fontVirtualFile);
+            String fontAsset = generateMainAsset(flutterProjectDir, packageName, fontVirtualFile);
 
             Map<String, String> fontAssetConfig = new LinkedHashMap<String, String>();
             fontAssetConfig.put("asset", fontAsset);

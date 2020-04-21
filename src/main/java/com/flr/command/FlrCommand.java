@@ -88,7 +88,7 @@ public class FlrCommand implements Disposable {
         try {
             FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
 
-            pubspecFilePath = getPubspecFilePath();
+            pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
             pubspecFile = new File(pubspecFilePath);
             pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
 
@@ -268,7 +268,7 @@ public class FlrCommand implements Disposable {
         try {
             FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
 
-            pubspecFilePath = getPubspecFilePath();
+            pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
             pubspecFile = new File(pubspecFilePath);
             pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
 
@@ -282,6 +282,7 @@ public class FlrCommand implements Disposable {
         }
 
         String packageName = (String) pubspecConfig.get("name");
+        boolean isPackageProjectType = FlrFileUtil.isPackageProjectType(flrLogConsole, flutterProjectRootDir);
 
         // ----- Step-1 End -----
 
@@ -628,7 +629,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName);
+        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName, isPackageProjectType);
         r_dart_file_content += g__R_Image_AssetResource_class_code;
 
         // ----- Step-13 End -----
@@ -639,7 +640,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, svgImageAssetIdDict, packageName);
+        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, svgImageAssetIdDict, packageName, isPackageProjectType);
         r_dart_file_content += g__R_Svg_AssetResource_class_code;
 
         // ----- Step-14 End -----
@@ -649,7 +650,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, textAssetIdDict, packageName);
+        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, textAssetIdDict, packageName, isPackageProjectType);
         r_dart_file_content += g__R_Text_AssetResource_class_code;
 
         // ----- Step-15 End -----
@@ -794,7 +795,7 @@ public class FlrCommand implements Disposable {
         try {
             FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
 
-            pubspecFilePath = getPubspecFilePath();
+            pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
             pubspecFile = new File(pubspecFilePath);
             pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
 
@@ -1002,7 +1003,10 @@ public class FlrCommand implements Disposable {
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
 
-        indicatorMessage = "Flr recommends the following flutter resource structure:\n" +
+        indicatorMessage = "Flr recommends the following flutter resource structure schemes:\n" +
+                "\n" +
+                "------------------------------ scheme 1 ------------------------------" +
+                "\n" +
                 "\n" +
                 "  flutter_project_root_dir\n" +
                 "  ├── build\n" +
@@ -1054,18 +1058,62 @@ public class FlrCommand implements Disposable {
                 "      - lib/assets/fonts\n", flrCoreVersion, FlrConstant.DARTFMT_LINE_LENGTH);
         flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
+        indicatorMessage = "\n" +
+                "------------------------------ scheme 2 ------------------------------" +
+                "\n" +
+                "\n" +
+                "  flutter_project_root_dir\n" +
+                "  ├── build\n" +
+                "  │   ├── ..\n" +
+                "  ├── lib\n" +
+                "  │   ├── ..\n" +
+                "  ├── assets\n" +
+                "  │   ├── images // image resource directory of all modules\n" +
+                "  │   │   ├── #{module} // image resource directory of a module\n" +
+                "  │   │   │   ├── #{main_image_asset}\n" +
+                "  │   │   │   ├── #{variant-dir} // image resource directory of a variant\n" +
+                "  │   │   │   │   ├── #{image_asset_variant}\n" +
+                "  │   │   │\n" +
+                "  │   │   ├── home // image resource directory of home module\n" +
+                "  │   │   │   ├── home_badge.svg\n" +
+                "  │   │   │   ├── home_icon.png\n" +
+                "  │   │   │   ├── 3.0x // image resource directory of a 3.0x-ratio-variant\n" +
+                "  │   │   │   │   ├── home_icon.png\n" +
+                "  │   │   │\t\t\n" +
+                "  │   ├── texts // text resource directory\n" +
+                "  │   │   │     // (you can also break it down further by module)\n" +
+                "  │   │   └── test.json\n" +
+                "  │   │   └── test.yaml\n" +
+                "  │   │   │\n" +
+                "  │   ├── fonts // font resource directory of all font-families\n" +
+                "  │   │   ├── #{font-family} // font resource directory of a font-family\n" +
+                "  │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf\n" +
+                "  │   │   │\n" +
+                "  │   │   ├── Amiri // font resource directory of Amiri font-family\n" +
+                "  │   │   │   ├── Amiri-Regular.ttf\n" +
+                "  │   │   │   ├── Amiri-Bold.ttf\n" +
+                "  │   │   │   ├── Amiri-Italic.ttf\n" +
+                "  │   │   │   ├── Amiri-BoldItalic.ttf\n" +
+                "  │   ├── ..  \n";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        indicatorMessage = String.format(
+                "[*]: Then config the resource directories that need to be scanned as follows：\n" +
+                        "\n" +
+                        "  flr:\n" +
+                        "    core_version: %s\n" +
+                        "    dartfmt_line_length: %d\n" +
+                        "    # config the image and text resource directories that need to be scanned\n" +
+                        "    assets:\n" +
+                        "      - assets/images\n" +
+                        "      - assets/texts\n" +
+                        "    # config the font resource directories that need to be scanned\n" +
+                        "    fonts:\n" +
+                        "      - assets/fonts\n", flrCoreVersion, FlrConstant.DARTFMT_LINE_LENGTH);
+        flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
     }
 
     // MARK: pubspec.yaml Util Methods
-
-    /*
-    * get the path of pubspec.yaml
-    * */
-    private String getPubspecFilePath() {
-        String flutterProjectRootDir = curProject.getBasePath();
-        String pubspecFilePath = flutterProjectRootDir + "/pubspec.yaml";
-        return pubspecFilePath;
-    }
 
     /*
      * get the right version of r_dart_library package based on flutter's version
