@@ -133,7 +133,7 @@ patchPluginXml {
     changeNotes = """
 <h2>Flr Plugin Change Notes</h2>
 <i><b>Attention:</b> Flr v191.* is built for Android Studio 3.5</i>
-<h3>191.2.0.0</h3>
+<h3>191.3.0.0</h3>
 <ul>
   <li>Update flr plugin engine</li>
 </ul>
