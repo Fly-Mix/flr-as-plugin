@@ -69,46 +69,84 @@
 
 ## 推荐的flutter资源目录组织结构
 
- `Flr`推荐如下的flutter资源目录组织结构：
+`Flr`推荐如下的flutter资源目录组织结构方案：
 
-```
-flutter_project_root_dir
-├── build
-│   ├── ..
-├── lib
-│   ├── assets
-│   │   ├── #{module}-images // 某个模块的图片资源总目录
-│   │   │   ├── #{main_image_asset}
-│   │   │   ├── #{variant-dir} // 某个变体版本的图片资源总目录
-│   │   │   │   ├── #{image_asset_variant}
-│   │   │   │
-│   │   ├── home-images // home模块的图片资源总目录
-│   │   │   ├── home_icon.png
-│   │   │   ├── home_badge.svg
-│   │   │   ├── 3.0x // 3.0倍分辨率版本的图片资源总目录
-│   │   │   │   ├── home_icon.png
-│   │   │   │
-│   │   ├── texts // 文本资源总目录
-│   │   │   │     // （你也可以根据模块进一步细分）
-│   │   │   └── test.json
-│   │   │   └── test.yaml
-│   │   │   │
-│   │   ├── fonts // 所有字体家族的字体资源总目录
-│   │   │   ├── #{font-family} // 某个字体家族的字体资源总目录
-│   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
-│   │   │   │
-│   │   │   ├── Amiri // Amiri字体家族的字体资源总目录
-│   │   │   │   ├── Amiri-Regular.ttf
-│   │   │   │   ├── Amiri-Bold.ttf
-│   │   │   │   ├── Amiri-Italic.ttf
-│   │   │   │   ├── Amiri-BoldItalic.ttf
-│   ├── ..
-```
+- 方案一：
 
+  ```
+  flutter_project_root_dir
+  ├── build
+  │   ├── ..
+  ├── lib
+  │   ├── assets
+  │   │   ├── images // 所有模块的图片资源总目录
+  │   │   │   ├── #{module} // 某个模块的图片资源总目录
+  │   │   │   │   ├── #{main_image_asset}
+  │   │   │   │   ├── #{variant-dir} // 某个变体版本的图片资源总目录
+  │   │   │   │   │   ├── #{image_asset_variant}
+  │   │   │   │
+  │   │   │   ├── home // home模块的图片资源总目录
+  │   │   │   │   ├── home_badge.svg
+  │   │   │   │   ├── home_icon.png
+  │   │   │   │   ├── 3.0x // 3.0倍分辨率版本的图片资源总目录
+  │   │   │   │   │   ├── home_icon.png
+  │   │   │   │		
+  │   │   ├── texts // 文本资源总目录
+  │   │   │   │     // （你也可以根据模块进一步细分）
+  │   │   │   └── test.json
+  │   │   │   └── test.yaml
+  │   │   │   │
+  │   │   ├── fonts // 所有字体家族的字体资源总目录
+  │   │   │   ├── #{font-family} // 某个字体家族的字体资源总目录
+  │   │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
+  │   │   │   │
+  │   │   │   ├── Amiri // Amiri字体家族的字体资源总目录
+  │   │   │   │   ├── Amiri-Regular.ttf
+  │   │   │   │   ├── Amiri-Bold.ttf
+  │   │   │   │   ├── Amiri-Italic.ttf
+  │   │   │   │   ├── Amiri-BoldItalic.ttf
+  │   ├── ..
+  ```
+- 方案二：
+
+  ```
+  flutter_project_root_dir
+  ├── build
+  │   ├── ..
+  ├── lib
+  │   ├── ..
+  ├── assets
+  │   ├── images // 所有模块的图片资源总目录
+  │   │   ├── #{module} // 某个模块的图片资源总目录
+  │   │   │   ├── #{main_image_asset}
+  │   │   │   ├── #{variant-dir} // 某个变体版本的图片资源总目录
+  │   │   │   │   ├── #{image_asset_variant}
+  │   │   │
+  │   │   ├── home // home模块的图片资源总目录
+  │   │   │   ├── home_badge.svg
+  │   │   │   ├── home_icon.png
+  │   │   │   ├── 3.0x // 3.0倍分辨率版本的图片资源总目录
+  │   │   │   │   ├── home_icon.png
+  │   │   │		
+  │   ├── texts // 文本资源总目录
+  │   │   │     // （你也可以根据模块进一步细分）
+  │   │   └── test.json
+  │   │   └── test.yaml
+  │   │   │
+  │   ├── fonts // 所有字体家族的字体资源总目录
+  │   │   ├── #{font-family} // 某个字体家族的字体资源总目录
+  │   │   │   ├── #{font-family}-#{font_weight_or_style}.ttf
+  │   │   │
+  │   │   ├── Amiri // Amiri字体家族的字体资源总目录
+  │   │   │   ├── Amiri-Regular.ttf
+  │   │   │   ├── Amiri-Bold.ttf
+  │   │   │   ├── Amiri-Italic.ttf
+  │   │   │   ├── Amiri-BoldItalic.ttf
+  │   ├── ..
+  ```
 
 
 **需要注意的是，字体资源根目录下的组织结构必须（MUST）采用上述的组织结构：** 以字体家族名称命名子目录，然后字体家族的字体资源放在子目录下。否则，`Flr`可能无法正确扫描字体资源。
-
 ## r.g.dart
 
 在你调用`Flr Generate`动作或者`Flr Start Monitor`动作后，`Flr`会扫描`pubspec.yaml`中配置的资源目录，并为扫描到的资源添加声明到`pubspec.yaml`，以及生成`r.g.dart`。
@@ -182,7 +220,18 @@ class R {
 
 ## Example
 
-这里提供了一个[Flutter-R Demo](https://github.com/Fly-Mix/flutter_r_demo)来展示如何在Flutter项目中使用`Flr`工具和在代码中如何使用`R`类。
+这里提供了一些示例Demo来展示如何在Flutter项目中使用`Flr`工具和在代码中如何使用`R`类：
+
+- [Flutter-R Demo](https://github.com/Fly-Mix/flutter_r_demo) 
+
+- [flutter_hello_app](https://github.com/Fly-Mix/flutter_hello_app)
+
+- [flutter_hello_module](https://github.com/Fly-Mix/flutter_hello_module)
+
+- [flutter_hello_package](https://github.com/Fly-Mix/flutter_hello_package)
+
+- [flutter_hello_plugin](https://github.com/Fly-Mix/flutter_hello_plugin)
+
 
 ## License
 
