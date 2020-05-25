@@ -288,7 +288,7 @@ public class FlrAssetUtil {
         if(mainRelativeResourceFile.startsWith(libPrefix)) {
             // mainRelativeResourceFile: lib/assets/images/test.png
             // to get assetName: assets/images/test.png
-            String assetName = mainRelativeResourceFile.replaceFirst("lib/", "");
+            String assetName = mainRelativeResourceFile.replaceFirst(libPrefix, "");
 
             // mainAsset: packages/flutter_r_demo/assets/images/test.png
             String mainAsset = "packages/" + packageName + "/" + assetName;
