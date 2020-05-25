@@ -531,15 +531,26 @@ public class FlrCommand implements Disposable {
 
         // ----- Step-8 Begin -----
         // 为扫描得到的legal_resource_file添加资源声明到pubspec.yaml：
-        // - 合并image_asset数组和text_asset数组为asset数组（image_asset数组元素在前）;
+        // - 合并image_asset数组和text_asset数组为new_asset_array（image_asset数组元素在前）；
+        // - 读取pubspec.yaml中flutter-assets配置，获得old_asset_array，然后和new_asset_array合并为asset数组；
         // - 修改pubspec.yaml中flutter-assets配置的值为asset数组；
         // - 修改pubspec.yaml中flutter-fonts配置的值为font_family_config数组。
         //
-        List<String> assetArray = new ArrayList<>();
-        assetArray.addAll(imageAssetArray);
-        assetArray.addAll(textAssetArray);
-
         Map<String, Object> flutterConfig = (Map<String, Object>)pubspecConfig.get("flutter");
+
+        List<String> newAssetArray = new ArrayList<>();
+        newAssetArray.addAll(imageAssetArray);
+        newAssetArray.addAll(textAssetArray);
+
+        List<String> oldAssetArray = new ArrayList<>();
+        if (flutterConfig.containsKey("assets")) {
+            Object assets = flutterConfig.get("assets");
+            if(assets instanceof List) {
+                oldAssetArray = (List<String>)assets;
+            }
+        }
+
+        List<String> assetArray = FlrAssetUtil.mergeFlutterAssets(flutterProjectRootDir, packageName, newAssetArray, oldAssetArray);
         if(assetArray.size() > 0) {
             flutterConfig.put("assets", assetArray);
         } else {
