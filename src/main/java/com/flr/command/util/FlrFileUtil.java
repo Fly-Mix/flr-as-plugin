@@ -23,7 +23,42 @@ import java.util.regex.Pattern;
 public class FlrFileUtil {
 
     /*
-     * 获取当前flutter工程的pubspec.yaml文件的路径
+     * 获取flutter主工程的所有子工程的根目录
+     * */
+    public static List<String> getFlutterSubProjectRootDirs(@NotNull String flutterMainProjectRootDir) {
+        List<String> flutterSubProjectRootDirArray = new ArrayList<>();
+
+        File resourceDirFile = new File(flutterMainProjectRootDir);
+        VirtualFile resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile);
+        if(resourceDirVirtualFile == null) {
+            return flutterSubProjectRootDirArray;
+        }
+
+        String pubspecFileName = "pubspec.yaml";
+        VirtualFile[] resourceDirChildren = resourceDirVirtualFile.getChildren();
+        for(VirtualFile resourceDirChild: resourceDirChildren) {
+            if(resourceDirChild.isDirectory()) {
+                VirtualFile[] subResourceDirChildren = resourceDirChild.getChildren();
+                for (VirtualFile subResourceDirChild: subResourceDirChildren) {
+                    if(subResourceDirChild.isDirectory()) {
+                        continue;
+                    }
+
+                    String fileBaseName = subResourceDirChild.getName();
+                    if(fileBaseName.equals(pubspecFileName)) {
+                        String flutterSubProjectRootDir = subResourceDirChild.getParent().getPath();
+                        flutterSubProjectRootDirArray.add(flutterSubProjectRootDir);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return flutterSubProjectRootDirArray;
+    }
+
+    /*
+     * 获取指定flutter工程的pubspec.yaml文件的路径
      * */
     public static String getPubspecFilePath(@NotNull String flutterProjectDir) {
         String pubspecFilePath = flutterProjectDir + "/pubspec.yaml";
@@ -31,7 +66,7 @@ public class FlrFileUtil {
     }
 
     /*
-     * 判断当前flutter工程的工程类型是不是Package工程类型
+     * 判断指定flutter工程的工程类型是不是Package工程类型
      *
      * flutter工程共有4种工程类型：
      * - app：Flutter App工程，用于开发纯Flutter的App
