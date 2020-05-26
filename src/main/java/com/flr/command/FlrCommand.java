@@ -67,19 +67,94 @@ public class FlrCommand implements Disposable {
     // MARK: Command Action Methods
 
     /*
-    * 对 flutter 工程进行初始化
-    *  */
-    public void init(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+    * 初始化所有工作空间下的flutter主工程及其所有子工程
+    * */
+    public void initAll(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
         String indicatorMessage = "[Flr Init]";
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
 
         String flrExceptionTitle = "[x]: init failed !!!";
 
-        String flutterProjectRootDir = curProject.getBasePath();
+        String flutterMainProjectRootDir = curProject.getBasePath();
         String pubspecFilePath;
         File pubspecFile;
         Map<String, Object> pubspecConfig;
+
+        // ----- Step-1 Begin -----
+        // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程
+        // - 检测当前flutter主工程根目录是否存在 pubspec.yaml
+        //
+        try {
+            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterMainProjectRootDir);
+        } catch (FlrException e) {
+            handleFlrException(flrExceptionTitle, e);
+            return;
+        }
+
+        // ----- Step-1 End -----
+
+        indicatorMessage = "init all flutter projects now...";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        // ----- Step-2 Begin -----
+        // 获取主工程和其所有子工程，对它们进行init_one操作
+        // - 获取flutter主工程根目录下所有的子工程目录
+        // - 初始化主工程
+        // - 初始化所有子工程
+
+        List<String> flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(flutterMainProjectRootDir);
+
+        flrLogConsole.println("", indicatorType);
+        initOne(actionEvent, flrLogConsole, flutterMainProjectRootDir);
+
+        for(String flutterProjectRootDir : flutterSubProjectRootDirArray) {
+            flrLogConsole.println("", indicatorType);
+            initOne(actionEvent, flrLogConsole, flutterProjectRootDir);
+        }
+
+        // ----- Step-2 End -----
+
+        // ----- Step-3 Begin -----
+        // 调用flutter工具，为flutter工程获取依赖
+        //
+
+        flrLogConsole.println("", indicatorType);
+        indicatorMessage = "get dependencies for all flutter projects via running \"Flutter Packages Get\" action now ...";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        FlrUtil.runFlutterPubGet(actionEvent);
+        indicatorMessage = "[√]: get dependencies for all flutter projects done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        // ----- Step-3 End -----
+        flrLogConsole.println("", indicatorType);
+        indicatorMessage = "[√]: init all flutter projects done !!!\n";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        indicatorMessage = "[*]: if you want to know how to make a good resource structure for your flutter project, please click menu \"Tools-Flr-Recommend\" ";
+        flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
+
+        String contentTitle = "[√]: init done !!!";
+        showSuccessMessage(contentTitle, "", false);
+    }
+
+    /*
+    * 对指定 flutter 工程进行初始化
+    *  */
+    public void initOne(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole, @NotNull String flutterProjectRootDir) {
+
+        String indicatorMessage = "------------------------------- init specified project -------------------------------";
+        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        String flrExceptionTitle = String.format("[x]: init %s failed", flutterProjectRootDir) ;
+
+        String pubspecFilePath;
+        File pubspecFile;
+        Map<String, Object> pubspecConfig;
+
+        indicatorMessage = String.format("init %s now ...", flutterProjectRootDir);
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // ----- Step-1 Begin -----
         // 进行环境检测:
@@ -94,6 +169,11 @@ public class FlrCommand implements Disposable {
 
         } catch (FlrException e) {
             handleFlrException(flrExceptionTitle, e);
+
+            flrLogConsole.println(flrExceptionTitle, FlrLogConsole.LogType.error);
+
+            indicatorMessage = "--------------------------------------------------------------------------------------";
+            flrLogConsole.println(indicatorMessage, indicatorType);
             return;
         }
 
@@ -155,7 +235,6 @@ public class FlrCommand implements Disposable {
             }
         }
 
-
         flrConfig.put("dartfmt_line_length", dartfmtLineLength);
         flrConfig.put("assets", assetResourceDirArray);
         flrConfig.put("fonts", fontResourceDirArray);
@@ -215,26 +294,11 @@ public class FlrCommand implements Disposable {
         // 保存并刷新 pubspec.yaml
         FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
 
-        // ----- Step-4 Begin -----
-        // 调用flutter工具，为flutter工程获取依赖
-        //
-
-        indicatorMessage = "get dependency \"r_dart_library\" via running \"Flutter Packages Get\" action now ...";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-        FlrUtil.runFlutterPubGet(actionEvent);
-        indicatorMessage = "get dependency \"r_dart_library\" done!";
+        indicatorMessage = String.format("[√]: init %s done !!!", flutterProjectRootDir);
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        // ----- Step-4 End -----
-
-        indicatorMessage = "[√]: init done !!!\n";
+        indicatorMessage = "--------------------------------------------------------------------------------------";
         flrLogConsole.println(indicatorMessage, indicatorType);
-
-        indicatorMessage = "[*]: if you want to know how to make a good resource structure for your flutter project, please click menu \"Tools-Flr-Recommend\" ";
-        flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
-
-        String contentTitle = "[√]: init done !!!";
-        showSuccessMessage(contentTitle, "", false);
     }
 
     /*
