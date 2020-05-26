@@ -77,10 +77,6 @@ public class FlrCommand implements Disposable {
         String flrExceptionTitle = "[x]: init failed !!!";
 
         String flutterMainProjectRootDir = curProject.getBasePath();
-        String pubspecFilePath;
-        File pubspecFile;
-        Map<String, Object> pubspecConfig;
-
         // ----- Step-1 Begin -----
         // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程
         // - 检测当前flutter主工程根目录是否存在 pubspec.yaml
@@ -127,6 +123,7 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, indicatorType);
 
         // ----- Step-3 End -----
+
         flrLogConsole.println("", indicatorType);
         indicatorMessage = "[√]: init all flutter projects done !!!\n";
         flrLogConsole.println(indicatorMessage, indicatorType);
@@ -134,7 +131,7 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "[*]: if you want to know how to make a good resource structure for your flutter project, please click menu \"Tools-Flr-Recommend\" ";
         flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
 
-        String contentTitle = "[√]: init done !!!";
+        String contentTitle = "[√]: init all flutter projects done !!!";
         showSuccessMessage(contentTitle, "", false);
     }
 
@@ -147,7 +144,7 @@ public class FlrCommand implements Disposable {
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, indicatorType);
 
-        String flrExceptionTitle = String.format("[x]: init %s failed", flutterProjectRootDir) ;
+        String flrExceptionTitle = String.format("[x]: init %s failed", flutterProjectRootDir);
 
         String pubspecFilePath;
         File pubspecFile;
@@ -294,6 +291,9 @@ public class FlrCommand implements Disposable {
         // 保存并刷新 pubspec.yaml
         FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
 
+        String contentTitle = String.format("[√]: init %s done !!!", flutterProjectRootDir);
+        showSuccessMessage(contentTitle, "", false);
+
         indicatorMessage = String.format("[√]: init %s done !!!", flutterProjectRootDir);
         flrLogConsole.println(indicatorMessage, indicatorType);
 
@@ -301,25 +301,90 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, indicatorType);
     }
 
-    /*
-    * 扫描资源目录，自动为资源添加声明到 pubspec.yaml 和生成 r.g.dart
-    * */
-    public void generate(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+    public void generateAll(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
         String indicatorMessage = "[Flr Generate]";
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
 
         String flrExceptionTitle = "[x]: generate failed !!!";
 
+        String flutterMainProjectRootDir = curProject.getBasePath();
+        // ----- Step-1 Begin -----
+        // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程
+        // - 检测当前flutter主工程根目录是否存在 pubspec.yaml
+        //
+        try {
+            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterMainProjectRootDir);
+        } catch (FlrException e) {
+            handleFlrException(flrExceptionTitle, e);
+            return;
+        }
+
+        // ----- Step-1 End -----
+
+        indicatorMessage = "generate for all flutter projects now...";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        // ----- Step-2 Begin -----
+        // 获取主工程和其所有子工程，对它们进行generate_one操作
+        // - 获取flutter主工程根目录下所有的子工程目录
+        // - 对主工程执行generate_one操作
+        // - 对所有子工程执行generate_one操作
+
+        List<String> flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(flutterMainProjectRootDir);
+
+        flrLogConsole.println("", indicatorType);
+        generateOne(actionEvent, flrLogConsole, flutterMainProjectRootDir);
+
+        for(String flutterProjectRootDir : flutterSubProjectRootDirArray) {
+            flrLogConsole.println("", indicatorType);
+            generateOne(actionEvent, flrLogConsole, flutterProjectRootDir);
+        }
+
+        // ----- Step-2 End -----
+
+        // ----- Step-3 Begin -----
+        // 调用flutter工具，为flutter工程获取依赖
+        //
+
+        flrLogConsole.println("", indicatorType);
+        indicatorMessage = "get dependencies for all flutter projects via running \"Flutter Packages Get\" action now ...";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+        FlrUtil.runFlutterPubGet(actionEvent);
+        indicatorMessage = "[√]: get dependencies for all flutter projects done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        // ----- Step-3 End -----
+
+        flrLogConsole.println("", indicatorType);
+        indicatorMessage = "[√]: generate for all flutter projects done !!!\n";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        String contentTitle = "[√]: generate for all flutter projects done !!!";
+        showSuccessMessage(contentTitle, "", false);
+    }
+
+    /*
+    * 扫描资源目录，自动为资源添加声明到 pubspec.yaml 和生成 r.g.dart
+    * */
+    public void generateOne(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole, @NotNull String flutterProjectRootDir) {
+        String indicatorMessage = "--------------------------- generate for specified project ---------------------------";
+        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        String flrExceptionTitle = String.format("[x]: generate for %s failed", flutterProjectRootDir) ;;
+
         // 警告日志数组
         List<FlrColoredLogEntity> warningMessages = new ArrayList<FlrColoredLogEntity>();
 
-        String flutterProjectRootDir = curProject.getBasePath();
         String pubspecFilePath;
         File pubspecFile;
         Map<String, Object> pubspecConfig;
         Map<String, Object> flrConfig;
         List<List<String>> resourceDirResultTuple;
+
+        indicatorMessage = String.format("generate for %s now ...", flutterProjectRootDir);
+        flrLogConsole.println(indicatorMessage, indicatorType);
 
         // ----- Step-1 Begin -----
         // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程：
@@ -342,6 +407,11 @@ public class FlrCommand implements Disposable {
             resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(flrLogConsole, flrConfig, flutterProjectRootDir);
         } catch (FlrException e) {
             handleFlrException(flrExceptionTitle, e);
+
+            flrLogConsole.println(flrExceptionTitle, FlrLogConsole.LogType.error);
+
+            indicatorMessage = "--------------------------------------------------------------------------------------";
+            flrLogConsole.println(indicatorMessage, indicatorType);
             return;
         }
 
@@ -785,9 +855,6 @@ public class FlrCommand implements Disposable {
         }
         // ----- Step-20 End -----
 
-        indicatorMessage = String.format("generate for %s done!", curProject.getBasePath());
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
 
         // ----- Step-21 Begin -----
         // 调用 flutter 工具对 r.g.dart 进行格式化操作
@@ -803,22 +870,6 @@ public class FlrCommand implements Disposable {
         // ----- Step-21 End -----
 
         // ----- Step-22 Begin -----
-        // 调用flutter工具，为flutter工程获取依赖
-        //
-
-        // 执行 "Flutter Packages Get" action
-        indicatorMessage = "running \"Flutter Packages Get\" action now ...";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-        FlrUtil.runFlutterPubGet(actionEvent);
-        indicatorMessage = "running \"Flutter Packages Get\" action done !!!";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        // ----- Step-22 End -----
-
-        indicatorMessage = "[√]: generate done !!!";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        // ----- Step-23 Begin -----
         // 判断警告日志数组是否为空，若不为空，输出所有警告日志
         //
 
@@ -829,7 +880,7 @@ public class FlrCommand implements Disposable {
             }
         }
 
-        String contentTitle = "[√]: generate done !!!";
+        String contentTitle = String.format("[√]: generate for %s done!", flutterProjectRootDir);
         if(warningCount > 0) {
             String warningUnitDesc = "warning";
             if(warningCount > 1) {
@@ -840,6 +891,14 @@ public class FlrCommand implements Disposable {
         } else {
             showSuccessMessage(contentTitle, "", false);
         }
+        // ----- Step-22 End -----
+
+        indicatorMessage = String.format("[√]: generate for %s done !!!", flutterProjectRootDir);
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        indicatorMessage = "--------------------------------------------------------------------------------------";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
     }
 
     /*
@@ -902,7 +961,7 @@ public class FlrCommand implements Disposable {
         indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" now ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
         flrLogConsole.println("", indicatorType);
-        generate(actionEvent, flrLogConsole);
+        generateAll(actionEvent, flrLogConsole);
         flrLogConsole.println("", indicatorType);
         indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" done!";
         flrLogConsole.println(indicatorMessage, indicatorType);
@@ -967,7 +1026,7 @@ public class FlrCommand implements Disposable {
                 flrLogConsole.println(indicatorMessage, indicatorType);
 
                 flrLogConsole.println("", indicatorType);
-                generate(actionEvent, flrLogConsole);
+                generateAll(actionEvent, flrLogConsole);
 
                 flrLogConsole.println("", indicatorType);
                 indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" done!";
