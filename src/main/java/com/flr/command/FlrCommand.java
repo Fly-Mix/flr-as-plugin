@@ -909,34 +909,15 @@ public class FlrCommand implements Disposable {
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
 
-        String flrExceptionTitle = "[x]: generate failed !!!";
+        String flrExceptionTitle = "[x]: start monitor failed !!!";
 
-        String flutterProjectRootDir = curProject.getBasePath();
-        String pubspecFilePath;
-        File pubspecFile;
-        Map<String, Object> pubspecConfig;
-        Map<String, Object> flrConfig;
-        List<List<String>> resourceDirResultTuple;
-
+        String flutterMainProjectRootDir = curProject.getBasePath();
         // ----- Step-1 Begin -----
-        // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程：
-        // - 检测当前flutter工程根目录是否存在pubspec.yaml
-        // - 检测当前pubspec.yaml中是否存在Flr的配置
-        // - 检测当前flr_config中的resource_dir配置是否合法：
-        //    判断合法的标准是：assets配置或者fonts配置了至少1个legal_resource_dir
+        // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程
+        // - 检测当前flutter主工程根目录是否存在 pubspec.yaml
         //
-
         try {
-            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
-
-            pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
-            pubspecFile = new File(pubspecFilePath);
-            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
-
-            FlrChecker.checkFlrConfigIsExisted(flrLogConsole, pubspecConfig);
-            flrConfig = (Map<String, Object>)pubspecConfig.get("flr");
-
-            resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(flrLogConsole, flrConfig, flutterProjectRootDir);
+            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterMainProjectRootDir);
         } catch (FlrException e) {
             handleFlrException(flrExceptionTitle, e);
             return false;
@@ -944,48 +925,103 @@ public class FlrCommand implements Disposable {
 
         // ----- Step-1 End -----
 
-        String packageName = (String) pubspecConfig.get("name");
+        // ----- Step-2 Begin -----
+        // 对flutter工程进行合法资源目录检测:
+        // - 获取主工程的所有子工程根目录，生成工程根目录数组flutter_project_root_dir_array
+        // - 遍历flutter_project_root_dir_array，获取每个工程的legal_resource_dir数组：
+        //   - 从flr_config中的assets配置获取assets_legal_resource_dir数组；
+        //   - 从flr_config中的fonts配置获取fonts_legal_resource_dir数组；
+        //   - 合并assets_legal_resource_dir数组和fonts_legal_resource_dir数组到legal_resource_dir数组。
+        // - 检测legal_resource_dir数组是否为空，为空则结束运行。
+        //
+        flrLogConsole.println("", indicatorType);
+        indicatorMessage = "get the valid resource directories of all projects now ...";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        List<String> flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(flutterMainProjectRootDir);
+
+        List<String> flutterProjectRootDirArray = new ArrayList<>();
+        flutterProjectRootDirArray.add(flutterMainProjectRootDir);
+        flutterProjectRootDirArray.addAll(flutterSubProjectRootDirArray);
+
+        // 合法的资源目录数组
+        List<String> legalResourceDirArray = new ArrayList<>();
+        // 非法的资源目录数组
+        List<String> illegalResourceDirArray = new ArrayList<>();
+
+        for(String flutterProjectRootDir : flutterProjectRootDirArray) {
+            try {
+                flrLogConsole.println("", indicatorType);
+                indicatorMessage = "--------------------------- get info of specified project ----------------------------";
+                flrLogConsole.println(indicatorMessage, indicatorType);
+
+                indicatorMessage = String.format("get the valid resource directories from %s now...", flutterProjectRootDir);
+                flrLogConsole.println(indicatorMessage, indicatorType);
+
+                FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
+
+                String pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
+                File pubspecFile = new File(pubspecFilePath);
+                Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
+
+                FlrChecker.checkFlrConfigIsExisted(flrLogConsole, pubspecConfig);
+                Map<String, Object> flrConfig = (Map<String, Object>)pubspecConfig.get("flr");
+
+                List<List<String>> resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(flrLogConsole, flrConfig, flutterProjectRootDir);
+
+                // 合法的资源目录数组
+                List<String> assetsLegalResourceDirArray = resourceDirResultTuple.get(0);
+                List<String> fontsLegalResourceDirArray = resourceDirResultTuple.get(1);
+                legalResourceDirArray.addAll(assetsLegalResourceDirArray);
+                legalResourceDirArray.addAll(fontsLegalResourceDirArray);
+                // 非法的资源目录数组
+                illegalResourceDirArray.addAll(resourceDirResultTuple.get(2));
+
+                indicatorMessage = String.format("get the valid resource directories from %s done !!!", flutterProjectRootDir);
+                flrLogConsole.println(indicatorMessage, indicatorType);
+                indicatorMessage = "--------------------------------------------------------------------------------------";
+                flrLogConsole.println(indicatorMessage, indicatorType);
+            } catch (FlrException e) {
+                indicatorMessage = e.getMessage();
+                flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.error);
+
+                indicatorMessage = String.format("[x]: %s has no valid resource directories.", flutterProjectRootDir);
+                flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.error);
+                indicatorMessage = "--------------------------------------------------------------------------------------";
+                flrLogConsole.println(indicatorMessage, indicatorType);
+            }
+        }
+
+        if(legalResourceDirArray.size() == 0) {
+            flrLogConsole.println("", indicatorType);
+
+            indicatorMessage = "[x]: have no valid resource directories to be monitored";
+            flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.error);
+            return false;
+        }
+
+        flrLogConsole.println("", indicatorType);
+
+        indicatorMessage = "get the valid resource directories of all projects done !!!";
+        flrLogConsole.println(indicatorMessage, indicatorType);
+
+        // ----- Step-2 End -----
 
         if(curFlrListener != null) {
             stopMonitor(actionEvent, flrLogConsole);
         }
 
-        // ----- Step-2 Begin -----
+        // ----- Step-3 Begin -----
         // 执行一次 flr generate 操作
         //
-
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
-        String nowStr = df.format(new Date());// new Date()为获取当前系统时间，也可使用当前时间戳
-        indicatorMessage = String.format("--------------------------- %s ---------------------------", nowStr);
-        flrLogConsole.println(indicatorMessage, indicatorType);
-        indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" now ...";
+        flrLogConsole.println("", indicatorType);
+        indicatorMessage = "now generate for all projects once before launching the monitoring service ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
         flrLogConsole.println("", indicatorType);
         generateAll(actionEvent, flrLogConsole);
         flrLogConsole.println("", indicatorType);
-        indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" done!";
+        indicatorMessage = "did generate for all projects, now is going to launching the monitoring service ...";
         flrLogConsole.println(indicatorMessage, indicatorType);
-        indicatorMessage = "---------------------------------------------------------------------------------";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-        flrLogConsole.println("", indicatorType);
-
-        // ----- Step-2 End -----
-
-        // ----- Step-3 Begin -----
-        // 获取legal_resource_dir数组：
-        // - 从flr_config中的assets配置获取assets_legal_resource_dir数组；
-        // - 从flr_config中的fonts配置获取fonts_legal_resource_dir数组；
-        // - 合并assets_legal_resource_dir数组和fonts_legal_resource_dir数组为legal_resource_dir数组。
-        //
-
-        // 合法的资源目录数组
-        List<String> assetsLegalResourceDirArray = resourceDirResultTuple.get(0);
-        List<String> fontsLegalResourceDirArray = resourceDirResultTuple.get(1);
-        List<String> legalResourceDirArray = new ArrayList<String>();
-        legalResourceDirArray.addAll(assetsLegalResourceDirArray);
-        legalResourceDirArray.addAll(fontsLegalResourceDirArray);
-        // 非法的资源目录数组
-        List<String> illegalResourceDirArray = resourceDirResultTuple.get(2);
 
         // ----- Step-3 End -----
 
@@ -994,8 +1030,10 @@ public class FlrCommand implements Disposable {
         //  - 启动一个文件监控服务，对 legal_resource_dir 数组中的资源目录进行文件监控
         //  - 若服务检测到资源变化（资源目录下的发生增/删/改文件），则执行一次 flr generate 操作
         //
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+        String nowStr = df.format(new Date());// new Date()为获取当前系统时间，也可使用当前时间戳
 
-        nowStr = df.format(new Date());
+        flrLogConsole.println("", indicatorType);
         indicatorMessage = String.format("--------------------------- %s ---------------------------", nowStr);
         flrLogConsole.println(indicatorMessage, indicatorType);
 
@@ -1022,14 +1060,14 @@ public class FlrCommand implements Disposable {
                 indicatorMessage = "detect some asset changes, run Flr-Generate Action now";
                 flrLogConsole.println(indicatorMessage, indicatorType);
 
-                indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" now ...";
+                indicatorMessage = "generate for all projects now ...";
                 flrLogConsole.println(indicatorMessage, indicatorType);
 
                 flrLogConsole.println("", indicatorType);
                 generateAll(actionEvent, flrLogConsole);
 
                 flrLogConsole.println("", indicatorType);
-                indicatorMessage = "scan assets, specify scanned assets in pubspec.yaml, generate \"r.g.dart\" done!";
+                indicatorMessage = "generate for all projects done !!!";
                 flrLogConsole.println(indicatorMessage, indicatorType);
 
                 indicatorMessage = "---------------------------------------------------------------------------------";
@@ -1046,7 +1084,7 @@ public class FlrCommand implements Disposable {
                 showSuccessMessage(contentTitle, contentMessage, false);
             }
         };
-        List<String> legalRelativeResourceDirArray = FlrFileUtil.convertToRelativeResourceDirs(flutterProjectRootDir, legalResourceDirArray);
+        List<String> legalRelativeResourceDirArray = FlrFileUtil.convertToRelativeResourceDirs(flutterMainProjectRootDir, legalResourceDirArray);
         curFlrListener = new FlrListener(curProject, legalRelativeResourceDirArray, assetChangesEventCallback);
         isMonitoringAssets = true;
 
