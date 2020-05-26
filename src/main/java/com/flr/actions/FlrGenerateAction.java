@@ -40,7 +40,7 @@ public class FlrGenerateAction extends AnAction {
                     String indicatorMessage =
                             "[*]: the monitoring service is monitoring the asset changes, and then auto scan assets, specifies assets and generates \"r.g.dart\" ...\n" +
                                     "[*]: you can click menu \"Tools-Flr-Stop Monitor\" to terminate it\n";
-                    flrLogConsole.println(indicatorMessage, indicatorType);
+                    flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
                 }
             }
         });
