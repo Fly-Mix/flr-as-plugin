@@ -10,7 +10,7 @@ public class FlrConstant {
     public static String PLUGIN_ID = "com.fly-mix.flr";
 
     // Flr的核心逻辑版本
-    public static String CORE_VERSION = "3.0.0";
+    public static String CORE_VERSION = "3.1.0";
 
     // 插件对外展示的名称
     public static String PLUGIN_DISPLAY_NAME = "Flr";
