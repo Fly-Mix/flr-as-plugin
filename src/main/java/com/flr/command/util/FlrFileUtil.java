@@ -271,7 +271,7 @@ public class FlrFileUtil {
             yaml.dump(pubspecConfig, writer);
 
             VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
-            if(pubspecFile == null) {
+            if(pubspecVirtualFile == null) {
                 return;
             }
             pubspecVirtualFile.refresh(false, false);
