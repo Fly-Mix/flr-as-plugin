@@ -262,8 +262,11 @@ public class FlrCommand implements Disposable {
         // - 检测Flutter配置中的assets选项是否是一个非空数组；若不是，则删除assets选项；
         // - 检测Flutter配置中的fonts选项是否是一个非空数组；若不是，则删除fonts选项。
         //
-
         Map<String, Object> flutterConfig = (Map<String, Object>)pubspecConfig.get("flutter");
+        if(flutterConfig == null || flrConfig instanceof Map == false) {
+            flutterConfig = new LinkedHashMap<>();
+        }
+
         String flutterAssetsKey = "assets";
         Object flutterAssets = flutterConfig.get(flutterAssetsKey);
         Boolean shouldRmFlutterAssetsKey = true;
@@ -671,6 +674,9 @@ public class FlrCommand implements Disposable {
         // - 修改pubspec.yaml中flutter-fonts配置的值为font_family_config数组。
         //
         Map<String, Object> flutterConfig = (Map<String, Object>)pubspecConfig.get("flutter");
+        if(flutterConfig == null || flrConfig instanceof Map == false) {
+            flutterConfig = new LinkedHashMap<>();
+        }
 
         List<String> newAssetArray = new ArrayList<>();
         newAssetArray.addAll(imageAssetArray);
