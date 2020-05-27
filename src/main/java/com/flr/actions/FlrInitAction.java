@@ -29,7 +29,7 @@ public class FlrInitAction extends AnAction {
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Flr Init", false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-                flrApp.flrCommand.init(e, flrLogConsole);
+                flrApp.flrCommand.initAll(e, flrLogConsole);
             }
         });
     }
