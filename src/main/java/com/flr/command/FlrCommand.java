@@ -988,8 +988,9 @@ public class FlrCommand implements Disposable {
                 indicatorMessage = "--------------------------------------------------------------------------------------";
                 flrLogConsole.println(indicatorMessage, indicatorType);
             } catch (FlrException e) {
-                indicatorMessage = e.getMessage();
-                flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.error);
+                handleFlrException(flrExceptionTitle, e);
+
+                flrLogConsole.println("", FlrLogConsole.LogType.error);
 
                 indicatorMessage = String.format("[x]: %s has no valid resource directories.", flutterProjectRootDir);
                 flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.error);
@@ -998,18 +999,22 @@ public class FlrCommand implements Disposable {
             }
         }
 
-        if(legalResourceDirArray.size() == 0) {
-            flrLogConsole.println("", indicatorType);
-
-            indicatorMessage = "[x]: have no valid resource directories to be monitored";
-            flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.error);
-            return false;
-        }
-
         flrLogConsole.println("", indicatorType);
 
         indicatorMessage = "get the valid resource directories of all projects done !!!";
         flrLogConsole.println(indicatorMessage, indicatorType);
+
+        if(legalResourceDirArray.size() == 0) {
+            FlrException e = FlrException.ILLEGAL_ENV;
+            handleFlrException(flrExceptionTitle, e);
+
+            flrLogConsole.println("", indicatorType);
+
+            indicatorMessage = "[x]: have no valid resource directories to be monitored";
+            flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.error);
+            flrLogConsole.println(flrExceptionTitle, FlrLogConsole.LogType.error);
+            return false;
+        }
 
         // ----- Step-2 End -----
 
