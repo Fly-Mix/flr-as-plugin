@@ -43,7 +43,7 @@ PlatformType pluginEnginePlatform = PlatformType.IC_193
 // 用于开发 flr-plugin 时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
 // 如切换到 191-master 分支后，该值更新为 PlatformType.IC_191
-PlatformType pluginProductPlatform = pluginEnginePlatform
+PlatformType pluginProductPlatform = PlatformType.IC_193
 
 // flr-plugin 的版本号
 // 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_product_version）
@@ -139,7 +139,11 @@ patchPluginXml {
     */
     changeNotes = """
 <h2>Flr Plugin Change Notes</h2>
-
+<i><b>Attention:</b> Flr v193.* is built for Android Studio 4.0</i>
+<h3>193.3.1.0</h3>
+<ul>
+  <li>Update flr plugin engine</li>
+</ul>
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
 <h3>3.1.0</h3>
