@@ -9,10 +9,12 @@ sourceCompatibility = 1.8
 // 平台版本使用其 branch_number 作为区分
 // 关于`branch_number`的更多细节，可参考 https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
 enum PlatformType {
-    // Android Studio v3.5
+    // Android Studio 3.5
     IC_191 ('191'),
-    // Android Studio v3.6
+    // Android Studio 3.6
     IC_192 ('192'),
+    // Android Studio 4.0
+    IC_193 ('193'),
 
     final String branchNumber
 
@@ -32,11 +34,11 @@ enum PlatformType {
 // flr-plugin-engine 的版本号
 // 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_engine_version）
 // 该值在完成一个新版本的 flr-plugin-engine 开发后，手动更新
-String pluginEngineVersion = '3.1.0'
+String pluginEngineVersion = '3.2.0'
 
 // 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
-PlatformType pluginEnginePlatform = PlatformType.IC_192
+PlatformType pluginEnginePlatform = PlatformType.IC_193
 
 // 用于开发 flr-plugin 时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
@@ -75,15 +77,20 @@ intellij {
     List platformPlugins = null
 
     switch (pluginProductPlatform) {
-        // Config for Android Studio v3.5
+        // Config for Android Studio 3.5
         case PlatformType.IC_191:
             platformVersion = '2019.1.4'
             platformPlugins =  ['Dart:191.8593', 'io.flutter:43.0.1']
             break
-        // Config for Android Studio v3.6
+        // Config for Android Studio 3.6
         case PlatformType.IC_192:
             platformVersion = '2019.2.4'
             platformPlugins = ['Dart:192.7761', 'io.flutter:43.0.2']
+            break
+        // Config for Android Studio 4.0
+        case PlatformType.IC_193:
+            platformVersion = '2019.3.3'
+            platformPlugins = ['Dart:193.7361', 'io.flutter:45.1.2']
             break
     }
 
@@ -139,7 +146,11 @@ patchPluginXml {
 </ul>
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
-<h3>3.1.0</h3>
+<h3>3.2.0</h3>
+<ul>
+  <li>Add pubspec.yaml file tree view</li>
+</ul>
+<h4>3.1.0</h4>
 <ul>
   <li>Support for processing(init/generate/monitor) multi projects(the main project and its sub projects in one workspace)</li>
   <li>Support for auto merging old asset specifications when specifying new assets</li>
