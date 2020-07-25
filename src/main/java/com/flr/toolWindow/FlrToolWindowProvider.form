@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.flr.toolWindow.FlrToolWindowProvider">
+  <grid id="27dc6" binding="windowContent" layout-manager="BorderLayout" hgap="0" vgap="0">
+    <constraints>
+      <xy x="287" y="291" width="165" height="289"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <splitpane id="c5e0" binding="splitPane">
+        <constraints border-constraint="Center"/>
+        <properties>
+          <dividerSize value="1"/>
+        </properties>
+        <border type="none"/>
+        <children>
+          <grid id="f21f6" binding="consoleContainer" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <splitpane position="right"/>
+            </constraints>
+            <properties>
+              <toolTipText value="Flr Log View"/>
+            </properties>
+            <border type="none"/>
+            <children/>
+          </grid>
+        </children>
+      </splitpane>
+    </children>
+  </grid>
+</form>
