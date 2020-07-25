@@ -1,7 +1,7 @@
 package com.flr.actions;
 
 import com.flr.logConsole.FlrLogConsole;
-import com.flr.logConsole.FlrLogConsoleFactory;
+import com.flr.toolWindow.FlrToolWindowFactory;
 import com.flr.FlrApp;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -15,8 +15,8 @@ public class FlrMonitorAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getData(PlatformDataKeys.PROJECT);
 
-        FlrLogConsole flrLogConsole = FlrLogConsoleFactory.createLogConsole(project);
-        FlrLogConsoleFactory.showCurLogConsole(project);
+        FlrLogConsole flrLogConsole = FlrToolWindowFactory.getLogConsole(project);
+        FlrToolWindowFactory.showCurLogConsole(project);
         flrLogConsole.clear();
 
         FlrApp flrApp = project.getComponent(FlrApp.class);

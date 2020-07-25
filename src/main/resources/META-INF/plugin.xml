@@ -20,7 +20,8 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
-        <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.logConsole.FlrLogConsoleFactory"/>
+        <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.toolWindow.FlrToolWindowFactory"/>
+
     </extensions>
 
     <actions>

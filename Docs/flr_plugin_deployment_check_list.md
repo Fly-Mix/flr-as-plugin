@@ -4,7 +4,7 @@
 1. 编辑`build.gradle`，更新与`flr-plugin-engine`发布相关的字段：
    - 更新`pluginEngineVersion`为：$version
    - 更新`changeNotes`中的`Flr Plugin Engine Change Notes`选项
-1. 打tag，合并到各个`platform-master`分支
+1. 合并到`master`分支，然后打tag，合并到各个`platform-master`分支
 
 ## Flr Plugin Deployment Check List
 
