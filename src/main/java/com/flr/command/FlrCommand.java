@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import io.flutter.sdk.*;
+import com.jetbrains.lang.dart.sdk.DartSdk;
 
 /**
  * 专有名词简单解释和示例：
@@ -241,15 +242,9 @@ public class FlrCommand implements Disposable {
         flrLogConsole.println(indicatorMessage, indicatorType);
 
         // 添加依赖包`r_dart_library`(https://github.com/YK-Unit/r_dart_library)的声明到pubspec.yaml
-        String rDartLibraryVersion = getRDartLibraryVersion();
-        Map<String, Object> rDartLibraryMap = new LinkedHashMap<String, Object>();
-        Map<String, String> rDartLibraryGitMap = new LinkedHashMap<String, String>();
-        rDartLibraryGitMap.put("url", "https://github.com/YK-Unit/r_dart_library.git");
-        rDartLibraryGitMap.put("ref", rDartLibraryVersion);
-        rDartLibraryMap.put("git", rDartLibraryGitMap);
-
         Map<String, Object> dependenciesMap = (Map<String, Object>)pubspecConfig.get("dependencies");
-        dependenciesMap.put("r_dart_library", rDartLibraryMap);
+        String rDartLibraryVersion = getRDartLibraryVersion();
+        dependenciesMap.put("r_dart_library", rDartLibraryVersion);
         pubspecConfig.put("dependencies", dependenciesMap);
 
         // ----- Step-2 End -----
@@ -1307,11 +1302,19 @@ public class FlrCommand implements Disposable {
 
         VirtualFile flutterSdkHome = FlutterSdk.getFlutterSdk(curProject).getHome();
         FlutterSdkVersion flutterSdkVersion = FlutterSdkVersion.readFromSdk(flutterSdkHome);
-
         String flutterVersionWithoutHotfixStr = flutterSdkVersion.toString();
+
+        DartSdk dartSdk = DartSdk.getDartSdk(curProject);
+        String dartSdkVersionStr = (dartSdk == null) ? "0.0.0" : dartSdk.getVersion();
+
         int compareResult = FlrUtil.versionCompare(flutterVersionWithoutHotfixStr, "1.10.15");
         if(compareResult == 0 || compareResult == 1) {
             rDartLibraryVersion = "0.2.1";
+
+            compareResult = FlrUtil.versionCompare(dartSdkVersionStr, "2.12.0");
+            if(compareResult == 0 || compareResult == 1) {
+                rDartLibraryVersion = "0.4.0-nullsafety.0";
+            }
         }
 
         return rDartLibraryVersion;
