@@ -842,7 +842,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g__R_Svg_class_code = FlrCodeUtil.generate__R_Svg_class(svgImageAssetArray, svgImageAssetIdDict, packageName);
+        String g__R_Svg_class_code = FlrCodeUtil.generate__R_Svg_class(svgImageAssetArray, svgImageAssetIdDict, packageName, this.shouldSupportNullsafety);
         r_dart_file_content += g__R_Svg_class_code;
 
         // ----- Step-17 End -----
