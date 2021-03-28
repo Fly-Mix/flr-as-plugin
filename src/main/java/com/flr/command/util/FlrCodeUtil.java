@@ -61,7 +61,7 @@ public class FlrCodeUtil {
     /*
     * 根据模板生成 AssetResource class 的代码
     * */
-    public static String generate_AssetResource_class(@NotNull String packageName) {
+    public static String generate_AssetResource_class(@NotNull String packageName, @NotNull boolean shouldSupportNullsafety) {
         String code = "/// Asset resource’s metadata class.\n" +
                 "/// For example, here is the metadata of `packages/flutter_demo/assets/images/example.png` asset:\n" +
                 "/// - packageName：flutter_demo\n" +
@@ -69,52 +69,100 @@ public class FlrCodeUtil {
                 "/// - fileDirname：assets/images\n" +
                 "/// - fileBasename：example.png\n" +
                 "/// - fileBasenameNoExtension：example\n" +
-                "/// - fileExtname：.png\n" +
-                "class AssetResource {\n" +
-                "  /// Creates an object to hold the asset resource’s metadata.\n" +
-                "  const AssetResource(this.assetName, {this.packageName}) : assert(assetName != null);\n" +
-                "\n" +
-                "  /// The name of the main asset from the set of asset resources to choose from.\n" +
-                "  final String assetName;\n" +
-                "\n" +
-                "  /// The name of the package from which the asset resource is included.\n" +
-                "  final String packageName;\n" +
-                "\n" +
-                "  /// The name used to generate the key to obtain the asset resource. For local assets\n" +
-                "  /// this is [assetName], and for assets from packages the [assetName] is\n" +
-                "  /// prefixed 'packages/<package_name>/'.\n" +
-                "  String get keyName => packageName == null ? assetName : \"packages/$packageName/$assetName\";\n" +
-                "\n" +
-                "  /// The file basename of the asset resource.\n" +
-                "  String get fileBasename {\n" +
-                "    final basename = path.basename(assetName);\n" +
-                "    return basename;\n" +
-                "  }\n" +
-                "\n" +
-                "  /// The no extension file basename of the asset resource.\n" +
-                "  String get fileBasenameNoExtension {\n" +
-                "    final basenameWithoutExtension = path.basenameWithoutExtension(assetName);\n" +
-                "    return basenameWithoutExtension;\n" +
-                "  }\n" +
-                "\n" +
-                "  /// The file extension name of the asset resource.\n" +
-                "  String get fileExtname {\n" +
-                "    final extension = path.extension(assetName);\n" +
-                "    return extension;\n" +
-                "  }\n" +
-                "\n" +
-                "  /// The directory path name of the asset resource.\n" +
-                "  String get fileDirname {\n" +
-                "    var dirname = assetName;\n" +
-                "    if (packageName != null) {\n" +
-                "      final packageStr = \"packages/$packageName/\";\n" +
-                "      dirname = dirname.replaceAll(packageStr, \"\");\n" +
-                "    }\n" +
-                "    final filenameStr = \"$fileBasename/\";\n" +
-                "    dirname = dirname.replaceAll(filenameStr, \"\");\n" +
-                "    return dirname;\n" +
-                "  }\n" +
-                "}";
+                "/// - fileExtname：.png\n";
+        if (shouldSupportNullsafety) {
+            code += "class AssetResource {\n" +
+                    "  /// Creates an object to hold the asset resource’s metadata.\n" +
+                    "  const AssetResource(this.assetName, {this.packageName});\n" +
+                    "\n" +
+                    "  /// The name of the main asset from the set of asset resources to choose from.\n" +
+                    "  final String assetName;\n" +
+                    "\n" +
+                    "  /// The name of the package from which the asset resource is included.\n" +
+                    "  final String? packageName;\n" +
+                    "\n" +
+                    "  /// The name used to generate the key to obtain the asset resource. For local assets\n" +
+                    "  /// this is [assetName], and for assets from packages the [assetName] is\n" +
+                    "  /// prefixed 'packages/<package_name>/'.\n" +
+                    "  String get keyName => packageName == null ? assetName : \"packages/$packageName/$assetName\";\n" +
+                    "\n" +
+                    "  /// The file basename of the asset resource.\n" +
+                    "  String get fileBasename {\n" +
+                    "    final basename = path.basename(assetName);\n" +
+                    "    return basename;\n" +
+                    "  }\n" +
+                    "\n" +
+                    "  /// The no extension file basename of the asset resource.\n" +
+                    "  String get fileBasenameNoExtension {\n" +
+                    "    final basenameWithoutExtension = path.basenameWithoutExtension(assetName);\n" +
+                    "    return basenameWithoutExtension;\n" +
+                    "  }\n" +
+                    "\n" +
+                    "  /// The file extension name of the asset resource.\n" +
+                    "  String get fileExtname {\n" +
+                    "    final extension = path.extension(assetName);\n" +
+                    "    return extension;\n" +
+                    "  }\n" +
+                    "\n" +
+                    "  /// The directory path name of the asset resource.\n" +
+                    "  String get fileDirname {\n" +
+                    "    var dirname = assetName;\n" +
+                    "    if (packageName != null) {\n" +
+                    "      final packageStr = \"packages/$packageName/\";\n" +
+                    "      dirname = dirname.replaceAll(packageStr, \"\");\n" +
+                    "    }\n" +
+                    "    final filenameStr = \"$fileBasename/\";\n" +
+                    "    dirname = dirname.replaceAll(filenameStr, \"\");\n" +
+                    "    return dirname;\n" +
+                    "  }\n" +
+                    "}";
+        } else {
+            code += "class AssetResource {\n" +
+                    "  /// Creates an object to hold the asset resource’s metadata.\n" +
+                    "  const AssetResource(this.assetName, {this.packageName}) : assert(assetName != null);\n" +
+                    "\n" +
+                    "  /// The name of the main asset from the set of asset resources to choose from.\n" +
+                    "  final String assetName;\n" +
+                    "\n" +
+                    "  /// The name of the package from which the asset resource is included.\n" +
+                    "  final String packageName;\n" +
+                    "\n" +
+                    "  /// The name used to generate the key to obtain the asset resource. For local assets\n" +
+                    "  /// this is [assetName], and for assets from packages the [assetName] is\n" +
+                    "  /// prefixed 'packages/<package_name>/'.\n" +
+                    "  String get keyName => packageName == null ? assetName : \"packages/$packageName/$assetName\";\n" +
+                    "\n" +
+                    "  /// The file basename of the asset resource.\n" +
+                    "  String get fileBasename {\n" +
+                    "    final basename = path.basename(assetName);\n" +
+                    "    return basename;\n" +
+                    "  }\n" +
+                    "\n" +
+                    "  /// The no extension file basename of the asset resource.\n" +
+                    "  String get fileBasenameNoExtension {\n" +
+                    "    final basenameWithoutExtension = path.basenameWithoutExtension(assetName);\n" +
+                    "    return basenameWithoutExtension;\n" +
+                    "  }\n" +
+                    "\n" +
+                    "  /// The file extension name of the asset resource.\n" +
+                    "  String get fileExtname {\n" +
+                    "    final extension = path.extension(assetName);\n" +
+                    "    return extension;\n" +
+                    "  }\n" +
+                    "\n" +
+                    "  /// The directory path name of the asset resource.\n" +
+                    "  String get fileDirname {\n" +
+                    "    var dirname = assetName;\n" +
+                    "    if (packageName != null) {\n" +
+                    "      final packageStr = \"packages/$packageName/\";\n" +
+                    "      dirname = dirname.replaceAll(packageStr, \"\");\n" +
+                    "    }\n" +
+                    "    final filenameStr = \"$fileBasename/\";\n" +
+                    "    dirname = dirname.replaceAll(filenameStr, \"\");\n" +
+                    "    return dirname;\n" +
+                    "  }\n" +
+                    "}";
+        }
 
         return code;
     }
