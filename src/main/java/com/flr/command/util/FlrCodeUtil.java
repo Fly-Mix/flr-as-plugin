@@ -431,7 +431,7 @@ public class FlrCodeUtil {
     /*
      * 根据模板，为 svgImageAssetArray（svg类的图片资产数组）生成 _R_Svg class 的代码
      * */
-    public static String generate__R_Svg_class(@NotNull List<String> svgImageAssetArray, @NotNull Map<String, String> svgImageAssetIdDict, @NotNull String packageName) {
+    public static String generate__R_Svg_class(@NotNull List<String> svgImageAssetArray, @NotNull Map<String, String> svgImageAssetIdDict, @NotNull String packageName, @NotNull boolean shouldSupportNullsafety) {
         String all_g_Asset_method_code = "";
 
         for (String asset : svgImageAssetArray) {
@@ -439,16 +439,29 @@ public class FlrCodeUtil {
 
             String assetId = svgImageAssetIdDict.get(asset);
             String assetComment = generateAssetComment(asset, packageName);
+            String g_Asset_method_code = "";
 
-            String g_Asset_method_code = String.format("  /// %s\n" +
-                            "  // ignore: non_constant_identifier_names\n" +
-                            "  AssetSvg %s({@required double width, @required double height}) {\n" +
-                            "    final imageProvider = AssetSvg(asset.%s.keyName, width: width, height: height);\n" +
-                            "    return imageProvider;\n" +
-                            "  }",
-                    assetComment,
-                    assetId,
-                    assetId);
+            if (shouldSupportNullsafety) {
+                g_Asset_method_code = String.format("  /// %s\n" +
+                                "  // ignore: non_constant_identifier_names\n" +
+                                "  AssetSvg %s({required double width, required double height}) {\n" +
+                                "    final imageProvider = AssetSvg(asset.%s.keyName, width: width, height: height);\n" +
+                                "    return imageProvider;\n" +
+                                "  }",
+                        assetComment,
+                        assetId,
+                        assetId);
+            } else {
+                g_Asset_method_code = String.format("  /// %s\n" +
+                                "  // ignore: non_constant_identifier_names\n" +
+                                "  AssetSvg %s({@required double width, @required double height}) {\n" +
+                                "    final imageProvider = AssetSvg(asset.%s.keyName, width: width, height: height);\n" +
+                                "    return imageProvider;\n" +
+                                "  }",
+                        assetComment,
+                        assetId,
+                        assetId);
+            }
 
             all_g_Asset_method_code += g_Asset_method_code;
         }
