@@ -790,7 +790,7 @@ public class FlrCommand implements Disposable {
         //
 
         r_dart_file_content += "\n";
-        String g_AssetResource_class_code = FlrCodeUtil.generate_AssetResource_class(packageName);
+        String g_AssetResource_class_code = FlrCodeUtil.generate_AssetResource_class(packageName, this.shouldSupportNullsafety);
         r_dart_file_content += g_AssetResource_class_code;
 
         // ----- Step-12 End -----
