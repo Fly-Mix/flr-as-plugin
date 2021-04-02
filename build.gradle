@@ -149,7 +149,7 @@ patchPluginXml {
 <i><b>Attention:</b> Flr v201.* is built for Android Studio 4.1</i>
 <h3>201.3.3.0</h3>
 <ul>
-  <li>First released for Android Studio 4.1</li>
+  <li>Update flr plugin engine</li>
 </ul>
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
