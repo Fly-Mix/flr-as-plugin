@@ -17,6 +17,8 @@ enum PlatformType {
     IC_193 ('193'),
     // Android Studio 4.1
     IC_201 ('201'),
+    // Android Studio 4.2
+    IC_202 ('202'),
 
     final String branchNumber
 
@@ -40,7 +42,7 @@ String pluginEngineVersion = '3.3.0'
 
 // 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
-PlatformType pluginEnginePlatform = PlatformType.IC_201
+PlatformType pluginEnginePlatform = PlatformType.IC_202
 
 // 用于开发 flr-plugin 时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
@@ -73,6 +75,7 @@ dependencies {
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
+// Get platformVersion with Build#AI-Version of Android Studio from https://www.jetbrains.com/idea/download/other.html
 intellij {
 
     String platformVersion = null
@@ -98,6 +101,11 @@ intellij {
         case PlatformType.IC_201:
             platformVersion = '2020.1.4'
             platformPlugins = ['Dart:201.9002', 'io.flutter:50.0.2']
+            break
+        // Config for Android Studio 4.2
+        case PlatformType.IC_202:
+            platformVersion = '2020.2.3'
+            platformPlugins = ['Dart:202.8488', 'io.flutter:56.0.2']
             break
     }
 
