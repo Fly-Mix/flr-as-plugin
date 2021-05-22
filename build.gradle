@@ -3,7 +3,8 @@ plugins {
     id 'org.jetbrains.intellij' version '0.4.16'
 }
 
-sourceCompatibility = 1.8
+// 指定JDK版本
+sourceCompatibility = '11'
 
 // 插件需要支持的 IntelliJ IDEA Community Edition平台版本
 // 平台版本使用其 branch_number 作为区分
