@@ -3,9 +3,6 @@ plugins {
     id 'org.jetbrains.intellij' version '0.4.16'
 }
 
-// 指定JDK版本
-sourceCompatibility = '11'
-
 // 插件需要支持的 IntelliJ IDEA Community Edition平台版本
 // 平台版本使用其 branch_number 作为区分
 // 关于`branch_number`的更多细节，可参考 https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
@@ -49,6 +46,31 @@ PlatformType pluginEnginePlatform = PlatformType.IC_202
 // 该值在切换到 platform-master 分支后，手动更新
 // 如切换到 191-master 分支后，该值更新为 PlatformType.IC_191
 PlatformType pluginProductPlatform = pluginEnginePlatform
+
+// 指定JDK版本
+// JDK8: '1.8'or'8'
+// JDK11: '11' （IDEA 2020.2 版本开始使用JDK11）
+sourceCompatibility = '8'
+switch (pluginProductPlatform) {
+// Config for Android Studio 3.5
+    case PlatformType.IC_191:
+// Config for Android Studio 3.6
+    case PlatformType.IC_192:
+// Config for Android Studio 4.0
+    case PlatformType.IC_193:
+// Config for Android Studio 4.1
+    case PlatformType.IC_201:
+        sourceCompatibility = '8'
+        break
+// Config for Android Studio 4.2
+    case PlatformType.IC_202:
+        sourceCompatibility = '11'
+        break
+}
+
+println "flr-as-plugin 构建配置信息如下："
+println " - PluginProductPlatform: ${pluginProductPlatform}"
+println " - SourceCompatibility: JDK${sourceCompatibility}"
 
 // flr-plugin 的版本号
 // 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_product_version）
@@ -155,11 +177,7 @@ patchPluginXml {
     */
     changeNotes = """
 <h2>Flr Plugin Change Notes</h2>
-<i><b>Attention:</b> Flr v202.* is built for Android Studio 4.2</i>
-<h3>202.3.3.0</h3>
-<ul>
-  <li>First released for Android Studio 4.2</li>
-</ul>
+
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
 <h3>3.3.0</h3>
