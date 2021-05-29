@@ -21,6 +21,7 @@ import java.util.*;
 
 import io.flutter.sdk.*;
 import com.jetbrains.lang.dart.sdk.DartSdk;
+import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 
 /**
  * 专有名词简单解释和示例：
@@ -55,6 +56,8 @@ public class FlrCommand implements Disposable {
 
     private boolean shouldSupportNullsafety = false;
 
+    public boolean isFlutterProject = false;
+
     public FlrCommand(Project project) {
         curProject = project;
 
@@ -64,7 +67,14 @@ public class FlrCommand implements Disposable {
     private void initFlagOfShouldSupportNullsafety() {
         this.shouldSupportNullsafety = false;
 
-        VirtualFile flutterSdkHome = FlutterSdk.getFlutterSdk(curProject).getHome();
+        FlutterSdk flutterSdk = FlutterSdk.getFlutterSdk(curProject);
+        if (flutterSdk == null) {
+            this.isFlutterProject = false;
+            return;
+        }
+
+        this.isFlutterProject = true;
+        VirtualFile flutterSdkHome = flutterSdk.getHome();
         FlutterSdkVersion flutterSdkVersion = FlutterSdkVersion.readFromSdk(flutterSdkHome);
         String flutterVersionWithoutHotfixStr = flutterSdkVersion.toString();
 
@@ -89,7 +99,19 @@ public class FlrCommand implements Disposable {
     }
 
     // MARK: Private Util Methods
+    /*
+    * 检测当前project是不是 flutter project，如果不是就打印提示
+    * */
+    public boolean checkIsFlutterProjectAndShowTips(@NotNull FlrLogConsole flrLogConsole) {
+        if (this.isFlutterProject) {
+            return true;
+        }
 
+        String tipsStr = String.format("[*]: this is not a flutter project");
+        flrLogConsole.println(tipsStr, FlrLogConsole.LogType.tips);
+
+        return false;
+    }
 
     // MARK: Command Action Methods
 
@@ -97,6 +119,10 @@ public class FlrCommand implements Disposable {
     * 初始化所有工作空间下的flutter主工程及其所有子工程
     * */
     public void initAll(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+        if (checkIsFlutterProjectAndShowTips(flrLogConsole) == false) {
+            return;
+        }
+
         String indicatorMessage = "[Flr Init]";
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
@@ -326,6 +352,10 @@ public class FlrCommand implements Disposable {
     }
 
     public void generateAll(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+        if (checkIsFlutterProjectAndShowTips(flrLogConsole) == false) {
+            return;
+        }
+
         String indicatorMessage = "[Flr Generate]";
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
@@ -932,6 +962,10 @@ public class FlrCommand implements Disposable {
     * 启动一个资源变化监控服务，若检测到有资源变化，就自动执行generate操作
     * */
     public Boolean startMonitor(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole) {
+        if (checkIsFlutterProjectAndShowTips(flrLogConsole) == false) {
+            return false;
+        }
+
         String indicatorMessage = "[Flr Start Monitor]";
         FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
         flrLogConsole.println(indicatorMessage, titleLogType);
