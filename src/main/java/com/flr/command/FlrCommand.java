@@ -54,17 +54,23 @@ public class FlrCommand implements Disposable {
 
     private FlrLogConsole.LogType titleLogType = FlrLogConsole.LogType.tips;
 
+    private boolean didInitFlutterEnv = false; // 是否初始化了Flutter环境信息；Flutter环境信息包括：shouldSupportNullsafety、isFlutterProject
+
     private boolean shouldSupportNullsafety = false;
 
     public boolean isFlutterProject = false;
 
     public FlrCommand(Project project) {
         curProject = project;
-
-        initFlagOfShouldSupportNullsafety();
     }
 
-    private void initFlagOfShouldSupportNullsafety() {
+    private void initFlagEnvIfNeed() {
+        if (this.didInitFlutterEnv) {
+            return;
+        }
+
+        this.didInitFlutterEnv = true;
+
         this.shouldSupportNullsafety = false;
 
         FlutterSdk flutterSdk = FlutterSdk.getFlutterSdk(curProject);
@@ -103,6 +109,8 @@ public class FlrCommand implements Disposable {
     * 检测当前project是不是 flutter project，如果不是就打印提示
     * */
     public boolean checkIsFlutterProjectAndShowTips(@NotNull FlrLogConsole flrLogConsole) {
+        initFlagEnvIfNeed();
+
         if (this.isFlutterProject) {
             return true;
         }
