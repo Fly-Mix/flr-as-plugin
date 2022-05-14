@@ -21,6 +21,8 @@ enum PlatformType {
     IC_203 ('203'),
     // Android Studio Bumblebee | 2021.1.1
     IC_211 ('211'),
+    // Android Studio Chipmunk | 2021.2.1
+    IC_212 ('212'),
 
     final String branchNumber
 
@@ -44,7 +46,7 @@ String pluginEngineVersion = '3.3.1'
 
 // 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
-PlatformType pluginEnginePlatform = PlatformType.IC_211
+PlatformType pluginEnginePlatform = PlatformType.IC_212
 
 // 用于开发 flr-plugin 时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
@@ -72,6 +74,8 @@ switch (pluginProductPlatform) {
     case PlatformType.IC_203:
 // Config for Android Studio Bumblebee | 2021.1.1
     case PlatformType.IC_211:
+// Config for Android Studio Chipmunk | 2021.2.1
+    case PlatformType.IC_212:
         sourceCompatibility = '11'
         break
 }
@@ -147,6 +151,11 @@ intellij {
         case PlatformType.IC_211:
             platformVersion = '2021.1'
             platformPlugins = ['Dart:211.7798', 'io.flutter:64.1.2']
+            break
+       // Config for Android Studio Chipmunk | 2021.2.1
+        case PlatformType.IC_212:
+            platformVersion = '2021.2.3'
+            platformPlugins = ['Dart:212.5744', 'io.flutter:67.1.2']
             break
     }
 
