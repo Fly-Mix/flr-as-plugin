@@ -204,7 +204,11 @@ patchPluginXml {
     */
     changeNotes = """
 <h2>Flr Plugin Change Notes</h2>
-
+<i><b>Attention:</b> Flr v212.* is built for Android Studio Chipmunk | 2021.2.1</i>
+<h3>212.3.3.1</h3>
+<ul>
+  <li>First released for Android Studio Bumblebee | 2021.1.1</li>
+</ul>
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
 <h3>3.3.1</h3>
