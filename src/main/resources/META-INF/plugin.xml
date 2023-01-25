@@ -9,6 +9,8 @@
          on how to target different products -->
     <!-- 添加当前插件所依赖的其他插件-->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.java</depends>
     <depends>Dart</depends>
     <depends>io.flutter</depends>
 
