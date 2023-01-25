@@ -1,6 +1,14 @@
+// 当前最新开发环境：gradle-7.5.1
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.16'
+
+    /*
+    Gradle-IntelliJ-Plugin 'org.jetbrains.intellij' 的设置说明：
+    - build plugin for 2022.1 需要使用 gradle 7.* 以上，以及 'org.jetbrains.intellij' 需要使用 1.5.3+ 版本
+    - 若使用本地默认的 gradle ，请手动切换 gradle 到特定版本
+    */
+    // id 'org.jetbrains.intellij' version '0.4.16' // gradle 6.7
+    id 'org.jetbrains.intellij' version '1.12.0' // gradle 7.5.1
 }
 
 // 插件需要支持的 IntelliJ IDEA Community Edition平台版本
@@ -25,6 +33,8 @@ enum PlatformType {
     IC_212 ('212'),
     // Android Studio Dolphin | 2021.3.1
     IC_213 ('213'),
+    // Android Studio Electric Eel | 2022.1.1
+    IC_221 ('221'),
 
     final String branchNumber
 
@@ -48,7 +58,7 @@ String pluginEngineVersion = '3.3.1'
 
 // 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
-PlatformType pluginEnginePlatform = PlatformType.IC_213
+PlatformType pluginEnginePlatform = PlatformType.IC_221
 
 // 用于开发 flr-plugin 时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
@@ -80,6 +90,8 @@ switch (pluginProductPlatform) {
     case PlatformType.IC_212:
 // Config for Android Studio Dolphin | 2021.3.1
     case PlatformType.IC_213:
+// Config for Android Studio Electric Eel | 2022.1.1
+    case PlatformType.IC_221:
         sourceCompatibility = '11'
         break
 }
@@ -109,8 +121,15 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile group: 'org.yaml', name: 'snakeyaml', version: '1.26'
+    /*
+    gradle7 适配说明：
+    - compile 函数名需要改为 implementation
+    - testCompile 函数名需要改为 testImplementation
+    */
+//    testCompile group: 'junit', name: 'junit', version: '4.12'
+//    compile group: 'org.yaml', name: 'snakeyaml', version: '1.26'
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    implementation group: 'org.yaml', name: 'snakeyaml', version: '1.26'
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
@@ -165,6 +184,11 @@ intellij {
         case PlatformType.IC_213:
             platformVersion = '2021.3.2'
             platformPlugins = ['Dart:213.7371', 'io.flutter:70.0.3']
+            break
+        // Config for Android Studio Electric Eel | 2022.1.1
+        case PlatformType.IC_221:
+            platformVersion = '2022.1.4'
+            platformPlugins = ['java', 'Dart:221.6096', 'io.flutter:71.2.4']
             break
     }
 
