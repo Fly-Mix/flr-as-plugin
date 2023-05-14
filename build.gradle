@@ -45,6 +45,8 @@ enum PlatformType {
     IC_221 ('221'),
     // Android Studio Flamingo | 2022.2.1
     IC_222 ('222'),
+    // Android Studio Giraffe | 2022.3.1
+    IC_223 ('223'),
 
     final String branchNumber
 
@@ -68,7 +70,7 @@ String pluginEngineVersion = '3.3.1'
 
 // 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
-PlatformType pluginEnginePlatform = PlatformType.IC_222
+PlatformType pluginEnginePlatform = PlatformType.IC_223
 
 // 用于开发 flr-plugin 时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
@@ -106,6 +108,8 @@ switch (pluginProductPlatform) {
         break
 // Config for Android Studio Flamingo | 2022.2.1
     case PlatformType.IC_222:
+// Config for Android Studio Giraffe | 2022.3.1
+    case PlatformType.IC_223:
         sourceCompatibility = '17'
         break
 }
@@ -208,6 +212,11 @@ intellij {
         case PlatformType.IC_222:
             platformVersion = '2022.2.4'
             platformPlugins = ['java', 'Dart:222.4582', 'io.flutter:73.0.2']
+            break
+    // Config for Android Studio Giraffe | 2022.3.1
+        case PlatformType.IC_223:
+            platformVersion = '2022.3.3'
+            platformPlugins = ['java', 'Dart:223.8950', 'io.flutter:73.0.3']
             break
     }
 
