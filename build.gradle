@@ -4,11 +4,19 @@ plugins {
 
     /*
     Gradle-IntelliJ-Plugin 'org.jetbrains.intellij' 的设置说明：
-    - build plugin for 2022.1 需要使用 gradle 7.* 以上，以及 'org.jetbrains.intellij' 需要使用 1.5.3+ 版本
-    - 若使用本地默认的 gradle ，请手动切换 gradle 到特定版本
+    1. Gradle-IntelliJ-Plugin'org.jetbrains.intellij' 版本升级说明：
+       - build plugin for 2022.1 ，'org.jetbrains.intellij' 需要使用 1.5.3+ 版本（同时需要升级 gradle 版本到 7.* 以上，JDK 版本至 11）
+       - build plugin for 2022.2.3 ，'org.jetbrains.intellij' 需要使用 1.13.3+ 版本（同时需要升级 gradle 版本到 7.* 以上，JDK 版本至 17）
+    2. 若使用本地默认的 gradle ，请手动切换 gradle 到特定版本
+    3. 当前项目默认使项目根目录下 gradle/wrapper/gradle-wrapper.properties 中指定的 gradle 版本，更改当前项目的 gradle 版本的便捷方法是：修改 gradle-wrapper.properties 中 distributionUrl（目标gradle下载地址）
+       - 使用 gradle-5.2.1：distributionUrl=https\://services.gradle.org/distributions/gradle-5.2.1-all.zip
+       - 使用 gradle-7.5.1：distributionUrl=https\://services.gradle.org/distributions/gradle-7.5.1-all.zip
+    4. 当前项目使用的 JDK 版本设置：Preferences | Build, Execution, Deployment | Build Tools | Gradle，Gradle JVM 设置对应版本 JDK
+
     */
     // id 'org.jetbrains.intellij' version '0.4.16' // gradle 6.7
-    id 'org.jetbrains.intellij' version '1.12.0' // gradle 7.5.1
+    // id 'org.jetbrains.intellij' version '1.12.0' // gradle 7.5.1
+    id 'org.jetbrains.intellij' version '1.13.3' // gradle 7.5.1
 }
 
 // 插件需要支持的 IntelliJ IDEA Community Edition平台版本
@@ -35,6 +43,8 @@ enum PlatformType {
     IC_213 ('213'),
     // Android Studio Electric Eel | 2022.1.1
     IC_221 ('221'),
+    // Android Studio Flamingo | 2022.2.1
+    IC_222 ('222'),
 
     final String branchNumber
 
@@ -58,7 +68,7 @@ String pluginEngineVersion = '3.3.1'
 
 // 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
-PlatformType pluginEnginePlatform = PlatformType.IC_221
+PlatformType pluginEnginePlatform = PlatformType.IC_222
 
 // 用于开发 flr-plugin 时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
@@ -93,6 +103,10 @@ switch (pluginProductPlatform) {
 // Config for Android Studio Electric Eel | 2022.1.1
     case PlatformType.IC_221:
         sourceCompatibility = '11'
+        break
+// Config for Android Studio Flamingo | 2022.2.1
+    case PlatformType.IC_222:
+        sourceCompatibility = '17'
         break
 }
 
@@ -189,6 +203,11 @@ intellij {
         case PlatformType.IC_221:
             platformVersion = '2022.1.4'
             platformPlugins = ['java', 'Dart:221.6096', 'io.flutter:71.2.4']
+            break
+        // Config for Android Studio Flamingo | 2022.2.1
+        case PlatformType.IC_222:
+            platformVersion = '2022.2.4'
+            platformPlugins = ['java', 'Dart:222.4582', 'io.flutter:73.0.2']
             break
     }
 
