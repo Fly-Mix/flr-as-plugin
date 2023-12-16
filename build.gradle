@@ -224,8 +224,8 @@ intellij {
             break
         // Config for Android Studio Hedgehog | 2023.1.1
         case PlatformType.IC_231:
-            platformVersion = '2023.1'
-            platformPlugins = ['java', 'Dart:231.9065', 'io.flutter:74.0.4']
+            platformVersion = '2023.1.5'
+            platformPlugins = ['java', 'Dart:231.9402', 'io.flutter:77.1.2']
             break
     }
 
