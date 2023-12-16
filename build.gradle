@@ -274,7 +274,11 @@ patchPluginXml {
     */
     changeNotes = """
 <h2>Flr Plugin Change Notes</h2>
-
+<i><b>Attention:</b> Flr v231.* is built for Android Studio Hedgehog | 2023.1.1</i>
+<h3>231.3.3.1</h3>
+<ul>
+  <li>First released for Android Studio Hedgehog | 2023.1.1</li>
+</ul>
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
 <h3>3.3.1</h3>
