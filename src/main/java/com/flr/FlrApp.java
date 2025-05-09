@@ -1,39 +1,60 @@
 package com.flr;
 
 import com.flr.command.FlrCommand;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.components.ProjectComponent;
+import org.jetbrains.annotations.NotNull;
 
-public class FlrApp implements ProjectComponent {
-    public final Project curProject;
+@Service(Service.Level.PROJECT)
+@State(
+    name = "FlrApp",
+    storages = {@Storage("flr.xml")}
+)
+public final class FlrApp {
+    private static FlrApp instance;
+    private final Project curProject;
+    private final FlrCommand flrCommand;
 
-    public final FlrCommand flrCommand;
-
-    public FlrApp(Project project) {
+    private FlrApp(@NotNull Project project) {
         curProject = project;
         flrCommand = new FlrCommand(curProject);
+        
+        // 注册项目关闭监听器
+        project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+            @Override
+            public void projectClosing(@NotNull Project project) {
+                if (project.equals(curProject)) {
+                    dispose();
+                }
+            }
+        });
     }
 
-    @Override
-    public void initComponent() {
-        System.out.println("AppLifecycle-1. initComponent");
+    public static FlrApp getInstance(@NotNull Project project) {
+        if (instance == null) {
+            synchronized (FlrApp.class) {
+                if (instance == null) {
+                    instance = project.getService(FlrApp.class);
+                }
+            }
+        }
+        return instance;
     }
 
-    @Override
-    public void projectOpened() {
-        System.out.println("AppLifecycle-2. projectOpened");
+    public void dispose() {
+        if (flrCommand != null) {
+            flrCommand.dispose();
+        }
+        instance = null;
     }
 
-    @Override
-    public void projectClosed() {
-        System.out.println("AppLifecycle-3. projectClosed");
+    public FlrCommand getFlrCommand() {
+        return flrCommand;
     }
-
-    @Override
-    public void disposeComponent() {
-        System.out.println("AppLifecycle-4. disposeComponent");
-        flrCommand.dispose();
-    }
-
-
 }
