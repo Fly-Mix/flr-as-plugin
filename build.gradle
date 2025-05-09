@@ -285,7 +285,7 @@ patchPluginXml {
     changeNotes = """
 <h2>Flr Plugin Change Notes</h2>
 <i><b>Attention:</b> Flr v243.* is built for Android Studio Meerkat | 2024.3.1</i>
-<h3>243.3.3.1</h3>
+<h3>243.3.4.0</h3>
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
 <h3>3.4.0</h3>
