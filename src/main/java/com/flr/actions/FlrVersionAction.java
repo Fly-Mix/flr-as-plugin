@@ -13,12 +13,13 @@ public class FlrVersionAction extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getData(PlatformDataKeys.PROJECT);
+        if (project == null) return;
 
         FlrLogConsole flrLogConsole = FlrToolWindowFactory.getLogConsole(project);
         FlrToolWindowFactory.showCurLogConsole(project);
         flrLogConsole.clear();
 
-        FlrApp flrApp = project.getComponent(FlrApp.class);
-        flrApp.flrCommand.displayVersion(e, flrLogConsole);
+        FlrApp flrApp = FlrApp.getInstance(project);
+        flrApp.getFlrCommand().displayVersion(e, flrLogConsole);
     }
 }

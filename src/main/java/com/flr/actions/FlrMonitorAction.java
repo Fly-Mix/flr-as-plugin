@@ -14,21 +14,22 @@ public class FlrMonitorAction extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getData(PlatformDataKeys.PROJECT);
+        if (project == null) return;
 
         FlrLogConsole flrLogConsole = FlrToolWindowFactory.getLogConsole(project);
         FlrToolWindowFactory.showCurLogConsole(project);
         flrLogConsole.clear();
 
-        FlrApp flrApp = project.getComponent(FlrApp.class);
+        FlrApp flrApp = FlrApp.getInstance(project);
         Presentation actionPresentation = e.getPresentation();
-        if(flrApp.flrCommand.isMonitoringAssets) {
+        if(flrApp.getFlrCommand().isMonitoringAssets) {
             actionPresentation.setText("Start Monitor");
             actionPresentation.setDescription("launch a monitoring service");
-            flrApp.flrCommand.stopMonitor(e, flrLogConsole);
+            flrApp.getFlrCommand().stopMonitor(e, flrLogConsole);
         } else {
             actionPresentation.setText("Stop Monitor");
             actionPresentation.setDescription("terminate the monitoring service");
-            Boolean isStartSuccess = flrApp.flrCommand.startMonitor(e, flrLogConsole);
+            Boolean isStartSuccess = flrApp.getFlrCommand().startMonitor(e, flrLogConsole);
             if(isStartSuccess == false) {
                 actionPresentation.setText("Start Monitor");
                 actionPresentation.setDescription("launch a monitoring service");

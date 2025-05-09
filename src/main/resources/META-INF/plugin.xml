@@ -14,16 +14,9 @@
     <depends>Dart</depends>
     <depends>io.flutter</depends>
 
-    <project-components>
-        <component>
-            <implementation-class>com.flr.FlrApp</implementation-class>
-        </component>
-    </project-components>
-
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
         <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.toolWindow.FlrToolWindowFactory"/>
-
     </extensions>
 
     <actions>
