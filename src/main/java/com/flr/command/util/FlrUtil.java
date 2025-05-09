@@ -5,7 +5,10 @@ import com.flr.FlrConstant;
 import com.flr.FlrException;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.extensions.PluginId;
@@ -111,18 +114,14 @@ public class FlrUtil {
     // MARK: - Flutter Util Methods
     public static void runFlutterPubGet(AnActionEvent actionEvent) {
         // 从后台任务线程切换到UI线程
-        // https://intellij-support.jetbrains.com/hc/en-us/community/posts/206124399-Error-Write-access-is-allowed-from-event-dispatch-thread-only
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        FlutterPackagesGetAction flutterPubGetAction = new FlutterPackagesGetAction();
-                        flutterPubGetAction.actionPerformed(actionEvent);
-                    }
-                });
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+            ApplicationManager.getApplication().runWriteAction(() -> {
+                // 使用 ActionManager 来执行 FlutterPackagesGetAction
+                AnAction action = ActionManager.getInstance().getAction("flutter.pub.get");
+                if (action != null) {
+                    action.actionPerformed(actionEvent);
+                }
+            });
         });
     }
 
