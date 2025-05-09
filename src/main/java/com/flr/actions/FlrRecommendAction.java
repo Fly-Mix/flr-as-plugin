@@ -13,12 +13,13 @@ public class FlrRecommendAction extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getData(PlatformDataKeys.PROJECT);
+        if (project == null) return;
 
         FlrLogConsole flrLogConsole = FlrToolWindowFactory.getLogConsole(project);
         FlrToolWindowFactory.showCurLogConsole(project);
         flrLogConsole.clear();
 
-        FlrApp flrApp = project.getComponent(FlrApp.class);
-        flrApp.flrCommand.displayRecommendedFlutterResourceStructure(e, flrLogConsole);
+        FlrApp flrApp = FlrApp.getInstance(project);
+        flrApp.getFlrCommand().displayRecommendedFlutterResourceStructure(e, flrLogConsole);
     }
 }

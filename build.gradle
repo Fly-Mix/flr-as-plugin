@@ -287,6 +287,10 @@ patchPluginXml {
 
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
+<h3>3.4.0</h3>
+<ul>
+  <li>Migrate existing code from Components to modern APIs</li>
+</ul>
 <h3>3.3.1</h3>
 <ul>
   <li>Fix bug</li>

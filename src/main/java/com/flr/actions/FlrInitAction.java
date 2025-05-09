@@ -17,19 +17,20 @@ public class FlrInitAction extends AnAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
         Project project = e.getData(PlatformDataKeys.PROJECT);
+        if (project == null) return;
 
         FlrLogConsole flrLogConsole = FlrToolWindowFactory.getLogConsole(project);
         FlrToolWindowFactory.showCurLogConsole(project);
         flrLogConsole.clear();
 
-        FlrApp flrApp = project.getComponent(FlrApp.class);
+        FlrApp flrApp = FlrApp.getInstance(project);
 
         // Java Code Examples for com.intellij.openapi.progress.ProgressIndicator
         // https://www.programcreek.com/java-api-examples/?api=com.intellij.openapi.progress.ProgressIndicator
         ProgressManager.getInstance().run(new Task.Backgroundable(project, "Flr Init", false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-                flrApp.flrCommand.initAll(e, flrLogConsole);
+                flrApp.getFlrCommand().initAll(e, flrLogConsole);
             }
         });
     }

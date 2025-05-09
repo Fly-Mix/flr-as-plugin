@@ -4,6 +4,7 @@ package com.flr.command.util;
 import com.flr.FlrConstant;
 import com.flr.FlrException;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -64,8 +65,7 @@ public class FlrUtil {
     * */
     public static String getFlrVersion() {
         PluginId flrPluginId = PluginId.getId(FlrConstant.PLUGIN_ID);
-        String flrVersion = PluginManager.getPlugin(flrPluginId).getVersion();
-        return  flrVersion;
+        return PluginManagerCore.getPlugin(flrPluginId).getVersion();
     }
 
     // MARK: - Shell Util Methods
