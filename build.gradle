@@ -16,7 +16,8 @@ plugins {
     */
     // id 'org.jetbrains.intellij' version '0.4.16' // gradle 6.7
     // id 'org.jetbrains.intellij' version '1.12.0' // gradle 7.5.1
-    id 'org.jetbrains.intellij' version '1.13.3' // gradle 7.5.1
+    // id 'org.jetbrains.intellij' version '1.13.3' // gradle 7.5.1
+    id 'org.jetbrains.intellij' version '1.17.1' // gradle 7.5.1
 }
 
 // 插件需要支持的 IntelliJ IDEA Community Edition平台版本
@@ -49,6 +50,8 @@ enum PlatformType {
     IC_223 ('223'),
     // Android Studio Hedgehog | 2023.1.1
     IC_231 ('231'),
+    // Android Studio Meerkat | 2024.3.1
+    IC_243 ('243'),
 
     final String branchNumber
 
@@ -72,7 +75,7 @@ String pluginEngineVersion = '3.3.1'
 
 // 用于开发 flr-plugin-engine 时使用平台版本
 // 一般使用最新平台版本
-PlatformType pluginEnginePlatform = PlatformType.IC_231
+PlatformType pluginEnginePlatform = PlatformType.IC_243
 
 // 用于开发 flr-plugin 时使用平台版本
 // 该值在切换到 platform-master 分支后，手动更新
@@ -114,6 +117,8 @@ switch (pluginProductPlatform) {
     case PlatformType.IC_223:
 // Config for Android Studio Hedgehog | 2023.1.1
     case PlatformType.IC_231:
+// Config for Android Studio Meerkat | 2024.3.1
+    case PlatformType.IC_243:
         sourceCompatibility = '17'
         break
 }
@@ -226,6 +231,11 @@ intellij {
         case PlatformType.IC_231:
             platformVersion = '2023.1.5'
             platformPlugins = ['java', 'Dart:231.9402', 'io.flutter:77.1.2']
+            break
+        // Config for Android Studio Meerkat | 2024.3.1
+        case PlatformType.IC_243:
+            platformVersion = '2024.3.1'
+            platformPlugins = ['java', 'Dart:243.23177', 'io.flutter:82.2.4']
             break
     }
 
