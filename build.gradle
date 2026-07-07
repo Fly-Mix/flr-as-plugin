@@ -159,6 +159,16 @@ dependencies {
     implementation group: 'org.yaml', name: 'snakeyaml', version: '1.26'
 }
 
+// headless 基准回归测试的运行参数（可用 -PflrDemoPath / -PflrDartPath 覆盖）：
+// - flr.demo.path：基准工程 flutter_r_demo 路径，默认同级目录；缺失时相关测试自动跳过
+// - flr.dart.path：dart 可执行文件，用于对 r.g.dart 做归一化比较（脱离 formatter 版本）
+test {
+    systemProperty 'flr.demo.path',
+            project.hasProperty('flrDemoPath') ? project.property('flrDemoPath') : "${rootProject.projectDir}/../flutter_r_demo"
+    systemProperty 'flr.dart.path',
+            project.hasProperty('flrDartPath') ? project.property('flrDartPath') : '/Users/York/.flutter/flutter/bin/dart'
+}
+
 // See https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
 // Get platformVersion with Build#AI-Version of Android Studio from https://www.jetbrains.com/idea/download/other.html
 intellij {

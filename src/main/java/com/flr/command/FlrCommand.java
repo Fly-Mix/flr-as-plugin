@@ -2,26 +2,26 @@ package com.flr.command;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
-import com.flr.command.util.FlrAssetUtil;
-import com.flr.command.util.FlrCodeUtil;
 import com.flr.command.util.FlrFileUtil;
 import com.flr.command.util.FlrUtil;
-import com.flr.logConsole.FlrColoredLogEntity;
+import com.flr.core.env.FlutterEnvironment;
+import com.flr.core.format.DartFormatter;
+import com.flr.core.report.FlrReporter;
+import com.flr.core.usecase.GenerateUseCase;
+import com.flr.infra.FlrConsoleReporter;
+import com.flr.infra.IdeDartFormatter;
+import com.flr.infra.IdeFlutterEnvironment;
 import com.flr.logConsole.FlrLogConsole;
 import com.flr.messageBox.FlrMessageBox;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import io.flutter.sdk.*;
-import com.jetbrains.lang.dart.sdk.DartSdk;
-import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 
 /**
  * 专有名词简单解释和示例：
@@ -54,46 +54,16 @@ public class FlrCommand implements Disposable {
 
     private FlrLogConsole.LogType titleLogType = FlrLogConsole.LogType.tips;
 
-    private boolean didInitFlutterEnv = false; // 是否初始化了Flutter环境信息；Flutter环境信息包括：shouldSupportNullsafety、isFlutterProject
+    // Flutter/Dart 环境探测接缝（SDK 探测、nullsafety 判定、r_dart_library 版本）
+    private final FlutterEnvironment flutterEnvironment;
 
-    private boolean shouldSupportNullsafety = false;
-
-    public boolean isFlutterProject = false;
+    // Dart 代码格式化接缝
+    private final DartFormatter dartFormatter;
 
     public FlrCommand(Project project) {
         curProject = project;
-    }
-
-    private void initFlagEnvIfNeed() {
-        if (this.didInitFlutterEnv) {
-            return;
-        }
-
-        this.didInitFlutterEnv = true;
-
-        this.shouldSupportNullsafety = false;
-
-        FlutterSdk flutterSdk = FlutterSdk.getFlutterSdk(curProject);
-        if (flutterSdk == null) {
-            this.isFlutterProject = false;
-            return;
-        }
-
-        this.isFlutterProject = true;
-        VirtualFile flutterSdkHome = flutterSdk.getHome();
-        FlutterSdkVersion flutterSdkVersion = FlutterSdkVersion.readFromSdk(flutterSdkHome);
-        String flutterVersionWithoutHotfixStr = flutterSdkVersion.toString();
-
-        DartSdk dartSdk = DartSdk.getDartSdk(curProject);
-        String dartSdkVersionStr = (dartSdk == null) ? "0.0.0" : dartSdk.getVersion();
-
-        int compareResult = FlrUtil.versionCompare(flutterVersionWithoutHotfixStr, "1.10.15");
-        if(compareResult == 0 || compareResult == 1) {
-            compareResult = FlrUtil.versionCompare(dartSdkVersionStr, "2.12.0");
-            if(compareResult == 0 || compareResult == 1) {
-                this.shouldSupportNullsafety = true;
-            }
-        }
+        flutterEnvironment = new IdeFlutterEnvironment(project);
+        dartFormatter = new IdeDartFormatter(project);
     }
 
     @Override
@@ -109,9 +79,7 @@ public class FlrCommand implements Disposable {
     * 检测当前project是不是 flutter project，如果不是就打印提示
     * */
     public boolean checkIsFlutterProjectAndShowTips(@NotNull FlrLogConsole flrLogConsole) {
-        initFlagEnvIfNeed();
-
-        if (this.isFlutterProject) {
+        if (flutterEnvironment.isFlutterProject()) {
             return true;
         }
 
@@ -303,7 +271,7 @@ public class FlrCommand implements Disposable {
 
         // 添加依赖包`r_dart_library`(https://github.com/YK-Unit/r_dart_library)的声明到pubspec.yaml
         Map<String, Object> dependenciesMap = (Map<String, Object>)pubspecConfig.get("dependencies");
-        String rDartLibraryVersion = getRDartLibraryVersion();
+        String rDartLibraryVersion = flutterEnvironment.getRDartLibraryVersion();
         dependenciesMap.put("r_dart_library", rDartLibraryVersion);
         pubspecConfig.put("dependencies", dependenciesMap);
 
@@ -428,542 +396,13 @@ public class FlrCommand implements Disposable {
 
     /*
     * 扫描资源目录，自动为资源添加声明到 pubspec.yaml 和生成 r.g.dart
+    *
+    * 薄适配层：构造 FlrReporter 与三接缝，委托 GenerateUseCase 执行全流水线（逻辑见 GenerateUseCase）。
     * */
     public void generateOne(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole, @NotNull String flutterProjectRootDir) {
-        String indicatorMessage = "--------------------------- generate for specified project ---------------------------";
-        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        String flrExceptionTitle = String.format("[x]: generate for %s failed", flutterProjectRootDir) ;;
-
-        // 警告日志数组
-        List<FlrColoredLogEntity> warningMessages = new ArrayList<FlrColoredLogEntity>();
-
-        String pubspecFilePath;
-        File pubspecFile;
-        Map<String, Object> pubspecConfig;
-        Map<String, Object> flrConfig;
-        List<List<String>> resourceDirResultTuple;
-
-        indicatorMessage = String.format("generate for %s now ...", flutterProjectRootDir);
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        // ----- Step-1 Begin -----
-        // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程：
-        // - 检测当前flutter工程根目录是否存在pubspec.yaml
-        // - 检测当前pubspec.yaml中是否存在Flr的配置
-        // - 检测当前flr_config中的resource_dir配置是否合法：
-        //    判断合法的标准是：assets配置或者fonts配置了至少1个legal_resource_dir
-        //
-
-        try {
-            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
-
-            pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
-            pubspecFile = new File(pubspecFilePath);
-            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
-
-            FlrChecker.checkFlrConfigIsExisted(flrLogConsole, pubspecConfig);
-            flrConfig = (Map<String, Object>)pubspecConfig.get("flr");
-
-            resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(flrLogConsole, flrConfig, flutterProjectRootDir);
-        } catch (FlrException e) {
-            handleFlrException(flrExceptionTitle, e);
-
-            flrLogConsole.println(flrExceptionTitle, FlrLogConsole.LogType.error);
-
-            indicatorMessage = "--------------------------------------------------------------------------------------";
-            flrLogConsole.println(indicatorMessage, indicatorType);
-            return;
-        }
-
-        String packageName = (String) pubspecConfig.get("name");
-        boolean isPackageProjectType = FlrFileUtil.isPackageProjectType(flrLogConsole, flutterProjectRootDir);
-
-        // ----- Step-1 End -----
-
-        // ----- Step-2 Begin -----
-        // 进行核心逻辑版本检测：
-        // 检测flr_config中的core_version和当前工具的core_version是否一致；若不一致，则按照以下规则处理：
-        //  - 更新flr_config中的core_version的值为当前工具的core_version；
-        //  - 生成“核心逻辑版本不一致”的警告日志，存放到警告日志数组。
-        //
-
-        String flrCoreVersion = (String)flrConfig.get("core_version");
-
-        if(flrCoreVersion instanceof String == false) {
-            flrCoreVersion = "unknown";
-        }
-
-        if(flrCoreVersion.equals(FlrConstant.CORE_VERSION) == false) {
-            flrConfig.put("core_version", FlrConstant.CORE_VERSION);
-
-            String warningText = String.format("[!]: warning, some team members may be using Flr tool with core_version %s, while you are using Flr tool with core_version %s", flrCoreVersion,FlrConstant.CORE_VERSION);
-            String tipsText = "[*]: to fix it, you and your team members should use the Flr tool with same core_version"
-                    + "\n"
-                    + "[*]: \"core_version\" is the core logic version of Flr tool, you can click menu \"Tools-Flr-Version\" to get it";
-
-            FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
-            FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.tips);
-            List<FlrColoredLogEntity.Item> items = Arrays.asList(warningItem, tipsItem);
-
-            FlrColoredLogEntity logEntity = new FlrColoredLogEntity(items);
-            warningMessages.add(logEntity);
-        }
-
-        // ----- Step-2 End -----
-
-        // ----- Step-3 Begin -----
-        // 获取assets_legal_resource_dir数组、fonts_legal_resource_dir数组和illegal_resource_dir数组：
-        // - 从flr_config中的assets配置获取assets_legal_resource_dir数组和assets_illegal_resource_dir数组；
-        // - 从flr_config中的fonts配置获取fonts_legal_resource_dir数组和fonts_illegal_resource_dir数组；
-        // - 合并assets_illegal_resource_dir数组和fonts_illegal_resource_dir数组为illegal_resource_dir数组‘；若illegal_resource_dir数组长度大于0，则生成“存在非法的资源目录”的警告日志，存放到警告日志数组。
-
-        // 合法的资源目录数组
-        List<String> assetsLegalResourceDirArray = resourceDirResultTuple.get(0);
-        List<String> fontsLegalResourceDirArray = resourceDirResultTuple.get(1);
-        // 非法的资源目录数组
-        List<String>  illegalResourceDirArray = resourceDirResultTuple.get(2);
-
-        if(illegalResourceDirArray.size() > 0) {
-            String warningText = "[!]: warning, found the following resource directory which is not existed: ";
-            for (String resourceDir : illegalResourceDirArray) {
-                warningText += "\n" + String.format("  - %s", resourceDir);
-            }
-
-            FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
-            List<FlrColoredLogEntity.Item> items = Arrays.asList(warningItem);
-
-            FlrColoredLogEntity logEntity = new FlrColoredLogEntity(items);
-            warningMessages.add(logEntity);
-        }
-
-        // ----- Step-3 End -----
-
-        indicatorMessage = "scan assets now ...";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        // ----- Step-4 Begin -----
-        // 扫描assets_legal_resource_dir数组中的legal_resource_dir，输出有序的image_asset数组、non_svg_image_asset数组、svg_image_asset数组、illegal_image_file数组：
-        // - 创建image_asset数组、illegal_image_file数组；
-        // - 遍历assets_legal_resource_dir数组，按照如下处理每个资源目录：
-        //  - 扫描当前资源目录和其所有层级的子目录，查找所有image_file；
-        //  - 根据legal_resource_file的标准，筛选查找结果生成legal_image_file子数组和illegal_image_file子数组；illegal_image_file子数组合并到illegal_image_file数组；
-        //  - 根据image_asset的定义，遍历legal_image_file子数组，生成image_asset子数；组；image_asset子数组合并到image_asset数组。
-        // - 对image_asset数组做去重处理；
-        // - 按照字典顺序对image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
-        // - 按照SVG分类，从image_asset数组筛选得到有序的non_svg_image_asset数组和svg_image_asset数组：
-        //  - 按照SVG分类，从image_asset数组筛选得到non_svg_image_asset数组和svg_image_asset数组；
-        //  - 按照字典顺序对non_svg_image_asset数组和svg_image_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
-        // - 输出有序的image_asset数组、non_svg_image_asset数组、svg_image_asset数组、illegal_image_file数组。
-
-        List<String> imageAssetArray = new ArrayList<String>();
-        List<VirtualFile> illegalImageFileArray = new ArrayList<VirtualFile>();
-
-        for (String resourceDir : assetsLegalResourceDirArray) {
-            List<List<VirtualFile>> imageFileResultTuple = FlrFileUtil.findImageFiles(resourceDir);
-            List<VirtualFile> legalImageFileSubArray = imageFileResultTuple.get(0);
-            List<VirtualFile> illegalImageFileSubArray = imageFileResultTuple.get(1);
-
-            illegalImageFileArray.addAll(illegalImageFileSubArray);
-
-            List<String> imageAssetSubArray = FlrAssetUtil.generateImageAssets(flutterProjectRootDir, packageName, legalImageFileSubArray);
-            imageAssetArray.addAll(imageAssetSubArray);
-        }
-
-        // uniq
-        imageAssetArray = new ArrayList<String>(new HashSet<String>(imageAssetArray));
-        // sort
-        Collections.sort(imageAssetArray);
-
-        List<String> nonSvgImageAssetArray = new ArrayList<String>();
-        List<String> svgImageAssetArray = new ArrayList<String>();
-
-        for (String asset : imageAssetArray) {
-            File assetFile = new File(asset);
-            if(FlrFileUtil.isSvgImageResourceFile(assetFile)) {
-                svgImageAssetArray.add(asset);
-            } else {
-                nonSvgImageAssetArray.add(asset);
-            }
-        }
-
-        Collections.sort(nonSvgImageAssetArray);
-        Collections.sort(svgImageAssetArray);
-
-        // ----- Step-4 End -----
-
-        // ----- Step-5 Begin -----
-        // 扫描assets_legal_resource_dir数组中的legal_resource_dir，输出text_asset数组和illegal_text_file数组：
-        // - 创建text_asset数组、illegal_text_file数组；
-        // - 遍历assets_legal_resource_dir数组，按照如下处理每个资源目录：
-        //  - 扫描当前资源目录和其所有层级的子目录，查找所有text_file；
-        //  - 根据legal_resource_file的标准，筛选查找结果生成legal_text_file子数组和illegal_text_file子数组；illegal_text_file子数组合并到illegal_text_file数组；
-        //  - 根据text_asset的定义，遍历legal_text_file子数组，生成text_asset子数组；text_asset子数组合并到text_asset数组。
-        // - 对text_asset数组做去重处理；
-        // - 按照字典顺序对text_asset数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
-        // - 输出text_asset数组和illegal_image_file数组。
-        //
-
-        List<String> textAssetArray = new ArrayList<String>();
-        List<VirtualFile> illegalTextFileArray = new ArrayList<VirtualFile>();
-
-        for (String resourceDir : assetsLegalResourceDirArray) {
-            List<List<VirtualFile>> textFileResultTuple = FlrFileUtil.findTextFiles(resourceDir);
-            List<VirtualFile> legalTextFileSubArray = textFileResultTuple.get(0);
-            List<VirtualFile> illegalTextFileSubArray = textFileResultTuple.get(1);
-
-            illegalTextFileArray.addAll(illegalTextFileSubArray);
-
-            List<String> textAssetSubArray = FlrAssetUtil.generateTextAssets(flutterProjectRootDir, packageName, legalTextFileSubArray);
-            textAssetArray.addAll(textAssetSubArray);
-        }
-
-        // uniq
-        textAssetArray = new ArrayList<String>(new HashSet<String>(textAssetArray));
-        // sort
-        Collections.sort(textAssetArray);
-
-        // ----- Step-5 End -----
-
-        // ----- Step-6 Begin -----
-        // 扫描fonts_legal_resource_dir数组中的legal_resource_dir，输出font_family_config数组、illegal_font_file数组：
-        // - 创建font_family_config数组、illegal_font_file数组；
-        // - 遍历fonts_legal_resource_dir数组，按照如下处理每个资源目录：
-        //  - 扫描当前资源目录，获得其第1级子目录数组，并按照字典顺序对数组做升序排列（一般使用开发语言提供的默认的sort算法即可）；
-        //  - 遍历第1级子目录数组，按照如下处理每个子目录：
-        //    - 获取当前子目录的名称，生成font_family_name；
-        //    - 扫描当前子目录和其所有子目录，查找所有font_file；
-        //    - 根据legal_resource_file的标准，筛选查找结果生成legal_font_file数组和illegal_font_file子数组；illegal_font_file子数组合并到illegal_font_file数组；
-        //    - 据font_asset的定义，遍历legal_font_file数组，生成font_asset_config数组；
-        //    - 按照字典顺序对生成font_asset_config数组做升序排列（比较asset的值）；
-        //    - 根据font_family_config的定义，为当前子目录组织font_family_name和font_asset_config数组生成font_family_config对象，添加到font_family_config子数组；font_family_config子数组合并到font_family_config数组。
-        // - 输出font_family_config数组、illegal_font_file数组；
-        // - 按照字典顺序对font_family_config数组做升序排列（比较family的值）。
-
-
-        List<Map> fontFamilyConfigArray = new ArrayList<Map>();
-        List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
-
-        for (String resourceDir : fontsLegalResourceDirArray) {
-            List<VirtualFile> fontFamilyDirArray = FlrFileUtil.findTopChildDirs(resourceDir);
-
-            for (VirtualFile fontFamilyDirFile : fontFamilyDirArray) {
-               String fontFamilyName = fontFamilyDirFile.getName();
-
-                List<List<VirtualFile>> fontFileResultTuple = FlrFileUtil.findFontFilesInFontFamilyDir(fontFamilyDirFile);
-                List<VirtualFile> legalFontFileArray = fontFileResultTuple.get(0);
-                List<VirtualFile> illegalFontFileSubArray = fontFileResultTuple.get(1);
-
-                illegalFontFileArray.addAll(illegalFontFileSubArray);
-
-                if(legalFontFileArray.size() <= 0) {
-                    continue;
-                }
-
-                List<Map> fontAssetConfigArray = FlrAssetUtil.generateFontAssetConfigs(flutterProjectRootDir, packageName, legalFontFileArray);
-                fontAssetConfigArray.sort(new Comparator<Map>() {
-                    @Override
-                    public int compare(Map o1, Map o2) {
-                        String assetValue1 = (String)o1.get("asset");
-                        String assetValue2 = (String)o2.get("asset");
-                        return assetValue1.compareTo(assetValue2);
-                    }
-                });
-
-                Map<String, Object> fontFamilyConfig = new LinkedHashMap<String, Object>();
-                fontFamilyConfig.put("family", fontFamilyName);
-                fontFamilyConfig.put("fonts", fontAssetConfigArray);
-
-                fontFamilyConfigArray.add(fontFamilyConfig);
-            }
-        }
-
-        fontFamilyConfigArray.sort(new Comparator<Map>() {
-            @Override
-            public int compare(Map o1, Map o2) {
-                String familyValue1 = (String)o1.get("family");
-                String familyValue2 = (String)o2.get("family");
-                return familyValue1.compareTo(familyValue2);
-            }
-        });
-
-        // ----- Step-6 End -----
-
-        indicatorMessage = "scan assets done !!!";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        //  ----- Step-7 Begin -----
-        //  检测是否存在illegal_resource_file：
-        // - 合并illegal_image_file数组、illegal_text_file数组和illegal_font_file数组为illegal_resource_file数组；
-        // - 若illegal_resource_file数组长度大于0，则生成“存在非法的资源文件”的警告日志，存放到警告日志数组。
-
-        List<VirtualFile> illegalResourceFileArray = new ArrayList<VirtualFile>();
-        illegalResourceFileArray.addAll(illegalImageFileArray);
-        illegalResourceFileArray.addAll(illegalTextFileArray);
-        illegalResourceFileArray.addAll(illegalFontFileArray);
-
-        if(illegalResourceFileArray.size() > 0) {
-            String warningText = "[!]: warning, found the following illegal resource file who's file basename contains illegal characters: ";
-            for (VirtualFile resourceFile : illegalResourceFileArray) {
-                warningText += "\n" + String.format("  - %s", resourceFile.getPath());
-            }
-
-            String tipsText  = "[*]: to fix it, you should only use letters (a-z, A-Z), numbers (0-9), and the other legal characters ('_', '+', '-', '.', '·', '!', '@', '&', '$', '￥') to name the file";
-
-            FlrColoredLogEntity.Item warningItem = new FlrColoredLogEntity.Item(warningText, FlrLogConsole.LogType.warning);
-            FlrColoredLogEntity.Item tipsItem = new FlrColoredLogEntity.Item(tipsText, FlrLogConsole.LogType.tips);
-            List<FlrColoredLogEntity.Item> items = Arrays.asList(warningItem, tipsItem);
-
-            FlrColoredLogEntity logEntity = new FlrColoredLogEntity(items);
-            warningMessages.add(logEntity);
-        }
-
-        // ----- Step-7 End -----
-
-        // 添加资源声明到 `pubspec.yaml`
-        indicatorMessage = "specify scanned assets in pubspec.yaml now ...";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        // ----- Step-8 Begin -----
-        // 为扫描得到的legal_resource_file添加资源声明到pubspec.yaml：
-        // - 合并image_asset数组和text_asset数组为new_asset_array（image_asset数组元素在前）；
-        // - 读取pubspec.yaml中flutter-assets配置，获得old_asset_array，然后和new_asset_array合并为asset数组；
-        // - 修改pubspec.yaml中flutter-assets配置的值为asset数组；
-        // - 修改pubspec.yaml中flutter-fonts配置的值为font_family_config数组。
-        //
-        Map<String, Object> flutterConfig = (Map<String, Object>)pubspecConfig.get("flutter");
-        if(flutterConfig == null || flrConfig instanceof Map == false) {
-            flutterConfig = new LinkedHashMap<>();
-        }
-
-        List<String> newAssetArray = new ArrayList<>();
-        newAssetArray.addAll(imageAssetArray);
-        newAssetArray.addAll(textAssetArray);
-
-        List<String> oldAssetArray = new ArrayList<>();
-        if (flutterConfig.containsKey("assets")) {
-            Object assets = flutterConfig.get("assets");
-            if(assets instanceof List) {
-                oldAssetArray = (List<String>)assets;
-            }
-        }
-
-        List<String> assetArray = FlrAssetUtil.mergeFlutterAssets(flutterProjectRootDir, packageName, newAssetArray, oldAssetArray);
-        if(assetArray.size() > 0) {
-            flutterConfig.put("assets", assetArray);
-        } else {
-            flutterConfig.remove("assets");
-        }
-
-        if(fontFamilyConfigArray.size() > 0) {
-            flutterConfig.put("fonts", fontFamilyConfigArray);
-        } else {
-            flutterConfig.remove("fonts");
-        }
-        pubspecConfig.put("flutter", flutterConfig);
-
-        // 保存刷新 pubspec.yaml
-        FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
-
-        // ----- Step-8 End -----
-
-        indicatorMessage = "specify scanned assets in pubspec.yaml done !!!";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        // ----- Step-9 Begin -----
-        // 分别遍历non_svg_image_asset数组、svg_image_asset数组、text_asset数组，
-        // 根据asset_id生成算法，分别输出non_svg_image_asset_id字典、svg_image_asset_id 字典、text_asset_id字典。
-        // 字典的key为asset，value为asset_id。
-        //
-        Map<String, String> nonSvgImageAssetIdDict = new HashMap<>();
-        Map<String, String> svgImageAssetIdDict = new HashMap<>();
-        Map<String, String> textAssetIdDict = new HashMap<>();
-
-        for (String asset : nonSvgImageAssetArray) {
-            List<String> usedAssetIdArray = new ArrayList<>(nonSvgImageAssetIdDict.values());
-            String assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE);
-            nonSvgImageAssetIdDict.put(asset, assetId);
-        }
-
-        for (String asset : svgImageAssetArray) {
-            List<String> usedAssetIdArray = new ArrayList<>(svgImageAssetIdDict.values());
-            String assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE);
-            svgImageAssetIdDict.put(asset, assetId);
-        }
-
-        for (String asset : textAssetArray) {
-            List<String> usedAssetIdArray = new ArrayList<>(textAssetIdDict.values());
-            String assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_TEXT_FILE_TYPE);
-            textAssetIdDict.put(asset, assetId);
-        }
-
-        // ----- Step-9 End -----
-
-        // 创建生成 `r.g.dart`
-        indicatorMessage = "generate \"r.g.dart\" now ...";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-
-        // ----- Step-10 Begin -----
-        // 在当前根目录下创建新的r.g.dart文件。
-        //
-
-        String r_dart_file_content = "";
-
-        // ----- Step-10 End -----
-
-        // ----- Step-11 Begin -----
-        // 生成 R 类的代码，追加写入r.g.dart
-        //
-
-        String g_R_class_code = FlrCodeUtil.generate_R_class(packageName);
-        r_dart_file_content += g_R_class_code;
-
-        // ----- Step-11 End -----
-
-
-        // ----- Step-12 Begin -----
-        // 生成 AssetResource 类的代码，追加写入r.g.dart
-        //
-
-        r_dart_file_content += "\n";
-        String g_AssetResource_class_code = FlrCodeUtil.generate_AssetResource_class(packageName, this.shouldSupportNullsafety);
-        r_dart_file_content += g_AssetResource_class_code;
-
-        // ----- Step-12 End -----
-
-
-        // ----- Step-13 Begin -----
-        // 遍历 non_svg_image_asset 数组，生成 _R_Image_AssetResource 类，追加写入 r.g.dart
-        //
-
-        r_dart_file_content += "\n";
-        String g__R_Image_AssetResource_class_code = FlrCodeUtil.generate__R_Image_AssetResource_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName, isPackageProjectType);
-        r_dart_file_content += g__R_Image_AssetResource_class_code;
-
-        // ----- Step-13 End -----
-
-
-        // ----- Step-14 Begin -----
-        // 遍历 svg_image_asset 数组，生成 _R_Svg_AssetResource 类，追加写入 r.g.dart。
-        //
-
-        r_dart_file_content += "\n";
-        String g__R_Svg_AssetResource_class_code = FlrCodeUtil.generate__R_Svg_AssetResource_class(svgImageAssetArray, svgImageAssetIdDict, packageName, isPackageProjectType);
-        r_dart_file_content += g__R_Svg_AssetResource_class_code;
-
-        // ----- Step-14 End -----
-
-        // ----- Step-15 Begin -----
-        // 遍历 text_asset 数组，生成 _R_Image_AssetResource 类，追加写入 r.g.dart
-        //
-
-        r_dart_file_content += "\n";
-        String g__R_Text_AssetResource_class_code = FlrCodeUtil.generate__R_Text_AssetResource_class(textAssetArray, textAssetIdDict, packageName, isPackageProjectType);
-        r_dart_file_content += g__R_Text_AssetResource_class_code;
-
-        // ----- Step-15 End -----
-
-        // ----- Step-16 Begin -----
-        // 遍历non_svg_image_asset数组，生成 _R_Image 类，追加写入 r.g.dart
-        //
-
-        r_dart_file_content += "\n";
-        String g__R_Image_class_code = FlrCodeUtil.generate__R_Image_class(nonSvgImageAssetArray, nonSvgImageAssetIdDict, packageName);
-        r_dart_file_content += g__R_Image_class_code;
-
-        // ----- Step-16 End -----
-
-        // ----- Step-17 Begin -----
-        // 遍历 svg_image_asset 数组，生成 _R_Svg 类，追加写入 r.g.dart。
-        //
-
-        r_dart_file_content += "\n";
-        String g__R_Svg_class_code = FlrCodeUtil.generate__R_Svg_class(svgImageAssetArray, svgImageAssetIdDict, packageName, this.shouldSupportNullsafety);
-        r_dart_file_content += g__R_Svg_class_code;
-
-        // ----- Step-17 End -----
-
-        // ----- Step-18 Begin -----
-        // 遍历 text_asset 数组，生成 _R_Image 类，追加写入 r.g.dart。
-        //
-
-        r_dart_file_content += "\n";
-        String g__R_Text_class_code = FlrCodeUtil.generate__R_Text_class(textAssetArray, textAssetIdDict, packageName);
-        r_dart_file_content += g__R_Text_class_code;
-
-        // ----- Step-18 End -----
-
-        // ----- Step-19 Begin -----
-        // 遍历font_family_config数组，根据下面的模板生成_R_Font_Family类，追加写入r.g.dart。
-
-        r_dart_file_content += "\n";
-        String g__R_Font_Family_class_code = FlrCodeUtil.generate__R_FontFamily_class(fontFamilyConfigArray, packageName);
-        r_dart_file_content += g__R_Font_Family_class_code;
-
-        // ----- Step-19 End -----
-
-
-        // ----- Step-20 Begin -----
-        // 结束操作，保存 r.g.dart
-        //
-
-        // 把 rDartContent 写到 r.g.dart 中
-        String rDartFilePath = flutterProjectRootDir + "/lib/r.g.dart";
-        File rDartFile = new File(rDartFilePath);
-        try {
-            FlrFileUtil.writeContentToFile(curProject, r_dart_file_content, rDartFile);
-        } catch (FlrException e) {
-            handleFlrException(flrExceptionTitle, e);
-            return;
-        }
-        // ----- Step-20 End -----
-
-
-        // ----- Step-21 Begin -----
-        // 调用 flutter 工具对 r.g.dart 进行格式化操作
-        //
-
-        // 格式化 r.g.dart
-        indicatorMessage = "format r.g.dart now ...";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-        FlrUtil.formatDartFile(curProject, rDartFile);
-        indicatorMessage = "format r.g.dart done !!!";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        // ----- Step-21 End -----
-
-        // ----- Step-22 Begin -----
-        // 判断警告日志数组是否为空，若不为空，输出所有警告日志
-        //
-
-        int warningCount = warningMessages.size();
-        if(warningCount > 0) {
-            for (FlrColoredLogEntity coloredLogEntity : warningMessages) {
-                flrLogConsole.println(coloredLogEntity);
-            }
-        }
-
-        String contentTitle = String.format("[√]: generate for %s done!", flutterProjectRootDir);
-        if(warningCount > 0) {
-            String warningUnitDesc = "warning";
-            if(warningCount > 1) {
-                warningUnitDesc = "warnings";
-            }
-            String warningMessage = String.format("[!]: found %d %s, you can get the details from Flr ToolWindow", warningCount, warningUnitDesc);
-            showSuccessMessage(contentTitle, warningMessage, true);
-        } else {
-            showSuccessMessage(contentTitle, "", false);
-        }
-        // ----- Step-22 End -----
-
-        indicatorMessage = String.format("[√]: generate for %s done !!!", flutterProjectRootDir);
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
-        indicatorMessage = "--------------------------------------------------------------------------------------";
-        flrLogConsole.println(indicatorMessage, indicatorType);
-
+        FlrReporter reporter = new FlrConsoleReporter(curProject, flrLogConsole);
+        GenerateUseCase useCase = new GenerateUseCase(curProject, flutterEnvironment, dartFormatter, reporter, flrLogConsole);
+        useCase.generateOne(flutterProjectRootDir);
     }
 
     /*
@@ -1357,35 +796,6 @@ public class FlrCommand implements Disposable {
                         "    fonts:\n" +
                         "      - assets/fonts\n", flrCoreVersion, FlrConstant.DARTFMT_LINE_LENGTH);
         flrLogConsole.println(indicatorMessage, FlrLogConsole.LogType.tips);
-    }
-
-    // MARK: pubspec.yaml Util Methods
-
-    /*
-     * get the right version of r_dart_library package based on flutter's version
-     * to get more detail, see https://github.com/YK-Unit/r_dart_library#dependency-relationship-table
-     * */
-    private String getRDartLibraryVersion() {
-        String rDartLibraryVersion = "0.1.1";
-
-        VirtualFile flutterSdkHome = FlutterSdk.getFlutterSdk(curProject).getHome();
-        FlutterSdkVersion flutterSdkVersion = FlutterSdkVersion.readFromSdk(flutterSdkHome);
-        String flutterVersionWithoutHotfixStr = flutterSdkVersion.toString();
-
-        DartSdk dartSdk = DartSdk.getDartSdk(curProject);
-        String dartSdkVersionStr = (dartSdk == null) ? "0.0.0" : dartSdk.getVersion();
-
-        int compareResult = FlrUtil.versionCompare(flutterVersionWithoutHotfixStr, "1.10.15");
-        if(compareResult == 0 || compareResult == 1) {
-            rDartLibraryVersion = "0.2.1";
-
-            compareResult = FlrUtil.versionCompare(dartSdkVersionStr, "2.12.0");
-            if(compareResult == 0 || compareResult == 1) {
-                rDartLibraryVersion = "0.4.0-nullsafety.0";
-            }
-        }
-
-        return rDartLibraryVersion;
     }
 
     // MARK: Exception Handler Methods
