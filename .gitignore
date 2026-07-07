@@ -10,6 +10,7 @@ build/
 
 # gradle related
 .gradle
-gradle/wrapper/
-gradlew
-gradlew.bat
+# 注意：gradle wrapper（gradlew、gradlew.bat、gradle/wrapper/）已纳入版本库，
+# 以钉定 Gradle 版本、保证构建可复现（勿再忽略）。
+# 基准校验脚本的本地 venv
+scripts/.venv/
