@@ -7,6 +7,8 @@
 *.iws
 .idea/
 build/
+# IntelliJ Platform Gradle Plugin 2.x 在工程内生成的工作目录
+.intellijPlatform/
 
 # gradle related
 .gradle

@@ -1,2 +1,26 @@
-rootProject.name = 'flr-as-plugin'
+plugins {
+    // Foojay 工具链自动解析器。
+    //
+    // 背景：本项目基于 IntelliJ Platform Gradle Plugin 2.x + 平台 2024.3，构建要求 JDK 21 工具链。
+    // 作用：当本机找不到 JDK 21 时，由本插件从 Adoptium（api.foojay.io）自动下载并使用，
+    //       使得仅凭 wrapper 即可在任意机器/CI 上 `./gradlew build`，无需手动设置 JAVA_HOME。
+    // 注意：需用 1.0.0+（0.9.0 与 Gradle 9.x 不兼容，会报 IBM_SEMERU）。
+    //
+    // 自动下载的 JDK 放在哪：
+    //   ~/.gradle/jdks/ 下（Gradle 用户目录），例如 eclipse_adoptium-21-...-os_x/<jdk>/Contents/Home。
+    //
+    // 隔离性（无需担心污染系统）：
+    //   - 仅位于 ~/.gradle/jdks/，不写入 /Library/Java/JavaVirtualMachines；
+    //   - 不改动系统 `java` / `JAVA_HOME` / `java_home`，不影响其它项目与工具；
+    //   - 仅 Gradle 工具链在编译/测试时使用；可随时 `rm -rf ~/.gradle/jdks/` 清除（下次按需重新拉取）。
+    //
+    // 两种「免自动下载」的方式（若不希望 Gradle 下载 JDK）：
+    //   1) 命令行：JAVA_HOME 指向本机已有的 JDK 21（如 Android Studio 自带 JBR：
+    //      "/Applications/Android Studio.app/Contents/jbr/Contents/Home"），再执行 ./gradlew；
+    //   2) Android Studio：Settings → Build, Execution, Deployment → Build Tools → Gradle，
+    //      将 Gradle JVM 设为 JBR 21。
+    //   任一方式下 Foojay 检测到本机已有 JDK 21，即不会触发下载。
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
 
+rootProject.name = 'flr-as-plugin'

@@ -340,6 +340,22 @@ scripts/verify_flr_baseline.sh
 - **P2.3（GenerateUseCase 完整抽取 + FlrReporter 接入）** 已推迟：对 headless 不必需，待本轮在 Android Studio 跑通黄金回归后再进行。
 - 建议把 gradle wrapper 纳入版本库（当前 `.gitignore` 排除，导致构建不可复现）——并入 P1。
 
+### 8. 实施进展（2026-07-08）：P1 = 迁移到 IntelliJ Platform Gradle Plugin 2.x（B 计划）
+
+已完成并本地验证（`buildPlugin` + `test` 全绿，产物 `flr-as-plugin-243.3.4.0.zip`）：
+- 插件 `org.jetbrains.intellij` 1.17.1 → **`org.jetbrains.intellij.platform` 2.17.0**；重写 `repositories`/`dependencies.intellijPlatform`
+  （`intellijIdeaCommunity` + `bundledPlugin com.intellij.java` + `plugin Dart/io.flutter` + `testFramework(Platform)` + `jetbrainsRuntime()` + `pluginVerifier/zipSigner`）；
+  `intellij{}`+`patchPluginXml{}` → `intellijPlatform { buildSearchableOptions=false; pluginConfiguration{...} }`。**保留** `PlatformType` 枚举/switch（仅改消费端）。
+- **关键收益兑现**：`GenerateHeadlessTest`（走 VFS 的全流程 headless 测试）在 2.x + `testFramework` 下**恢复并通过**——1.x 下的 `SettingsController` bootstrap 问题（IJPL-155647）已解。
+
+**迁移中确认的硬性要求（修正先前说法）：**
+- 最新 2.x（2.17.0）**要求 Gradle ≥ 9.0**（非早期文档所说 8.13）→ wrapper 已从 8.13 **升级到 9.6.0**（重新入库）。
+- 构建**要求 JDK 21**（2.x 为 2024.3 平台把编译/运行工具链设为 21）→ Gradle JVM 需为 JDK/JBR 21（Android Studio 自带 JBR 21）。
+- 2.x 从 `download.jetbrains.com` 下载平台为 **~887MB .dmg**（macOS）→ 首次构建较慢；受限/离线网络可用 `-PflrLocalIde=/path/to/installed-ide` 指向本地 IDE 绕开下载。
+- `until-build` 现为开放上限（`since-build=243`，无上限）；1.x 曾默认封顶 `243.*`。如需恢复封顶，在 `ideaVersion { untilBuild = "243.*" }` 设置。
+
+**待办**：`verifyPlugin`/`runIde` 收尾校验、真机 E2E（`verify_flr_baseline.sh`）最终确认；把 wrapper(9.6.0)+build.gradle+测试提交。
+
 ## 6. 官方文档参考
 
 - Developing Plugins — https://plugins.jetbrains.com/docs/intellij/developing-plugins.html
