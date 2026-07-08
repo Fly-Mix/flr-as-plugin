@@ -4,7 +4,6 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,36 +29,30 @@ public class FlrLogConsole {
             return;
         }
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                WriteCommandAction.runWriteCommandAction(curProject, new Runnable() {
-                    @Override
-                    public void run() {
-                        ConsoleViewContentType contentType = ConsoleViewContentType.SYSTEM_OUTPUT;
-                        switch (logType) {
-                            case normal:
-                                contentType = ConsoleViewContentType.SYSTEM_OUTPUT;
-                                break;
-                            case tips:
-                                contentType = ConsoleViewContentType.LOG_INFO_OUTPUT;
-                                break;
-                            case warning:
-                                contentType = ConsoleViewContentType.LOG_WARNING_OUTPUT;
-                                break;
-                            case error:
-                                contentType = ConsoleViewContentType.ERROR_OUTPUT;
-                                break;
-                        }
-                        curConsoleView.print( text + "\n", contentType);
-                        ConsoleViewImpl consoleViewImpl = (ConsoleViewImpl)curConsoleView;
-                        if(consoleViewImpl != null) {
-                            consoleViewImpl.scrollToEnd();
-                        }
-                    }
-                });
-            }
-        });
+        ConsoleViewContentType contentType;
+        switch (logType) {
+            case tips:
+                contentType = ConsoleViewContentType.LOG_INFO_OUTPUT;
+                break;
+            case warning:
+                contentType = ConsoleViewContentType.LOG_WARNING_OUTPUT;
+                break;
+            case error:
+                contentType = ConsoleViewContentType.ERROR_OUTPUT;
+                break;
+            case normal:
+            default:
+                contentType = ConsoleViewContentType.SYSTEM_OUTPUT;
+                break;
+        }
+
+        // ConsoleView.print 线程安全，无需 WriteCommandAction（那会污染 undo 栈）；
+        // 仅滚动到底部需要在 EDT 上执行。
+        curConsoleView.print(text + "\n", contentType);
+        if (curConsoleView instanceof ConsoleViewImpl) {
+            ConsoleViewImpl consoleViewImpl = (ConsoleViewImpl) curConsoleView;
+            ApplicationManager.getApplication().invokeLater(consoleViewImpl::scrollToEnd);
+        }
     }
 
     public void println(@NotNull FlrColoredLogEntity coloredLogEntity) {
