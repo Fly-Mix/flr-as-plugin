@@ -3,7 +3,6 @@ package com.flr.command;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -56,29 +55,27 @@ public class FlrListener implements BulkFileListener, Disposable {
 
     @Override
     public void after(@NotNull List<? extends VFileEvent> events) {
-        Boolean shouldCallback = false;
+        boolean shouldCallback = false;
 
-        System.out.println("\nFlr events"+ events);
+        for (VFileEvent event : events) {
+            // 用 event.getPath()：始终可用（含删除事件），避免 event.getFile() 可能为 null 而 NPE
+            String fileFullPath = event.getPath();
 
-        for (VFileEvent event: events) {
-            VirtualFile eventFile = event.getFile();
-            String fileFullPath = eventFile.getPath();
-
-            System.out.println("\nVFileEvent"+ "\ngetPath:"+event.getPath()+ "\ngetFile:"+event.getFile());
-
-            for(String monitoredAssetDirFullPath: curMonitoredAssetDirFullPaths) {
-                if(fileFullPath.contains(monitoredAssetDirFullPath)) {
+            for (String monitoredAssetDirFullPath : curMonitoredAssetDirFullPaths) {
+                // 精确匹配目录本身或其子路径，避免 ".../images_bak" 命中 ".../images"
+                if (fileFullPath.equals(monitoredAssetDirFullPath)
+                        || fileFullPath.startsWith(monitoredAssetDirFullPath + "/")) {
                     shouldCallback = true;
                     break;
                 }
             }
 
-            if(shouldCallback) {
+            if (shouldCallback) {
                 break;
             }
         }
 
-        if(shouldCallback) {
+        if (shouldCallback) {
             curAssetChangesEventCallback.run();
         }
     }
