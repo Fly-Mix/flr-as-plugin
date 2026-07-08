@@ -24,7 +24,7 @@ public class FlrMonitorAction extends AnAction {
         FlrApp flrApp = FlrApp.getInstance(project);
         // 仅负责启停；菜单文案不在此设置——在 actionPerformed 里改 presentation 不会持久到菜单，
         // 文案统一由下面的 update() 依据 isMonitoringAssets 刷新（菜单每次弹出时回调 update）。
-        if (flrApp.getFlrCommand().isMonitoringAssets) {
+        if (flrApp.getFlrCommand().isMonitoringAssets()) {
             flrApp.getFlrCommand().stopMonitor(e, flrLogConsole);
         } else {
             flrApp.getFlrCommand().startMonitor(e, flrLogConsole);
@@ -44,7 +44,7 @@ public class FlrMonitorAction extends AnAction {
             return;
         }
 
-        boolean isMonitoring = FlrApp.getInstance(project).getFlrCommand().isMonitoringAssets;
+        boolean isMonitoring = FlrApp.getInstance(project).getFlrCommand().isMonitoringAssets();
         if (isMonitoring) {
             presentation.setText("Stop Monitor");
             presentation.setDescription("terminate the monitoring service");

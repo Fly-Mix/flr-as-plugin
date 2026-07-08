@@ -5,6 +5,7 @@ import com.flr.FlrException;
 import com.flr.command.FlrChecker;
 import com.flr.command.util.FlrAssetUtil;
 import com.flr.command.util.FlrFileUtil;
+import com.flr.command.util.FlrUtil;
 import com.flr.core.codegen.RDartGenerator;
 import com.flr.core.env.FlutterEnvironment;
 import com.flr.core.format.DartFormatter;
@@ -13,6 +14,7 @@ import com.flr.core.report.FlrReporter;
 import com.flr.core.scan.AssetScanner;
 import com.flr.logConsole.FlrColoredLogEntity;
 import com.flr.logConsole.FlrLogConsole;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +52,57 @@ public final class GenerateUseCase {
         this.flutterEnvironment = flutterEnvironment;
         this.dartFormatter = dartFormatter;
         this.reporter = reporter;
+    }
+
+    /*
+     * 扫描工作空间下的 flutter 主工程及其所有子工程，各自 generate，然后统一获取依赖。
+     * 逻辑迁移自原 FlrCommand.generateAll，改用 reporter，行为不变。
+     */
+    public void generateAll(@NotNull AnActionEvent actionEvent) {
+        FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
+
+        // 环境检测：非 flutter 工程则提示并返回
+        if (flutterEnvironment.isFlutterProject() == false) {
+            reporter.log("[*]: this is not a flutter project", FlrLogConsole.LogType.tips);
+            return;
+        }
+
+        reporter.log("[Flr Generate]", FlrLogConsole.LogType.tips);
+
+        String flrExceptionTitle = "[x]: generate failed !!!";
+        String flutterMainProjectRootDir = project.getBasePath();
+
+        // ----- Step-1：主工程 pubspec 检测 -----
+        try {
+            FlrChecker.checkPubspecFileIsExisted(reporter, flutterMainProjectRootDir);
+        } catch (FlrException e) {
+            reporter.failure(flrExceptionTitle, e.getMessage());
+            return;
+        }
+
+        reporter.log("generate for all flutter projects now...", indicatorType);
+
+        // ----- Step-2：主工程 + 所有子工程各自 generateOne -----
+        List<String> flutterSubProjectRootDirArray = FlrFileUtil.getFlutterSubProjectRootDirs(flutterMainProjectRootDir);
+
+        reporter.log("", indicatorType);
+        generateOne(flutterMainProjectRootDir);
+
+        for (String flutterProjectRootDir : flutterSubProjectRootDirArray) {
+            reporter.log("", indicatorType);
+            generateOne(flutterProjectRootDir);
+        }
+
+        // ----- Step-3：为所有 flutter 工程获取依赖 -----
+        reporter.log("", indicatorType);
+        reporter.log("get dependencies for all flutter projects via running \"Flutter Packages Get\" action now ...", indicatorType);
+        FlrUtil.runFlutterPubGet(actionEvent);
+        reporter.log("[√]: get dependencies for all flutter projects done !!!", indicatorType);
+
+        reporter.log("", indicatorType);
+        reporter.log("[√]: generate for all flutter projects done !!!\n", indicatorType);
+
+        reporter.success("[√]: generate for all flutter projects done !!!", "", false);
     }
 
     /*
