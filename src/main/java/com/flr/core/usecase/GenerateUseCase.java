@@ -32,8 +32,7 @@ import java.util.Map;
  * - {@link DartFormatter}：格式化 r.g.dart
  * - {@link FlrReporter}：进度日志与结果通知（取代原先散落的 flrLogConsole/showXxxMessage）
  *
- * 说明：Step-1 的 {@link FlrChecker} / {@link FlrFileUtil} 校验与加载目前仍以 {@link FlrLogConsole}
- * 记录日志，故此处保留一个 logConsole 仅供它们使用；待后续把这两个工具类的日志也改为 FlrReporter 后即可移除。
+ * 全流程的进度日志与结果通知统一走 {@link FlrReporter}（Step-1 的 {@link FlrChecker} / {@link FlrFileUtil} 也已改用 FlrReporter）。
  */
 @SuppressWarnings("unchecked")
 public final class GenerateUseCase {
@@ -42,19 +41,15 @@ public final class GenerateUseCase {
     private final FlutterEnvironment flutterEnvironment;
     private final DartFormatter dartFormatter;
     private final FlrReporter reporter;
-    // 仅供 Step-1 尚未解耦的 FlrChecker/FlrFileUtil 记录日志用（与 reporter 指向同一 ConsoleView）
-    private final FlrLogConsole logConsole;
 
     public GenerateUseCase(@NotNull Project project,
                            @NotNull FlutterEnvironment flutterEnvironment,
                            @NotNull DartFormatter dartFormatter,
-                           @NotNull FlrReporter reporter,
-                           @NotNull FlrLogConsole logConsole) {
+                           @NotNull FlrReporter reporter) {
         this.project = project;
         this.flutterEnvironment = flutterEnvironment;
         this.dartFormatter = dartFormatter;
         this.reporter = reporter;
-        this.logConsole = logConsole;
     }
 
     /*
@@ -87,16 +82,16 @@ public final class GenerateUseCase {
         //    判断合法的标准是：assets配置或者fonts配置了至少1个legal_resource_dir
         //
         try {
-            FlrChecker.checkPubspecFileIsExisted(logConsole, flutterProjectRootDir);
+            FlrChecker.checkPubspecFileIsExisted(reporter, flutterProjectRootDir);
 
             pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
             pubspecFile = new File(pubspecFilePath);
-            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(logConsole, pubspecFile);
+            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(reporter, pubspecFile);
 
-            FlrChecker.checkFlrConfigIsExisted(logConsole, pubspecConfig);
+            FlrChecker.checkFlrConfigIsExisted(reporter, pubspecConfig);
             flrConfig = (Map<String, Object>) pubspecConfig.get("flr");
 
-            resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(logConsole, flrConfig, flutterProjectRootDir);
+            resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(reporter, flrConfig, flutterProjectRootDir);
         } catch (FlrException e) {
             reporter.failure(flrExceptionTitle, e.getMessage());
 
@@ -108,7 +103,7 @@ public final class GenerateUseCase {
         }
 
         String packageName = (String) pubspecConfig.get("name");
-        boolean isPackageProjectType = FlrFileUtil.isPackageProjectType(logConsole, flutterProjectRootDir);
+        boolean isPackageProjectType = FlrFileUtil.isPackageProjectType(reporter, flutterProjectRootDir);
 
         // ----- Step-1 End -----
 

@@ -2,6 +2,7 @@ package com.flr.command.util;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.core.report.FlrReporter;
 import com.flr.logConsole.FlrLogConsole;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.*;
@@ -77,7 +78,7 @@ public class FlrFileUtil {
      * flutter工程的工程类型可从flutter工程目录的 .metadata 文件中读取获得
      * 如果不存在 .metadata 文件，则判断 pubspec.yaml 是否存在 author 配置，若存在，说明是一个 Package工程
      * */
-    public static boolean isPackageProjectType(@NotNull FlrLogConsole flrLogConsole, @NotNull String flutterProjectDir) {
+    public static boolean isPackageProjectType(@NotNull FlrReporter reporter, @NotNull String flutterProjectDir) {
         String metadataFilePath = flutterProjectDir + "/.metadata";
         File metadataFile = new File(metadataFilePath);
 
@@ -104,29 +105,29 @@ public class FlrFileUtil {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                flrLogConsole.println(e.getMessage(), FlrLogConsole.LogType.normal);
-                flrLogConsole.println("", FlrLogConsole.LogType.normal);
+                reporter.log(e.getMessage(), FlrLogConsole.LogType.normal);
+                reporter.log("", FlrLogConsole.LogType.normal);
             }
         } else {
             String warningStr = "[!]: warning, metadata file is missed, flr can not make sure to get a right project type of this flutter project"
                     + "\n"
                     + "[!]: then flr maybe generate buggy r.g.dart";
-            flrLogConsole.println(warningStr, FlrLogConsole.LogType.warning);
+            reporter.log(warningStr, FlrLogConsole.LogType.warning);
             String tipsStr = String.format("[*]: to fix it, you can manually copy the metadata file of a flutter project with same project type to %s\n", metadataFilePath);
-            flrLogConsole.println(tipsStr, FlrLogConsole.LogType.tips);
+            reporter.log(tipsStr, FlrLogConsole.LogType.tips);
 
 
             String pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectDir);
             File pubspecFile = new File(pubspecFilePath);
             try {
-                Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
+                Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(reporter, pubspecFile);
                 if(pubspecConfig.containsKey("author")) {
                     return true;
                 }
             } catch (FlrException e) {
                 e.printStackTrace();
-                flrLogConsole.println(e.getMessage(), FlrLogConsole.LogType.normal);
-                flrLogConsole.println("", FlrLogConsole.LogType.normal);
+                reporter.log(e.getMessage(), FlrLogConsole.LogType.normal);
+                reporter.log("", FlrLogConsole.LogType.normal);
             }
         }
 
@@ -234,7 +235,7 @@ public class FlrFileUtil {
     * 若读取成功，返回一个字典对象pubspecConfig
     * 若读取失败，则返回null
     * */
-    public static Map<String, Object> loadPubspecConfigFromFile(@NotNull FlrLogConsole flrLogConsole, @NotNull File pubspecFile) throws FlrException {
+    public static Map<String, Object> loadPubspecConfigFromFile(@NotNull FlrReporter reporter, @NotNull File pubspecFile) throws FlrException {
         try {
             Yaml yaml = new Yaml();
             InputStream inputStream = new FileInputStream(pubspecFile);
@@ -249,10 +250,10 @@ public class FlrFileUtil {
             return pubspecConfig;
         } catch (Exception e) {
             e.printStackTrace();
-            flrLogConsole.println(e.getMessage(), FlrLogConsole.LogType.normal);
-            flrLogConsole.println("", FlrLogConsole.LogType.normal);
-            flrLogConsole.println("[x]: pubspec.yaml is damaged, maybe it has some syntax errors", FlrLogConsole.LogType.error);
-            flrLogConsole.println(String.format("[*]: please correct the pubspec.yaml file at %s", pubspecFile), FlrLogConsole.LogType.tips);
+            reporter.log(e.getMessage(), FlrLogConsole.LogType.normal);
+            reporter.log("", FlrLogConsole.LogType.normal);
+            reporter.log("[x]: pubspec.yaml is damaged, maybe it has some syntax errors", FlrLogConsole.LogType.error);
+            reporter.log(String.format("[*]: please correct the pubspec.yaml file at %s", pubspecFile), FlrLogConsole.LogType.tips);
             throw FlrException.ILLEGAL_ENV;
         }
     }

@@ -105,13 +105,15 @@ public class FlrCommand implements Disposable {
 
         String flrExceptionTitle = "[x]: init failed !!!";
 
+        FlrReporter reporter = new FlrConsoleReporter(curProject, flrLogConsole);
+
         String flutterMainProjectRootDir = curProject.getBasePath();
         // ----- Step-1 Begin -----
         // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程
         // - 检测当前flutter主工程根目录是否存在 pubspec.yaml
         //
         try {
-            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterMainProjectRootDir);
+            FlrChecker.checkPubspecFileIsExisted(reporter, flutterMainProjectRootDir);
         } catch (FlrException e) {
             handleFlrException(flrExceptionTitle, e);
             return;
@@ -175,6 +177,8 @@ public class FlrCommand implements Disposable {
 
         String flrExceptionTitle = String.format("[x]: init %s failed", flutterProjectRootDir);
 
+        FlrReporter reporter = new FlrConsoleReporter(curProject, flrLogConsole);
+
         String pubspecFilePath;
         File pubspecFile;
         Map<String, Object> pubspecConfig;
@@ -187,11 +191,11 @@ public class FlrCommand implements Disposable {
         //  - 检测当前 flutter 工程根目录是否存在 pubspec.yaml
         //
         try {
-            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
+            FlrChecker.checkPubspecFileIsExisted(reporter, flutterProjectRootDir);
 
             pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
             pubspecFile = new File(pubspecFilePath);
-            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
+            pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(reporter, pubspecFile);
 
         } catch (FlrException e) {
             handleFlrException(flrExceptionTitle, e);
@@ -338,13 +342,15 @@ public class FlrCommand implements Disposable {
 
         String flrExceptionTitle = "[x]: generate failed !!!";
 
+        FlrReporter reporter = new FlrConsoleReporter(curProject, flrLogConsole);
+
         String flutterMainProjectRootDir = curProject.getBasePath();
         // ----- Step-1 Begin -----
         // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程
         // - 检测当前flutter主工程根目录是否存在 pubspec.yaml
         //
         try {
-            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterMainProjectRootDir);
+            FlrChecker.checkPubspecFileIsExisted(reporter, flutterMainProjectRootDir);
         } catch (FlrException e) {
             handleFlrException(flrExceptionTitle, e);
             return;
@@ -401,7 +407,7 @@ public class FlrCommand implements Disposable {
     * */
     public void generateOne(@NotNull AnActionEvent actionEvent, @NotNull FlrLogConsole flrLogConsole, @NotNull String flutterProjectRootDir) {
         FlrReporter reporter = new FlrConsoleReporter(curProject, flrLogConsole);
-        GenerateUseCase useCase = new GenerateUseCase(curProject, flutterEnvironment, dartFormatter, reporter, flrLogConsole);
+        GenerateUseCase useCase = new GenerateUseCase(curProject, flutterEnvironment, dartFormatter, reporter);
         useCase.generateOne(flutterProjectRootDir);
     }
 
@@ -419,13 +425,15 @@ public class FlrCommand implements Disposable {
 
         String flrExceptionTitle = "[x]: start monitor failed !!!";
 
+        FlrReporter reporter = new FlrConsoleReporter(curProject, flrLogConsole);
+
         String flutterMainProjectRootDir = curProject.getBasePath();
         // ----- Step-1 Begin -----
         // 进行环境检测；若发现不合法的环境，则抛出异常，终止当前进程
         // - 检测当前flutter主工程根目录是否存在 pubspec.yaml
         //
         try {
-            FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterMainProjectRootDir);
+            FlrChecker.checkPubspecFileIsExisted(reporter, flutterMainProjectRootDir);
         } catch (FlrException e) {
             handleFlrException(flrExceptionTitle, e);
             return false;
@@ -466,16 +474,16 @@ public class FlrCommand implements Disposable {
                 indicatorMessage = String.format("get the valid resource directories from %s now...", flutterProjectRootDir);
                 flrLogConsole.println(indicatorMessage, indicatorType);
 
-                FlrChecker.checkPubspecFileIsExisted(flrLogConsole, flutterProjectRootDir);
+                FlrChecker.checkPubspecFileIsExisted(reporter, flutterProjectRootDir);
 
                 String pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectRootDir);
                 File pubspecFile = new File(pubspecFilePath);
-                Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
+                Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(reporter, pubspecFile);
 
-                FlrChecker.checkFlrConfigIsExisted(flrLogConsole, pubspecConfig);
+                FlrChecker.checkFlrConfigIsExisted(reporter, pubspecConfig);
                 Map<String, Object> flrConfig = (Map<String, Object>)pubspecConfig.get("flr");
 
-                List<List<String>> resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(flrLogConsole, flrConfig, flutterProjectRootDir);
+                List<List<String>> resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(reporter, flrConfig, flutterProjectRootDir);
 
                 // 合法的资源目录数组
                 List<String> assetsLegalResourceDirArray = resourceDirResultTuple.get(0);
