@@ -1,57 +1,35 @@
 package com.flr;
 
 import com.flr.command.FlrCommand;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * 工程级服务：持有该工程的 {@link FlrCommand}。
+ *
+ * 作为 {@link Service.Level#PROJECT} 轻量服务，平台按工程各创建一个实例并管理其生命周期；
+ * 实现 {@link Disposable}，工程关闭时由平台调用 {@link #dispose()} 级联释放 FlrCommand（及其监控监听器）。
+ *
+ * 注意：不要再手写 static 单例——那会让多个打开的工程共享同一实例而互相串号。
+ */
 @Service(Service.Level.PROJECT)
-@State(
-    name = "FlrApp",
-    storages = {@Storage("flr.xml")}
-)
-public final class FlrApp {
-    private static FlrApp instance;
-    private final Project curProject;
+public final class FlrApp implements Disposable {
+
     private final FlrCommand flrCommand;
 
-    private FlrApp(@NotNull Project project) {
-        curProject = project;
-        flrCommand = new FlrCommand(curProject);
-        
-        // 注册项目关闭监听器
-        project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-            @Override
-            public void projectClosing(@NotNull Project project) {
-                if (project.equals(curProject)) {
-                    dispose();
-                }
-            }
-        });
+    public FlrApp(@NotNull Project project) {
+        flrCommand = new FlrCommand(project);
     }
 
     public static FlrApp getInstance(@NotNull Project project) {
-        if (instance == null) {
-            synchronized (FlrApp.class) {
-                if (instance == null) {
-                    instance = project.getService(FlrApp.class);
-                }
-            }
-        }
-        return instance;
+        return project.getService(FlrApp.class);
     }
 
+    @Override
     public void dispose() {
-        if (flrCommand != null) {
-            flrCommand.dispose();
-        }
-        instance = null;
+        flrCommand.dispose();
     }
 
     public FlrCommand getFlrCommand() {
