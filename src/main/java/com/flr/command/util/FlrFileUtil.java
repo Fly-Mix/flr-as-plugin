@@ -4,6 +4,7 @@ import com.flr.FlrConstant;
 import com.flr.FlrException;
 import com.flr.core.report.FlrReporter;
 import com.flr.logConsole.FlrLogConsole;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,8 @@ public class FlrFileUtil {
      * 获取flutter主工程的所有子工程的根目录
      * */
     public static List<String> getFlutterSubProjectRootDirs(@NotNull String flutterMainProjectRootDir) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<String> flutterSubProjectRootDirArray = new ArrayList<>();
 
         File resourceDirFile = new File(flutterMainProjectRootDir);
@@ -56,6 +59,7 @@ public class FlrFileUtil {
         }
 
         return flutterSubProjectRootDirArray;
+        });
     }
 
     /*
@@ -418,6 +422,8 @@ public class FlrFileUtil {
     * illegalImageFileArray = ["~/path/to/flutter_project/lib/assets/images/~.png"]
     * */
     public static List<List<VirtualFile>> findImageFiles(@NotNull String resourceDir) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<VirtualFile> legalImageFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalImageFileArray = new ArrayList<VirtualFile>();
 
@@ -442,6 +448,7 @@ public class FlrFileUtil {
         imageFileResultTuple.add(legalImageFileArray);
         imageFileResultTuple.add(illegalImageFileArray);
         return imageFileResultTuple;
+        });
     }
 
     /*
@@ -457,6 +464,8 @@ public class FlrFileUtil {
      * illegalTextFileArray = ["~/path/to/flutter_project/lib/assets/jsons/~.json"]
      * */
     public static List<List<VirtualFile>> findTextFiles(@NotNull String resourceDir) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<VirtualFile> legalTextFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalTextFileArray = new ArrayList<VirtualFile>();
 
@@ -481,6 +490,7 @@ public class FlrFileUtil {
         textFileResultTuple.add(legalTextFileArray);
         textFileResultTuple.add(illegalTextFileArray);
         return textFileResultTuple;
+        });
     }
 
     /*
@@ -491,6 +501,8 @@ public class FlrFileUtil {
      * topChildDirArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri", "~/path/to/flutter_project/lib/assets/fonts/Open_Sans"]
      * */
     public static List<VirtualFile> findTopChildDirs(@NotNull String resourceDir) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<VirtualFile> topChildDirArray = new ArrayList<VirtualFile>();
 
         File resourceDirFile = new File(resourceDir);
@@ -503,6 +515,7 @@ public class FlrFileUtil {
         }
 
         return topChildDirArray;
+        });
     }
 
     /*
@@ -518,6 +531,8 @@ public class FlrFileUtil {
      * illegalFontFileArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri/~.ttf"]
      * */
     public static List<List<VirtualFile>> findFontFilesInFontFamilyDir(@NotNull VirtualFile fontFamilyDirFile) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<VirtualFile> legalFontFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
 
@@ -540,5 +555,6 @@ public class FlrFileUtil {
         fontFileResultTuple.add(legalFontFileArray);
         fontFileResultTuple.add(illegalFontFileArray);
         return fontFileResultTuple;
+        });
     }
 }

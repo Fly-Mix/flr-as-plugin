@@ -1,6 +1,7 @@
 package com.flr.command.util;
 
 // import com.intellij.history.core.Paths;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -174,6 +175,8 @@ public class FlrAssetUtil {
         // 3. 若main_resource_file是SVG类图片资源文件或者其他资源文件，判断asset是否存在的标准是：主资源文件存在
         //
 
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         File mainResourceFile = getMainResourceFile(flutterProjectDir, packageName, asset);
         if(FlrFileUtil.isNonSvgImageResourceFile(mainResourceFile)) {
             if(mainResourceFile.exists()) {
@@ -221,6 +224,7 @@ public class FlrAssetUtil {
         }
 
         return false;
+        });
     }
 
     /*
