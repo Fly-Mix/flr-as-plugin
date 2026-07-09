@@ -17,6 +17,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
         <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.toolWindow.FlrToolWindowFactory"/>
+        <!-- Flr 通知组：FlrMessageBox 以 id "Flr" 弹出通知 -->
+        <notificationGroup id="Flr" displayType="BALLOON"/>
     </extensions>
 
     <actions>
