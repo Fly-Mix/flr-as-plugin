@@ -1,5 +1,6 @@
 package com.flr.toolWindow;
 
+import com.flr.FlrIds;
 import com.flr.logConsole.FlrLogConsole;
 import com.flr.pubspecFileTree.FlrPubspecFileTree;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -55,7 +56,7 @@ public class FlrToolWindowFactory implements ToolWindowFactory {
     }
 
     public static FlrLogConsole getLogConsole(@NotNull Project project){
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Flr");
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(FlrIds.TOOL_WINDOW);
         if(toolWindow == null) {
             return null;
         }
@@ -67,19 +68,13 @@ public class FlrToolWindowFactory implements ToolWindowFactory {
         JSplitPane splitPane = (JSplitPane)flrToolWindowContent.getComponent(0);
 
         JPanel consoleContainer = (JPanel) splitPane.getRightComponent();
-        System.out.println("consoleContainer: ");
-        System.out.println(consoleContainer);
-
         ConsoleView consoleView = (ConsoleView) consoleContainer.getComponent(0);
-        System.out.println("consoleView: ");
-        System.out.println(consoleView);
-
         FlrLogConsole flrLogConsole = new FlrLogConsole(project, consoleView);
         return flrLogConsole;
     }
 
     public static void showCurLogConsole(@NotNull Project project) {
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Flr");
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(FlrIds.TOOL_WINDOW);
         if(toolWindow == null) {
             return;
         }

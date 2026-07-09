@@ -2,7 +2,13 @@ package com.flr.command.util;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.FlrPaths;
+import com.flr.core.report.FlrReporter;
 import com.flr.logConsole.FlrLogConsole;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
@@ -10,8 +16,6 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,10 +26,14 @@ import java.util.regex.Pattern;
 * */
 public class FlrFileUtil {
 
+    private static final Logger LOG = Logger.getInstance(FlrFileUtil.class);
+
     /*
      * 获取flutter主工程的所有子工程的根目录
      * */
     public static List<String> getFlutterSubProjectRootDirs(@NotNull String flutterMainProjectRootDir) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<String> flutterSubProjectRootDirArray = new ArrayList<>();
 
         File resourceDirFile = new File(flutterMainProjectRootDir);
@@ -34,7 +42,7 @@ public class FlrFileUtil {
             return flutterSubProjectRootDirArray;
         }
 
-        String pubspecFileName = "pubspec.yaml";
+        String pubspecFileName = FlrPaths.PUBSPEC_YAML;
         VirtualFile[] resourceDirChildren = resourceDirVirtualFile.getChildren();
         for(VirtualFile resourceDirChild: resourceDirChildren) {
             if(resourceDirChild.isDirectory()) {
@@ -55,13 +63,14 @@ public class FlrFileUtil {
         }
 
         return flutterSubProjectRootDirArray;
+        });
     }
 
     /*
      * 获取指定flutter工程的pubspec.yaml文件的路径
      * */
     public static String getPubspecFilePath(@NotNull String flutterProjectDir) {
-        String pubspecFilePath = flutterProjectDir + "/pubspec.yaml";
+        String pubspecFilePath = flutterProjectDir + "/" + FlrPaths.PUBSPEC_YAML;
         return pubspecFilePath;
     }
 
@@ -77,7 +86,7 @@ public class FlrFileUtil {
      * flutter工程的工程类型可从flutter工程目录的 .metadata 文件中读取获得
      * 如果不存在 .metadata 文件，则判断 pubspec.yaml 是否存在 author 配置，若存在，说明是一个 Package工程
      * */
-    public static boolean isPackageProjectType(@NotNull FlrLogConsole flrLogConsole, @NotNull String flutterProjectDir) {
+    public static boolean isPackageProjectType(@NotNull FlrReporter reporter, @NotNull String flutterProjectDir) {
         String metadataFilePath = flutterProjectDir + "/.metadata";
         File metadataFile = new File(metadataFilePath);
 
@@ -103,30 +112,30 @@ public class FlrFileUtil {
                     return true;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                flrLogConsole.println(e.getMessage(), FlrLogConsole.LogType.normal);
-                flrLogConsole.println("", FlrLogConsole.LogType.normal);
+                LOG.warn(e);
+                reporter.log(e.getMessage(), FlrLogConsole.LogType.normal);
+                reporter.log("", FlrLogConsole.LogType.normal);
             }
         } else {
             String warningStr = "[!]: warning, metadata file is missed, flr can not make sure to get a right project type of this flutter project"
                     + "\n"
                     + "[!]: then flr maybe generate buggy r.g.dart";
-            flrLogConsole.println(warningStr, FlrLogConsole.LogType.warning);
+            reporter.log(warningStr, FlrLogConsole.LogType.warning);
             String tipsStr = String.format("[*]: to fix it, you can manually copy the metadata file of a flutter project with same project type to %s\n", metadataFilePath);
-            flrLogConsole.println(tipsStr, FlrLogConsole.LogType.tips);
+            reporter.log(tipsStr, FlrLogConsole.LogType.tips);
 
 
             String pubspecFilePath = FlrFileUtil.getPubspecFilePath(flutterProjectDir);
             File pubspecFile = new File(pubspecFilePath);
             try {
-                Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(flrLogConsole, pubspecFile);
+                Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(reporter, pubspecFile);
                 if(pubspecConfig.containsKey("author")) {
                     return true;
                 }
             } catch (FlrException e) {
-                e.printStackTrace();
-                flrLogConsole.println(e.getMessage(), FlrLogConsole.LogType.normal);
-                flrLogConsole.println("", FlrLogConsole.LogType.normal);
+                LOG.warn(e);
+                reporter.log(e.getMessage(), FlrLogConsole.LogType.normal);
+                reporter.log("", FlrLogConsole.LogType.normal);
             }
         }
 
@@ -196,37 +205,44 @@ public class FlrFileUtil {
     }
 
     /*
-    * 写文件，并刷新文件
+    * 写文件（经 VFS，走 WriteCommandAction）
     * */
-    public static void writeContentToFile(@com.sun.istack.NotNull Project project, @com.sun.istack.NotNull String content, @com.sun.istack.NotNull File file) throws FlrException {
-        if(file.exists() == false) {
-            try {
-                // 创建文件，并同步加载文件到工程
-                file.createNewFile();
-                List<File> ioFiles = new ArrayList<File>();
-                ioFiles.add(file);
-                LocalFileSystem.getInstance().refreshIoFiles(ioFiles);
-            } catch (IOException e) {
-                e.printStackTrace();
-                FlrException flrException = new FlrException(e.getMessage());
-                throw flrException;
-            }
-        }
-        //Use try-with-resource to get auto-closeable writer instance
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(file.getPath())))
-        {
-            writer.write(content);
-        } catch (IOException e) {
-            e.printStackTrace();
-            FlrException flrException = new FlrException(e.getMessage());
-            throw flrException;
-        }
+    public static void writeContentToFile(@NotNull Project project, @NotNull String content, @NotNull File file) throws FlrException {
+        writeTextViaVfs(project, file, content);
+    }
 
-        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-        if(virtualFile == null) {
-            return;
+    /*
+     * 在 EDT + WriteCommandAction 内经 VFS 写入文本：写入走 VFS/Document 层，自动同步编辑器、可撤销、无需手动 refresh。
+     *
+     * 调用方在 Task.Backgroundable 后台线程（无写锁）执行，故用 invokeAndWait 切到 EDT 并保持同步语义
+     * （返回即写完、失败即抛 FlrException）；写动作内的异常经 holder 回抛到调用线程。
+     * */
+    private static void writeTextViaVfs(@NotNull Project project, @NotNull File file, @NotNull String content) throws FlrException {
+        // 父目录先在后台线程做同步刷新（不持写锁，此处允许 sync refresh），确保 VFS 已感知磁盘现状
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
+
+        final FlrException[] thrown = new FlrException[1];
+        ApplicationManager.getApplication().invokeAndWait(() ->
+            WriteCommandAction.runWriteCommandAction(project, () -> {
+                try {
+                    VirtualFile parent = VfsUtil.createDirectoryIfMissing(file.getParentFile().getPath());
+                    if (parent == null) {
+                        thrown[0] = new FlrException("can not create directory: " + file.getParent());
+                        return;
+                    }
+                    VirtualFile vFile = parent.findChild(file.getName());
+                    if (vFile == null) {
+                        vFile = parent.createChildData(FlrFileUtil.class, file.getName());
+                    }
+                    VfsUtil.saveText(vFile, content);
+                } catch (IOException e) {
+                    LOG.warn(e);
+                    thrown[0] = new FlrException(e.getMessage());
+                }
+            }));
+        if (thrown[0] != null) {
+            throw thrown[0];
         }
-        virtualFile.refresh(false, false);
     }
 
     /*
@@ -234,7 +250,7 @@ public class FlrFileUtil {
     * 若读取成功，返回一个字典对象pubspecConfig
     * 若读取失败，则返回null
     * */
-    public static Map<String, Object> loadPubspecConfigFromFile(@NotNull FlrLogConsole flrLogConsole, @NotNull File pubspecFile) throws FlrException {
+    public static Map<String, Object> loadPubspecConfigFromFile(@NotNull FlrReporter reporter, @NotNull File pubspecFile) throws FlrException {
         try {
             Yaml yaml = new Yaml();
             InputStream inputStream = new FileInputStream(pubspecFile);
@@ -248,35 +264,31 @@ public class FlrFileUtil {
             }
             return pubspecConfig;
         } catch (Exception e) {
-            e.printStackTrace();
-            flrLogConsole.println(e.getMessage(), FlrLogConsole.LogType.normal);
-            flrLogConsole.println("", FlrLogConsole.LogType.normal);
-            flrLogConsole.println("[x]: pubspec.yaml is damaged, maybe it has some syntax errors", FlrLogConsole.LogType.error);
-            flrLogConsole.println(String.format("[*]: please correct the pubspec.yaml file at %s", pubspecFile), FlrLogConsole.LogType.tips);
+            LOG.warn(e);
+            reporter.log(e.getMessage(), FlrLogConsole.LogType.normal);
+            reporter.log("", FlrLogConsole.LogType.normal);
+            reporter.log("[x]: pubspec.yaml is damaged, maybe it has some syntax errors", FlrLogConsole.LogType.error);
+            reporter.log(String.format("[*]: please correct the pubspec.yaml file at %s", pubspecFile), FlrLogConsole.LogType.tips);
             throw FlrException.ILLEGAL_ENV;
         }
     }
 
     /*
-     * 保存pubspecConfig到pubspec.yaml，并刷新pubspec.yaml
+     * 保存pubspecConfig到pubspec.yaml（经 VFS，走 WriteCommandAction）
      * */
-    public static void dumpPubspecConfigToFile(Map<String, Object> pubspecConfig, File pubspecFile) {
+    public static void dumpPubspecConfigToFile(@NotNull Project project, Map<String, Object> pubspecConfig, File pubspecFile) {
         try {
             DumperOptions dumperOptions = new DumperOptions();
             dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             dumperOptions.setIndent(2);
             dumperOptions.setIndicatorIndent(0);
             Yaml yaml = new Yaml(dumperOptions);
-            FileWriter writer = new FileWriter(pubspecFile);
+            StringWriter writer = new StringWriter();
             yaml.dump(pubspecConfig, writer);
 
-            VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
-            if(pubspecVirtualFile == null) {
-                return;
-            }
-            pubspecVirtualFile.refresh(false, false);
+            writeTextViaVfs(project, pubspecFile, writer.toString());
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.warn(e);
         }
     }
 
@@ -417,6 +429,8 @@ public class FlrFileUtil {
     * illegalImageFileArray = ["~/path/to/flutter_project/lib/assets/images/~.png"]
     * */
     public static List<List<VirtualFile>> findImageFiles(@NotNull String resourceDir) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<VirtualFile> legalImageFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalImageFileArray = new ArrayList<VirtualFile>();
 
@@ -441,6 +455,7 @@ public class FlrFileUtil {
         imageFileResultTuple.add(legalImageFileArray);
         imageFileResultTuple.add(illegalImageFileArray);
         return imageFileResultTuple;
+        });
     }
 
     /*
@@ -456,6 +471,8 @@ public class FlrFileUtil {
      * illegalTextFileArray = ["~/path/to/flutter_project/lib/assets/jsons/~.json"]
      * */
     public static List<List<VirtualFile>> findTextFiles(@NotNull String resourceDir) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<VirtualFile> legalTextFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalTextFileArray = new ArrayList<VirtualFile>();
 
@@ -480,6 +497,7 @@ public class FlrFileUtil {
         textFileResultTuple.add(legalTextFileArray);
         textFileResultTuple.add(illegalTextFileArray);
         return textFileResultTuple;
+        });
     }
 
     /*
@@ -490,6 +508,8 @@ public class FlrFileUtil {
      * topChildDirArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri", "~/path/to/flutter_project/lib/assets/fonts/Open_Sans"]
      * */
     public static List<VirtualFile> findTopChildDirs(@NotNull String resourceDir) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<VirtualFile> topChildDirArray = new ArrayList<VirtualFile>();
 
         File resourceDirFile = new File(resourceDir);
@@ -502,6 +522,7 @@ public class FlrFileUtil {
         }
 
         return topChildDirArray;
+        });
     }
 
     /*
@@ -517,6 +538,8 @@ public class FlrFileUtil {
      * illegalFontFileArray = ["~/path/to/flutter_project/lib/assets/fonts/Amiri/~.ttf"]
      * */
     public static List<List<VirtualFile>> findFontFilesInFontFamilyDir(@NotNull VirtualFile fontFamilyDirFile) {
+        // 后台线程读取 VFS 需持读锁
+        return ReadAction.compute(() -> {
         List<VirtualFile> legalFontFileArray = new ArrayList<VirtualFile>();
         List<VirtualFile> illegalFontFileArray = new ArrayList<VirtualFile>();
 
@@ -539,5 +562,6 @@ public class FlrFileUtil {
         fontFileResultTuple.add(legalFontFileArray);
         fontFileResultTuple.add(illegalFontFileArray);
         return fontFileResultTuple;
+        });
     }
 }

@@ -25,7 +25,7 @@ public class FlrGenerateAction extends AnAction {
         FlrApp flrApp = FlrApp.getInstance(project);
 
         // 如果当前资源变化监控服务正在运行，则不清空当前日志，否则就清空
-        if(flrApp.getFlrCommand().isMonitoringAssets == false) {
+        if(flrApp.getFlrCommand().isMonitoringAssets() == false) {
             flrLogConsole.clear();
         }
 
@@ -35,7 +35,7 @@ public class FlrGenerateAction extends AnAction {
                 flrApp.getFlrCommand().generateAll(e, flrLogConsole);
 
                 // 如果当前资源变化监控服务正在运行，则在执行 generate 后，打印监控服务在运行的提示
-                if(flrApp.getFlrCommand().isMonitoringAssets) {
+                if(flrApp.getFlrCommand().isMonitoringAssets()) {
                     FlrLogConsole.LogType indicatorType = FlrLogConsole.LogType.normal;
                     flrLogConsole.println("", indicatorType);
                     String indicatorMessage =

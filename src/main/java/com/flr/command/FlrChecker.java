@@ -2,6 +2,9 @@ package com.flr.command;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.FlrPaths;
+import com.flr.PubspecKeys;
+import com.flr.core.report.FlrReporter;
 import com.flr.logConsole.FlrLogConsole;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,17 +21,17 @@ public class FlrChecker {
     * 若存在返回true
     * 否则抛出异常
     * */
-    public static boolean checkPubspecFileIsExisted(@NotNull FlrLogConsole flrLogConsole, @NotNull String flutter_dir) throws FlrException {
-        String pubspecFilePath = flutter_dir + "/pubspec.yaml";
+    public static boolean checkPubspecFileIsExisted(@NotNull FlrReporter reporter, @NotNull String flutter_dir) throws FlrException {
+        String pubspecFilePath = flutter_dir + "/" + FlrPaths.PUBSPEC_YAML;
         File pubspecFile = new File(pubspecFilePath);
 
         if(pubspecFile.exists()) {
             return true;
         }
 
-        flrLogConsole.println(String.format("[x]: %s not found", pubspecFilePath), FlrLogConsole.LogType.error);
+        reporter.log(String.format("[x]: %s not found", pubspecFilePath), FlrLogConsole.LogType.error);
         String tipsStr = String.format("[*]: please make sure %s is existed", pubspecFilePath);
-        flrLogConsole.println(tipsStr, FlrLogConsole.LogType.tips);
+        reporter.log(tipsStr, FlrLogConsole.LogType.tips);
 
         throw FlrException.ILLEGAL_ENV;
     }
@@ -49,14 +52,14 @@ public class FlrChecker {
     * ```
     *
     * */
-    public static boolean checkFlrConfigIsExisted(@NotNull FlrLogConsole flrLogConsole, @NotNull Map<String, Object> pubspecConfig) throws FlrException {
-        Object flrConfig = pubspecConfig.get("flr");
+    public static boolean checkFlrConfigIsExisted(@NotNull FlrReporter reporter, @NotNull Map<String, Object> pubspecConfig) throws FlrException {
+        Object flrConfig = pubspecConfig.get(PubspecKeys.FLR);
         if(flrConfig instanceof Map) {
             return true;
         }
 
-        flrLogConsole.println("[x]: have no flr configuration in pubspec.yaml", FlrLogConsole.LogType.error);
-        flrLogConsole.println("[*]: please click menu \"Tools-Flr-Init\" to fix it", FlrLogConsole.LogType.tips);
+        reporter.log("[x]: have no flr configuration in pubspec.yaml", FlrLogConsole.LogType.error);
+        reporter.log("[*]: please click menu \"Tools-Flr-Init\" to fix it", FlrLogConsole.LogType.tips);
 
         throw FlrException.ILLEGAL_ENV;
     }
@@ -73,7 +76,7 @@ public class FlrChecker {
     * illegalResourceDirArray = ["~/path/to/flutter_r_demo/to/non-existed_folder"]
     *
     * */
-    public static List<List<String>> checkFlrAssetsIsLegal(@NotNull FlrLogConsole flrLogConsole, @NotNull Map<String, Object> flrConfig, @NotNull String flutterProjectRootDir) throws FlrException {
+    public static List<List<String>> checkFlrAssetsIsLegal(@NotNull FlrReporter reporter, @NotNull Map<String, Object> flrConfig, @NotNull String flutterProjectRootDir) throws FlrException {
         String flrCoreVersion = FlrConstant.CORE_VERSION;
         if(flrConfig.containsKey("core_version")) {
             flrCoreVersion = String.format("%s", flrConfig.get("core_version"));
@@ -82,8 +85,8 @@ public class FlrChecker {
         if(flrConfig.containsKey("dartfmt_line_length")) {
             dartfmtLineLengthStr = String.format("%s", flrConfig.get("dartfmt_line_length"));
         }
-        List<String> assetsResourceDirArray = (List<String>)flrConfig.get("assets");
-        List<String> fontsResourceDirArray = (List<String>)flrConfig.get("fonts");
+        List<String> assetsResourceDirArray = (List<String>)flrConfig.get(PubspecKeys.ASSETS);
+        List<String> fontsResourceDirArray = (List<String>)flrConfig.get(PubspecKeys.FONTS);
 
         if(assetsResourceDirArray instanceof List == false) {
             assetsResourceDirArray = new ArrayList<String>();
@@ -144,11 +147,11 @@ public class FlrChecker {
                 warningText += "\n" + String.format("  - %s", resourceDir);
             }
             warningText += "\n";
-            flrLogConsole.println(warningText, FlrLogConsole.LogType.warning);
+            reporter.log(warningText, FlrLogConsole.LogType.warning);
         }
 
-        flrLogConsole.println("[x]: have no valid resource directories configuration in pubspec.yaml", FlrLogConsole.LogType.error);
-        flrLogConsole.println(String.format(
+        reporter.log("[x]: have no valid resource directories configuration in pubspec.yaml", FlrLogConsole.LogType.error);
+        reporter.log(String.format(
                 "[*]: please manually configure the resource directories to fix it, for example:\n" +
                         "\u202D \n" +
                         "\u202D     flr:\n" +

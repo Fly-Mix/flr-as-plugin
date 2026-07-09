@@ -1,28 +1,21 @@
-// 当前最新开发环境：gradle-7.5.1
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+
+// 构建环境：Gradle 8.13+（IntelliJ Platform Gradle Plugin 2.x 最低要求）、JDK 17
 plugins {
     id 'java'
 
     /*
-    Gradle-IntelliJ-Plugin 'org.jetbrains.intellij' 的设置说明：
-    1. Gradle-IntelliJ-Plugin'org.jetbrains.intellij' 版本升级说明：
-       - build plugin for 2022.1 ，'org.jetbrains.intellij' 需要使用 1.5.3+ 版本（同时需要升级 gradle 版本到 7.* 以上，JDK 版本至 11）
-       - build plugin for 2022.2.3 ，'org.jetbrains.intellij' 需要使用 1.13.3+ 版本（同时需要升级 gradle 版本到 7.* 以上，JDK 版本至 17）
-    2. 若使用本地默认的 gradle ，请手动切换 gradle 到特定版本
-    3. 当前项目默认使项目根目录下 gradle/wrapper/gradle-wrapper.properties 中指定的 gradle 版本，更改当前项目的 gradle 版本的便捷方法是：修改 gradle-wrapper.properties 中 distributionUrl（目标gradle下载地址）
-       - 使用 gradle-5.2.1：distributionUrl=https\://services.gradle.org/distributions/gradle-5.2.1-all.zip
-       - 使用 gradle-7.5.1：distributionUrl=https\://services.gradle.org/distributions/gradle-7.5.1-all.zip
-    4. 当前项目使用的 JDK 版本设置：Preferences | Build, Execution, Deployment | Build Tools | Gradle，Gradle JVM 设置对应版本 JDK
-
+    构建 IntelliJ 插件用的 Gradle 插件：
+    - 旧：Gradle IntelliJ Plugin  id 'org.jetbrains.intellij'（1.x，已 EOL；且不兼容 Gradle 9.x）
+    - 新：IntelliJ Platform Gradle Plugin  id 'org.jetbrains.intellij.platform'（2.x，当前唯一维护）
+      · 最低要求 Gradle 8.13 + JDK 17
+      · 依赖模型变化：目标 IDE 与依赖插件、测试框架均在 dependencies { intellijPlatform { ... } } 中声明
     */
-    // id 'org.jetbrains.intellij' version '0.4.16' // gradle 6.7
-    // id 'org.jetbrains.intellij' version '1.12.0' // gradle 7.5.1
-    // id 'org.jetbrains.intellij' version '1.13.3' // gradle 7.5.1
-    id 'org.jetbrains.intellij' version '1.17.1' // gradle 7.5.1
+    id 'org.jetbrains.intellij.platform' version '2.17.0'
 }
 
 // 插件需要支持的 IntelliJ IDEA Community Edition平台版本
 // 平台版本使用其 branch_number 作为区分
-// 关于`branch_number`的更多细节，可参考 https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
 enum PlatformType {
     // Android Studio 3.5
     IC_191 ('191'),
@@ -68,198 +61,186 @@ enum PlatformType {
     }
 }
 
-// flr-plugin-engine 的版本号
-// 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_engine_version）
-// 该值在完成一个新版本的 flr-plugin-engine 开发后，手动更新
+// flr-plugin-engine 的版本号（完成一个新版本的 flr-plugin-engine 开发后手动更新）
 String pluginEngineVersion = '3.4.0'
 
-// 用于开发 flr-plugin-engine 时使用平台版本
-// 一般使用最新平台版本
+// 用于开发 flr-plugin-engine 时使用平台版本（一般使用最新平台版本）
 PlatformType pluginEnginePlatform = PlatformType.IC_243
 
-// 用于开发 flr-plugin 时使用平台版本
-// 该值在切换到 platform-master 分支后，手动更新
-// 如切换到 191-master 分支后，该值更新为 PlatformType.IC_191
+// 用于开发 flr-plugin 时使用平台版本（切换到 platform-master 分支后手动更新）
 PlatformType pluginProductPlatform = pluginEnginePlatform
 
 // 指定JDK版本
-// JDK8: '1.8'or'8'
-// JDK11: '11' （IDEA 2020.2 版本开始使用JDK11）
-sourceCompatibility = '8'
+// JDK8: '1.8'or'8'；JDK11: '11'（IDEA 2020.2 起）；JDK17：IDEA 2022.2.3 起
+// 注意：Gradle 9 起 sourceCompatibility 不再是 Project 属性，需经下面的 java{} 扩展设置
+String javaVersion = '8'
 switch (pluginProductPlatform) {
-// Config for Android Studio 3.5
     case PlatformType.IC_191:
-// Config for Android Studio 3.6
     case PlatformType.IC_192:
-// Config for Android Studio 4.0
     case PlatformType.IC_193:
-// Config for Android Studio 4.1
     case PlatformType.IC_201:
-        sourceCompatibility = '8'
+        javaVersion = '8'
         break
-// Config for Android Studio 4.2
     case PlatformType.IC_202:
-// Config for Android Studio - Arctic Fox | 2020.3.1
     case PlatformType.IC_203:
-// Config for Android Studio Bumblebee | 2021.1.1
     case PlatformType.IC_211:
-// Config for Android Studio Chipmunk | 2021.2.1
     case PlatformType.IC_212:
-// Config for Android Studio Dolphin | 2021.3.1
     case PlatformType.IC_213:
-// Config for Android Studio Electric Eel | 2022.1.1
     case PlatformType.IC_221:
-        sourceCompatibility = '11'
+        javaVersion = '11'
         break
-// Config for Android Studio Flamingo | 2022.2.1
     case PlatformType.IC_222:
-// Config for Android Studio Giraffe | 2022.3.1
     case PlatformType.IC_223:
-// Config for Android Studio Hedgehog | 2023.1.1
     case PlatformType.IC_231:
-// Config for Android Studio Meerkat | 2024.3.1
     case PlatformType.IC_243:
-        sourceCompatibility = '17'
+        javaVersion = '17'
         break
 }
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
+}
+
+// flr-plugin 的版本号：plugin_product_version = #{IC_branch_number}.#{plugin_engine_version}
+// example: IC_branch_number=191, plugin_engine_version=1.0.0 -> 191.1.0.0
+String pluginProductVersion = pluginProductPlatform.branchNumber + '.' + pluginEngineVersion
+
+// 项目版本；打包产物名由 project.name + version 得出，例如 flr-as-plugin-243.3.4.0.zip
+version = pluginProductVersion
 
 println "flr-as-plugin 构建配置信息如下："
 println " - PluginProductPlatform: ${pluginProductPlatform}"
-println " - SourceCompatibility: JDK${sourceCompatibility}"
+println " - SourceCompatibility: JDK${javaVersion}"
+println " - PluginProductVersion: ${pluginProductVersion}"
 
-// flr-plugin 的版本号
-// 关于其介绍，可看文档《flr_plugin_workflow》（注：文档中使用的字段为 plugin_product_version）
-//
-// plugin_product_version = #{IC_branch_number}.#{plugin_engine_version}
-//
-// example:
-// IC_branch_number = 191
-// plugin_engine_version = 1.0.0
-// plugin_product_version = 191.1.0.0
-//
-String pluginProductVersion = pluginProductPlatform.branchNumber + '.' + pluginEngineVersion
-
-// 打包文件的基本名称
-// example: flr-as-plugin-191.1.0.0
-archivesBaseName = rootProject.name + '-' + pluginProductVersion
+// 平台版本与依赖插件版本（原在 intellij{} 块内，2.x 需在 dependencies/pluginConfiguration 中使用，故上移到顶层）
+// platformPlugins 元素约定：'java' 表示平台自带插件 com.intellij.java；'#{id}:#{version}' 表示 marketplace 插件
+String platformVersion = null
+List platformPlugins = null
+switch (pluginProductPlatform) {
+    case PlatformType.IC_191:
+        platformVersion = '2019.1.4'
+        platformPlugins = ['Dart:191.8593', 'io.flutter:43.0.1']
+        break
+    case PlatformType.IC_192:
+        platformVersion = '2019.2.4'
+        platformPlugins = ['Dart:192.7761', 'io.flutter:43.0.2']
+        break
+    case PlatformType.IC_193:
+        platformVersion = '2019.3.3'
+        platformPlugins = ['Dart:193.7361', 'io.flutter:45.1.2']
+        break
+    case PlatformType.IC_201:
+        platformVersion = '2020.1.4'
+        platformPlugins = ['Dart:201.9002', 'io.flutter:50.0.2']
+        break
+    case PlatformType.IC_202:
+        platformVersion = '2020.2.3'
+        platformPlugins = ['Dart:202.8488', 'io.flutter:56.0.2']
+        break
+    case PlatformType.IC_203:
+        platformVersion = '2020.3.1'
+        platformPlugins = ['Dart:203.8292', 'io.flutter:59.0.2']
+        break
+    case PlatformType.IC_211:
+        platformVersion = '2021.1'
+        platformPlugins = ['Dart:211.7798', 'io.flutter:64.1.2']
+        break
+    case PlatformType.IC_212:
+        platformVersion = '2021.2.3'
+        platformPlugins = ['Dart:212.5744', 'io.flutter:67.1.2']
+        break
+    case PlatformType.IC_213:
+        platformVersion = '2021.3.2'
+        platformPlugins = ['Dart:213.7371', 'io.flutter:70.0.3']
+        break
+    case PlatformType.IC_221:
+        platformVersion = '2022.1.4'
+        platformPlugins = ['java', 'Dart:221.6096', 'io.flutter:71.2.4']
+        break
+    case PlatformType.IC_222:
+        platformVersion = '2022.2.4'
+        platformPlugins = ['java', 'Dart:222.4582', 'io.flutter:73.0.2']
+        break
+    case PlatformType.IC_223:
+        platformVersion = '2022.3.3'
+        platformPlugins = ['java', 'Dart:223.8950', 'io.flutter:73.0.3']
+        break
+    case PlatformType.IC_231:
+        platformVersion = '2023.1.5'
+        platformPlugins = ['java', 'Dart:231.9402', 'io.flutter:77.1.2']
+        break
+    case PlatformType.IC_243:
+        platformVersion = '2024.3.1'
+        platformPlugins = ['java', 'Dart:243.23177', 'io.flutter:82.2.4']
+        break
+}
+assert(platformVersion != null && platformPlugins != null)
 
 repositories {
     mavenCentral()
+    // 2.x：目标 IDE、marketplace 插件、测试框架等均从此处的仓库解析
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
-    /*
-    gradle7 适配说明：
-    - compile 函数名需要改为 implementation
-    - testCompile 函数名需要改为 testImplementation
-    */
-//    testCompile group: 'junit', name: 'junit', version: '4.12'
-//    compile group: 'org.yaml', name: 'snakeyaml', version: '1.26'
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
-    implementation group: 'org.yaml', name: 'snakeyaml', version: '1.26'
-}
+    // 2.x：一切构建/测试所需（目标 IDE、依赖插件、测试框架、工具）都作为依赖显式声明
+    intellijPlatform {
+        // 目标基座平台（与 1.x 的 intellij.version 一致：IntelliJ IDEA Community）
+        // 默认从官方仓库下载；受限网络/离线时可用 -PflrLocalIde=/path/to/installed-ide 指向本地已安装 IDE 绕开下载
+        if (project.hasProperty('flrLocalIde')) {
+            local project.property('flrLocalIde')
+        } else {
+            intellijIdeaCommunity platformVersion
+        }
 
-// See https://github.com/JetBrains/gradle-intellij-plugin#intellij-platform-properties
-// Get platformVersion with Build#AI-Version of Android Studio from https://www.jetbrains.com/idea/download/other.html
-intellij {
+        // 依赖插件：'java' -> 平台自带插件；'#{id}:#{version}' -> marketplace 插件（Dart / io.flutter）
+        platformPlugins.each { String p ->
+            if (p == 'java') {
+                bundledPlugin 'com.intellij.java'
+            } else {
+                String[] a = p.split(':')
+                plugin a[0], a[1]
+            }
+        }
 
-    String platformVersion = null
-    List platformPlugins = null
+        // 平台测试框架（BasePlatformTestCase 等所需；2.x 必须显式声明）
+        testFramework TestFrameworkType.Platform.INSTANCE
 
-    switch (pluginProductPlatform) {
-        // Config for Android Studio 3.5
-        case PlatformType.IC_191:
-            platformVersion = '2019.1.4'
-            platformPlugins =  ['Dart:191.8593', 'io.flutter:43.0.1']
-            break
-        // Config for Android Studio 3.6
-        case PlatformType.IC_192:
-            platformVersion = '2019.2.4'
-            platformPlugins = ['Dart:192.7761', 'io.flutter:43.0.2']
-            break
-        // Config for Android Studio 4.0
-        case PlatformType.IC_193:
-            platformVersion = '2019.3.3'
-            platformPlugins = ['Dart:193.7361', 'io.flutter:45.1.2']
-            break
-        // Config for Android Studio 4.1
-        case PlatformType.IC_201:
-            platformVersion = '2020.1.4'
-            platformPlugins = ['Dart:201.9002', 'io.flutter:50.0.2']
-            break
-        // Config for Android Studio 4.2
-        case PlatformType.IC_202:
-            platformVersion = '2020.2.3'
-            platformPlugins = ['Dart:202.8488', 'io.flutter:56.0.2']
-            break
-        // Config for Android Studio - Arctic Fox | 2020.3.1
-        case PlatformType.IC_203:
-            platformVersion = '2020.3.1'
-            platformPlugins = ['Dart:203.8292', 'io.flutter:59.0.2']
-            break
-        // Config for Android Studio Bumblebee | 2021.1.1
-        case PlatformType.IC_211:
-            platformVersion = '2021.1'
-            platformPlugins = ['Dart:211.7798', 'io.flutter:64.1.2']
-            break
-       // Config for Android Studio Chipmunk | 2021.2.1
-        case PlatformType.IC_212:
-            platformVersion = '2021.2.3'
-            platformPlugins = ['Dart:212.5744', 'io.flutter:67.1.2']
-            break
-        // Config for Android Studio Dolphin | 2021.3.1
-        case PlatformType.IC_213:
-            platformVersion = '2021.3.2'
-            platformPlugins = ['Dart:213.7371', 'io.flutter:70.0.3']
-            break
-        // Config for Android Studio Electric Eel | 2022.1.1
-        case PlatformType.IC_221:
-            platformVersion = '2022.1.4'
-            platformPlugins = ['java', 'Dart:221.6096', 'io.flutter:71.2.4']
-            break
-        // Config for Android Studio Flamingo | 2022.2.1
-        case PlatformType.IC_222:
-            platformVersion = '2022.2.4'
-            platformPlugins = ['java', 'Dart:222.4582', 'io.flutter:73.0.2']
-            break
-       // Config for Android Studio Giraffe | 2022.3.1
-        case PlatformType.IC_223:
-            platformVersion = '2022.3.3'
-            platformPlugins = ['java', 'Dart:223.8950', 'io.flutter:73.0.3']
-            break
-        // Config for Android Studio Hedgehog | 2023.1.1
-        case PlatformType.IC_231:
-            platformVersion = '2023.1.5'
-            platformPlugins = ['java', 'Dart:231.9402', 'io.flutter:77.1.2']
-            break
-        // Config for Android Studio Meerkat | 2024.3.1
-        case PlatformType.IC_243:
-            platformVersion = '2024.3.1'
-            platformPlugins = ['java', 'Dart:243.23177', 'io.flutter:82.2.4']
-            break
+        // JetBrains Runtime（JBR 21）：2024.3 平台运行时；buildSearchableOptions/runIde/平台测试均需要
+        jetbrainsRuntime()
+
+        // 工具：插件校验器 / 打包签名器
+        pluginVerifier()
+        zipSigner()
     }
 
-    assert(platformVersion != null && platformPlugins != null)
-
-    version = platformVersion
-    plugins = platformPlugins
-
-    /*
-    * Use this property if you want to test your plugin in any non-IDEA JetBrains IDE such as WebStorm or Android Studio.
-    *
-    * See https://github.com/JetBrains/gradle-intellij-plugin#rundebug-ide-properties
-    * */
-    //alternativeIdePath '/Applications/Android Studio.app'
+    testImplementation 'junit:junit:4.12'
+    implementation 'org.yaml:snakeyaml:1.26'
 }
 
-// See https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
-patchPluginXml {
+// headless 基准回归测试的运行参数（可用 -PflrDemoPath / -PflrDartPath 覆盖）：
+// - flr.demo.path：基准工程 flutter_r_demo 路径，默认同级目录；缺失时相关测试自动跳过
+// - flr.dart.path：dart 可执行文件，用于对 r.g.dart 做归一化比较（脱离 formatter 版本）
+test {
+    systemProperty 'flr.demo.path',
+            project.hasProperty('flrDemoPath') ? project.property('flrDemoPath') : "${rootProject.projectDir}/../flutter_r_demo"
+    systemProperty 'flr.dart.path',
+            project.hasProperty('flrDartPath') ? project.property('flrDartPath') : '/Users/York/.flutter/flutter/bin/dart'
+}
 
-    // 设置插件的版本号
-    version = pluginProductVersion
+// 2.x：插件元信息配置（取代 1.x 的 intellij{} + patchPluginXml{}）
+intellijPlatform {
+    // Flr 无可搜索的设置项，关闭 buildSearchableOptions（其会启动 headless IDE，既慢又易出问题）
+    buildSearchableOptions = false
 
-    // 设置插件描述
-    pluginDescription = """
+    pluginConfiguration {
+        version = pluginProductVersion
+
+        description = """
 <p>Flr (Flutter-R): A Flutter Resource Manager Android Studio Plugin, which can help flutter developer to auto specify assets in pubspec.yaml and generate r.g.dart file.</p>
 <br>
 <p>You can get more details from:</p>
@@ -267,22 +248,14 @@ patchPluginXml {
   <li><a href="https://github.com/Fly-Mix/flr-as-plugin">Flr GitHub Repository</a></li>
   <li><a href="https://plugins.jetbrains.com/plugin/13789-flr/">Flr Plugin Homepage</a></li>
 </ul>
-    """
+        """
 
-    /*
-    * 插件兼容IDEA的最小版本号和最大版本号
-    * 详细可参考：
-    * - https://github.com/JetBrains/gradle-intellij-plugin#patching-dsl
-    * - http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
-    * */
-    sinceBuild = pluginProductPlatform.branchNumber
-    //untilBuild = '191.*'
+        ideaVersion {
+            // 最小兼容版本；untilBuild 沿用插件默认（当前平台分支 .*，与 1.x 现状一致）
+            sinceBuild = pluginProductPlatform.branchNumber
+        }
 
-    /*
-    * 设置版本更新日志
-    * 注意：最新版本号的标题样式为h3，其他版本号的标题样式为h4
-    */
-    changeNotes = """
+        changeNotes = """
 <h2>Flr Plugin Change Notes</h2>
 <i><b>Attention:</b> Flr v243.* is built for Android Studio Meerkat | 2024.3.1</i>
 <h3>243.3.4.0</h3>
@@ -334,5 +307,6 @@ patchPluginXml {
   <li>Support for processing font assets (.ttf, .otf, .ttc)</li>
   <li>Improve robustness</li>
 </ul>
-    """
+        """
+    }
 }

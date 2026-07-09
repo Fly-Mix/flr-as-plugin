@@ -16,7 +16,10 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
+        <!-- id 须与 com.flr.FlrIds.TOOL_WINDOW 保持一致（Java 端用 ToolWindowManager.getToolWindow(...) 查找） -->
         <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.toolWindow.FlrToolWindowFactory"/>
+        <!-- id 须与 com.flr.FlrIds.NOTIFICATION_GROUP 保持一致（FlrMessageBox 以该 id 构造 Notification 弹出通知） -->
+        <notificationGroup id="Flr" displayType="BALLOON"/>
     </extensions>
 
     <actions>

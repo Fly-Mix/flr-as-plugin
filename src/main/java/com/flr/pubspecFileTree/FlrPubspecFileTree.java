@@ -1,5 +1,6 @@
 package com.flr.pubspecFileTree;
 
+import com.flr.FlrPaths;
 import com.flr.command.util.FlrFileUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -63,7 +64,7 @@ public class FlrPubspecFileTree extends JPanel {
     public void refreshContent() {
         // 检测当前flutter主工程根目录是否存在 pubspec.yaml；若不存在，则结束刷新
         String flutterMainProjectRootDir = curProject.getBasePath();
-        String mainPubspecFilePath = flutterMainProjectRootDir + "/pubspec.yaml";
+        String mainPubspecFilePath = flutterMainProjectRootDir + "/" + FlrPaths.PUBSPEC_YAML;
         File mainPubspecFile = new File(mainPubspecFilePath);
         if(mainPubspecFile.exists() == false) {
             return;
@@ -76,7 +77,7 @@ public class FlrPubspecFileTree extends JPanel {
         rootTreeNode.removeAllChildren();
 
         // 添加flutter主工程的pubspec.yaml
-        DefaultMutableTreeNode mainPubspecFileTreeNode = new DefaultMutableTreeNode("pubspec.yaml");
+        DefaultMutableTreeNode mainPubspecFileTreeNode = new DefaultMutableTreeNode(FlrPaths.PUBSPEC_YAML);
         rootTreeNode.add(mainPubspecFileTreeNode);
 
         // 获取flutter主工程根目录下所有的子工程目录，并添加它们的pubspec.yaml
