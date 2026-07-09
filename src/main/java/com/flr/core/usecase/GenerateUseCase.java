@@ -289,7 +289,7 @@ public final class GenerateUseCase {
         pubspecConfig.put("flutter", flutterConfig);
 
         // 保存刷新 pubspec.yaml
-        FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
+        FlrFileUtil.dumpPubspecConfigToFile(project, pubspecConfig, pubspecFile);
 
         // ----- Step-8 End -----
 

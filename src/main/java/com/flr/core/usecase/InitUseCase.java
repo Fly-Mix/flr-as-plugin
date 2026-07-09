@@ -200,7 +200,7 @@ public final class InitUseCase {
         pubspecConfig.put("flutter", flutterConfig);
 
         // 保存并刷新 pubspec.yaml
-        FlrFileUtil.dumpPubspecConfigToFile(pubspecConfig, pubspecFile);
+        FlrFileUtil.dumpPubspecConfigToFile(project, pubspecConfig, pubspecFile);
 
         reporter.success(String.format("[√]: init %s done !!!", flutterProjectRootDir), "", false);
 

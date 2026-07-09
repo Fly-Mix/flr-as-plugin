@@ -4,7 +4,9 @@ import com.flr.FlrConstant;
 import com.flr.FlrException;
 import com.flr.core.report.FlrReporter;
 import com.flr.logConsole.FlrLogConsole;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.*;
@@ -13,8 +15,6 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -204,37 +204,44 @@ public class FlrFileUtil {
     }
 
     /*
-    * 写文件，并刷新文件
+    * 写文件（经 VFS，走 WriteCommandAction）
     * */
     public static void writeContentToFile(@NotNull Project project, @NotNull String content, @NotNull File file) throws FlrException {
-        if(file.exists() == false) {
-            try {
-                // 创建文件，并同步加载文件到工程
-                file.createNewFile();
-                List<File> ioFiles = new ArrayList<File>();
-                ioFiles.add(file);
-                LocalFileSystem.getInstance().refreshIoFiles(ioFiles);
-            } catch (IOException e) {
-                LOG.warn(e);
-                FlrException flrException = new FlrException(e.getMessage());
-                throw flrException;
-            }
-        }
-        //Use try-with-resource to get auto-closeable writer instance
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(file.getPath())))
-        {
-            writer.write(content);
-        } catch (IOException e) {
-            LOG.warn(e);
-            FlrException flrException = new FlrException(e.getMessage());
-            throw flrException;
-        }
+        writeTextViaVfs(project, file, content);
+    }
 
-        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-        if(virtualFile == null) {
-            return;
+    /*
+     * 在 EDT + WriteCommandAction 内经 VFS 写入文本：写入走 VFS/Document 层，自动同步编辑器、可撤销、无需手动 refresh。
+     *
+     * 调用方在 Task.Backgroundable 后台线程（无写锁）执行，故用 invokeAndWait 切到 EDT 并保持同步语义
+     * （返回即写完、失败即抛 FlrException）；写动作内的异常经 holder 回抛到调用线程。
+     * */
+    private static void writeTextViaVfs(@NotNull Project project, @NotNull File file, @NotNull String content) throws FlrException {
+        // 父目录先在后台线程做同步刷新（不持写锁，此处允许 sync refresh），确保 VFS 已感知磁盘现状
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file.getParentFile());
+
+        final FlrException[] thrown = new FlrException[1];
+        ApplicationManager.getApplication().invokeAndWait(() ->
+            WriteCommandAction.runWriteCommandAction(project, () -> {
+                try {
+                    VirtualFile parent = VfsUtil.createDirectoryIfMissing(file.getParentFile().getPath());
+                    if (parent == null) {
+                        thrown[0] = new FlrException("can not create directory: " + file.getParent());
+                        return;
+                    }
+                    VirtualFile vFile = parent.findChild(file.getName());
+                    if (vFile == null) {
+                        vFile = parent.createChildData(FlrFileUtil.class, file.getName());
+                    }
+                    VfsUtil.saveText(vFile, content);
+                } catch (IOException e) {
+                    LOG.warn(e);
+                    thrown[0] = new FlrException(e.getMessage());
+                }
+            }));
+        if (thrown[0] != null) {
+            throw thrown[0];
         }
-        virtualFile.refresh(false, false);
     }
 
     /*
@@ -266,23 +273,19 @@ public class FlrFileUtil {
     }
 
     /*
-     * 保存pubspecConfig到pubspec.yaml，并刷新pubspec.yaml
+     * 保存pubspecConfig到pubspec.yaml（经 VFS，走 WriteCommandAction）
      * */
-    public static void dumpPubspecConfigToFile(Map<String, Object> pubspecConfig, File pubspecFile) {
+    public static void dumpPubspecConfigToFile(@NotNull Project project, Map<String, Object> pubspecConfig, File pubspecFile) {
         try {
             DumperOptions dumperOptions = new DumperOptions();
             dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             dumperOptions.setIndent(2);
             dumperOptions.setIndicatorIndent(0);
             Yaml yaml = new Yaml(dumperOptions);
-            FileWriter writer = new FileWriter(pubspecFile);
+            StringWriter writer = new StringWriter();
             yaml.dump(pubspecConfig, writer);
 
-            VirtualFile pubspecVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(pubspecFile);
-            if(pubspecVirtualFile == null) {
-                return;
-            }
-            pubspecVirtualFile.refresh(false, false);
+            writeTextViaVfs(project, pubspecFile, writer.toString());
         } catch (Exception e) {
             LOG.warn(e);
         }
