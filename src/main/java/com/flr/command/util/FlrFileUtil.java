@@ -2,6 +2,7 @@ package com.flr.command.util;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.FlrPaths;
 import com.flr.core.report.FlrReporter;
 import com.flr.logConsole.FlrLogConsole;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +42,7 @@ public class FlrFileUtil {
             return flutterSubProjectRootDirArray;
         }
 
-        String pubspecFileName = "pubspec.yaml";
+        String pubspecFileName = FlrPaths.PUBSPEC_YAML;
         VirtualFile[] resourceDirChildren = resourceDirVirtualFile.getChildren();
         for(VirtualFile resourceDirChild: resourceDirChildren) {
             if(resourceDirChild.isDirectory()) {
@@ -69,7 +70,7 @@ public class FlrFileUtil {
      * 获取指定flutter工程的pubspec.yaml文件的路径
      * */
     public static String getPubspecFilePath(@NotNull String flutterProjectDir) {
-        String pubspecFilePath = flutterProjectDir + "/pubspec.yaml";
+        String pubspecFilePath = flutterProjectDir + "/" + FlrPaths.PUBSPEC_YAML;
         return pubspecFilePath;
     }
 

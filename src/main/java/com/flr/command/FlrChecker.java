@@ -2,6 +2,7 @@ package com.flr.command;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.FlrPaths;
 import com.flr.PubspecKeys;
 import com.flr.core.report.FlrReporter;
 import com.flr.logConsole.FlrLogConsole;
@@ -21,7 +22,7 @@ public class FlrChecker {
     * 否则抛出异常
     * */
     public static boolean checkPubspecFileIsExisted(@NotNull FlrReporter reporter, @NotNull String flutter_dir) throws FlrException {
-        String pubspecFilePath = flutter_dir + "/pubspec.yaml";
+        String pubspecFilePath = flutter_dir + "/" + FlrPaths.PUBSPEC_YAML;
         File pubspecFile = new File(pubspecFilePath);
 
         if(pubspecFile.exists()) {

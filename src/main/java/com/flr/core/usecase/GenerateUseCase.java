@@ -2,6 +2,7 @@ package com.flr.core.usecase;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.FlrPaths;
 import com.flr.PubspecKeys;
 import com.flr.command.FlrChecker;
 import com.flr.command.util.FlrAssetUtil;
@@ -309,7 +310,7 @@ public final class GenerateUseCase {
         // ----- Step-20 Begin -----
         // 结束操作，保存 r.g.dart
         //
-        String rDartFilePath = flutterProjectRootDir + "/lib/r.g.dart";
+        String rDartFilePath = flutterProjectRootDir + "/" + FlrPaths.LIB_DIR + "/" + FlrPaths.R_DART;
         File rDartFile = new File(rDartFilePath);
         try {
             FlrFileUtil.writeContentToFile(project, r_dart_file_content, rDartFile);
