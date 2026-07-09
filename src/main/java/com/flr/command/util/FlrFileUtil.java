@@ -5,6 +5,7 @@ import com.flr.FlrException;
 import com.flr.core.report.FlrReporter;
 import com.flr.logConsole.FlrLogConsole;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,8 @@ import java.util.regex.Pattern;
 * 资源文件相关的工具类方法
 * */
 public class FlrFileUtil {
+
+    private static final Logger LOG = Logger.getInstance(FlrFileUtil.class);
 
     /*
      * 获取flutter主工程的所有子工程的根目录
@@ -108,7 +111,7 @@ public class FlrFileUtil {
                     return true;
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.warn(e);
                 reporter.log(e.getMessage(), FlrLogConsole.LogType.normal);
                 reporter.log("", FlrLogConsole.LogType.normal);
             }
@@ -129,7 +132,7 @@ public class FlrFileUtil {
                     return true;
                 }
             } catch (FlrException e) {
-                e.printStackTrace();
+                LOG.warn(e);
                 reporter.log(e.getMessage(), FlrLogConsole.LogType.normal);
                 reporter.log("", FlrLogConsole.LogType.normal);
             }
@@ -203,7 +206,7 @@ public class FlrFileUtil {
     /*
     * 写文件，并刷新文件
     * */
-    public static void writeContentToFile(@com.sun.istack.NotNull Project project, @com.sun.istack.NotNull String content, @com.sun.istack.NotNull File file) throws FlrException {
+    public static void writeContentToFile(@NotNull Project project, @NotNull String content, @NotNull File file) throws FlrException {
         if(file.exists() == false) {
             try {
                 // 创建文件，并同步加载文件到工程
@@ -212,7 +215,7 @@ public class FlrFileUtil {
                 ioFiles.add(file);
                 LocalFileSystem.getInstance().refreshIoFiles(ioFiles);
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.warn(e);
                 FlrException flrException = new FlrException(e.getMessage());
                 throw flrException;
             }
@@ -222,7 +225,7 @@ public class FlrFileUtil {
         {
             writer.write(content);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.warn(e);
             FlrException flrException = new FlrException(e.getMessage());
             throw flrException;
         }
@@ -253,7 +256,7 @@ public class FlrFileUtil {
             }
             return pubspecConfig;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.warn(e);
             reporter.log(e.getMessage(), FlrLogConsole.LogType.normal);
             reporter.log("", FlrLogConsole.LogType.normal);
             reporter.log("[x]: pubspec.yaml is damaged, maybe it has some syntax errors", FlrLogConsole.LogType.error);
@@ -281,7 +284,7 @@ public class FlrFileUtil {
             }
             pubspecVirtualFile.refresh(false, false);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.warn(e);
         }
     }
 

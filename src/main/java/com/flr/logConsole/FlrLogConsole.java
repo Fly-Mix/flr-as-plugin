@@ -4,6 +4,7 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,8 @@ public class FlrLogConsole {
         error
     }
 
+    private static final Logger LOG = Logger.getInstance(FlrLogConsole.class);
+
     private ConsoleView curConsoleView;
     private Project curProject;
 
@@ -25,7 +28,7 @@ public class FlrLogConsole {
 
     public void println(@NotNull String text, @NotNull FlrLogConsole.LogType logType) {
         if(curConsoleView == null) {
-            System.out.println("FlrLogConsole: curConsoleView is null !!!");
+            LOG.warn("FlrLogConsole: curConsoleView is null");
             return;
         }
 
@@ -64,7 +67,7 @@ public class FlrLogConsole {
 
     public void clear() {
         if(curConsoleView == null) {
-            System.out.println("FlrLogConsole: curConsoleView is null !!!");
+            LOG.warn("FlrLogConsole: curConsoleView is null");
             return;
         }
         curConsoleView.clear();

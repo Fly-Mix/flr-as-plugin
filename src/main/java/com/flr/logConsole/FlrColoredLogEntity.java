@@ -1,6 +1,6 @@
 package com.flr.logConsole;
 
-import com.sun.istack.NotNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -67,13 +67,7 @@ public class FlrToolWindowFactory implements ToolWindowFactory {
         JSplitPane splitPane = (JSplitPane)flrToolWindowContent.getComponent(0);
 
         JPanel consoleContainer = (JPanel) splitPane.getRightComponent();
-        System.out.println("consoleContainer: ");
-        System.out.println(consoleContainer);
-
         ConsoleView consoleView = (ConsoleView) consoleContainer.getComponent(0);
-        System.out.println("consoleView: ");
-        System.out.println(consoleView);
-
         FlrLogConsole flrLogConsole = new FlrLogConsole(project, consoleView);
         return flrLogConsole;
     }
