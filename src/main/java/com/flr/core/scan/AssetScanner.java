@@ -1,5 +1,6 @@
 package com.flr.core.scan;
 
+import com.flr.PubspecKeys;
 import com.flr.command.util.FlrAssetUtil;
 import com.flr.command.util.FlrFileUtil;
 import com.flr.core.model.ResourceScanResult;
@@ -118,7 +119,7 @@ public final class AssetScanner {
 
                 Map<String, Object> fontFamilyConfig = new LinkedHashMap<String, Object>();
                 fontFamilyConfig.put("family", fontFamilyName);
-                fontFamilyConfig.put("fonts", fontAssetConfigArray);
+                fontFamilyConfig.put(PubspecKeys.FONTS, fontAssetConfigArray);
 
                 fontFamilyConfigArray.add(fontFamilyConfig);
             }

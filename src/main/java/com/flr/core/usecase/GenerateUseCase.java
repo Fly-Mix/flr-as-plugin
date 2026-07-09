@@ -2,6 +2,7 @@ package com.flr.core.usecase;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.PubspecKeys;
 import com.flr.command.FlrChecker;
 import com.flr.command.util.FlrAssetUtil;
 import com.flr.command.util.FlrFileUtil;
@@ -142,7 +143,7 @@ public final class GenerateUseCase {
             pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(reporter, pubspecFile);
 
             FlrChecker.checkFlrConfigIsExisted(reporter, pubspecConfig);
-            flrConfig = (Map<String, Object>) pubspecConfig.get("flr");
+            flrConfig = (Map<String, Object>) pubspecConfig.get(PubspecKeys.FLR);
 
             resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(reporter, flrConfig, flutterProjectRootDir);
         } catch (FlrException e) {
@@ -257,7 +258,7 @@ public final class GenerateUseCase {
         // ----- Step-8 Begin -----
         // 为扫描得到的legal_resource_file添加资源声明到pubspec.yaml
         //
-        Map<String, Object> flutterConfig = (Map<String, Object>) pubspecConfig.get("flutter");
+        Map<String, Object> flutterConfig = (Map<String, Object>) pubspecConfig.get(PubspecKeys.FLUTTER);
         if (flutterConfig == null || flrConfig instanceof Map == false) {
             flutterConfig = new LinkedHashMap<>();
         }
@@ -267,8 +268,8 @@ public final class GenerateUseCase {
         newAssetArray.addAll(textAssetArray);
 
         List<String> oldAssetArray = new ArrayList<>();
-        if (flutterConfig.containsKey("assets")) {
-            Object assets = flutterConfig.get("assets");
+        if (flutterConfig.containsKey(PubspecKeys.ASSETS)) {
+            Object assets = flutterConfig.get(PubspecKeys.ASSETS);
             if (assets instanceof List) {
                 oldAssetArray = (List<String>) assets;
             }
@@ -276,17 +277,17 @@ public final class GenerateUseCase {
 
         List<String> assetArray = FlrAssetUtil.mergeFlutterAssets(flutterProjectRootDir, packageName, newAssetArray, oldAssetArray);
         if (assetArray.size() > 0) {
-            flutterConfig.put("assets", assetArray);
+            flutterConfig.put(PubspecKeys.ASSETS, assetArray);
         } else {
-            flutterConfig.remove("assets");
+            flutterConfig.remove(PubspecKeys.ASSETS);
         }
 
         if (fontFamilyConfigArray.size() > 0) {
-            flutterConfig.put("fonts", fontFamilyConfigArray);
+            flutterConfig.put(PubspecKeys.FONTS, fontFamilyConfigArray);
         } else {
-            flutterConfig.remove("fonts");
+            flutterConfig.remove(PubspecKeys.FONTS);
         }
-        pubspecConfig.put("flutter", flutterConfig);
+        pubspecConfig.put(PubspecKeys.FLUTTER, flutterConfig);
 
         // 保存刷新 pubspec.yaml
         FlrFileUtil.dumpPubspecConfigToFile(project, pubspecConfig, pubspecFile);

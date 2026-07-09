@@ -2,6 +2,7 @@ package com.flr.command;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.PubspecKeys;
 import com.flr.core.report.FlrReporter;
 import com.flr.logConsole.FlrLogConsole;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public class FlrChecker {
     *
     * */
     public static boolean checkFlrConfigIsExisted(@NotNull FlrReporter reporter, @NotNull Map<String, Object> pubspecConfig) throws FlrException {
-        Object flrConfig = pubspecConfig.get("flr");
+        Object flrConfig = pubspecConfig.get(PubspecKeys.FLR);
         if(flrConfig instanceof Map) {
             return true;
         }
@@ -83,8 +84,8 @@ public class FlrChecker {
         if(flrConfig.containsKey("dartfmt_line_length")) {
             dartfmtLineLengthStr = String.format("%s", flrConfig.get("dartfmt_line_length"));
         }
-        List<String> assetsResourceDirArray = (List<String>)flrConfig.get("assets");
-        List<String> fontsResourceDirArray = (List<String>)flrConfig.get("fonts");
+        List<String> assetsResourceDirArray = (List<String>)flrConfig.get(PubspecKeys.ASSETS);
+        List<String> fontsResourceDirArray = (List<String>)flrConfig.get(PubspecKeys.FONTS);
 
         if(assetsResourceDirArray instanceof List == false) {
             assetsResourceDirArray = new ArrayList<String>();

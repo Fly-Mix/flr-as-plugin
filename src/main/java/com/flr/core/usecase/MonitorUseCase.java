@@ -1,6 +1,7 @@
 package com.flr.core.usecase;
 
 import com.flr.FlrException;
+import com.flr.PubspecKeys;
 import com.flr.command.FlrChecker;
 import com.flr.command.FlrListener;
 import com.flr.command.util.FlrFileUtil;
@@ -99,7 +100,7 @@ public final class MonitorUseCase implements Disposable {
                 Map<String, Object> pubspecConfig = FlrFileUtil.loadPubspecConfigFromFile(reporter, pubspecFile);
 
                 FlrChecker.checkFlrConfigIsExisted(reporter, pubspecConfig);
-                Map<String, Object> flrConfig = (Map<String, Object>) pubspecConfig.get("flr");
+                Map<String, Object> flrConfig = (Map<String, Object>) pubspecConfig.get(PubspecKeys.FLR);
 
                 List<List<String>> resourceDirResultTuple = FlrChecker.checkFlrAssetsIsLegal(reporter, flrConfig, flutterProjectRootDir);
 

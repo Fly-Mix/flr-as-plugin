@@ -2,6 +2,7 @@ package com.flr.core.usecase;
 
 import com.flr.FlrConstant;
 import com.flr.FlrException;
+import com.flr.PubspecKeys;
 import com.flr.command.FlrChecker;
 import com.flr.command.util.FlrFileUtil;
 import com.flr.command.util.FlrUtil;
@@ -130,7 +131,7 @@ public final class InitUseCase {
         String usedFlrCoreLogicVersion = FlrConstant.CORE_VERSION;
         flrConfig.put("core_version", usedFlrCoreLogicVersion);
 
-        Map<String, Object> oldFlrConfig = (Map<String, Object>) pubspecConfig.get("flr");
+        Map<String, Object> oldFlrConfig = (Map<String, Object>) pubspecConfig.get(PubspecKeys.FLR);
         if (oldFlrConfig instanceof Map) {
             if (oldFlrConfig.containsKey("dartfmt_line_length")) {
                 Object length = oldFlrConfig.get("dartfmt_line_length");
@@ -142,15 +143,15 @@ public final class InitUseCase {
                 }
             }
 
-            if (oldFlrConfig.containsKey("assets")) {
-                Object assets = oldFlrConfig.get("assets");
+            if (oldFlrConfig.containsKey(PubspecKeys.ASSETS)) {
+                Object assets = oldFlrConfig.get(PubspecKeys.ASSETS);
                 if (assets instanceof List) {
                     assetResourceDirArray = (List<String>) assets;
                 }
             }
 
-            if (oldFlrConfig.containsKey("fonts")) {
-                Object fonts = oldFlrConfig.get("fonts");
+            if (oldFlrConfig.containsKey(PubspecKeys.FONTS)) {
+                Object fonts = oldFlrConfig.get(PubspecKeys.FONTS);
                 if (fonts instanceof List) {
                     fontResourceDirArray = (List<String>) fonts;
                 }
@@ -158,9 +159,9 @@ public final class InitUseCase {
         }
 
         flrConfig.put("dartfmt_line_length", dartfmtLineLength);
-        flrConfig.put("assets", assetResourceDirArray);
-        flrConfig.put("fonts", fontResourceDirArray);
-        pubspecConfig.put("flr", flrConfig);
+        flrConfig.put(PubspecKeys.ASSETS, assetResourceDirArray);
+        flrConfig.put(PubspecKeys.FONTS, fontResourceDirArray);
+        pubspecConfig.put(PubspecKeys.FLR, flrConfig);
 
         reporter.log("add flr configuration into pubspec.yaml done!", indicatorType);
 
@@ -172,12 +173,12 @@ public final class InitUseCase {
         reporter.log("add dependency \"r_dart_library\"(https://github.com/YK-Unit/r_dart_library) into pubspec.yaml done!", indicatorType);
 
         // ----- Step-3：修正 flutter 配置，避免 pub get 失败 -----
-        Map<String, Object> flutterConfig = (Map<String, Object>) pubspecConfig.get("flutter");
+        Map<String, Object> flutterConfig = (Map<String, Object>) pubspecConfig.get(PubspecKeys.FLUTTER);
         if (flutterConfig == null || flrConfig instanceof Map == false) {
             flutterConfig = new LinkedHashMap<>();
         }
 
-        String flutterAssetsKey = "assets";
+        String flutterAssetsKey = PubspecKeys.ASSETS;
         Object flutterAssets = flutterConfig.get(flutterAssetsKey);
         Boolean shouldRmFlutterAssetsKey = true;
         if (flutterAssets instanceof List && ((List) flutterAssets).isEmpty() == false) {
@@ -187,7 +188,7 @@ public final class InitUseCase {
             flutterConfig.remove(flutterAssetsKey);
         }
 
-        String flutterFontsKey = "fonts";
+        String flutterFontsKey = PubspecKeys.FONTS;
         Object flutterFonts = flutterConfig.get(flutterFontsKey);
         Boolean shouldRmFlutterFontsKey = true;
         if (flutterFonts instanceof List && ((List) flutterFonts).isEmpty() == false) {
@@ -197,7 +198,7 @@ public final class InitUseCase {
             flutterConfig.remove(flutterFontsKey);
         }
 
-        pubspecConfig.put("flutter", flutterConfig);
+        pubspecConfig.put(PubspecKeys.FLUTTER, flutterConfig);
 
         // 保存并刷新 pubspec.yaml
         FlrFileUtil.dumpPubspecConfigToFile(project, pubspecConfig, pubspecFile);
