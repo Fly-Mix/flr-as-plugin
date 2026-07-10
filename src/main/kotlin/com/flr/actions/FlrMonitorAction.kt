@@ -2,6 +2,7 @@ package com.flr.actions
 
 import com.flr.FlrApp
 import com.flr.toolWindow.FlrToolWindowFactory
+import com.flr.toolWindow.FlrToolWindowService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -24,6 +25,9 @@ class FlrMonitorAction : AnAction() {
         } else {
             flrApp.flrCommand.startMonitor(e, flrLogConsole)
         }
+
+        // 同步刷新工具窗状态面板（若已创建）
+        FlrToolWindowService.getInstance(project).statusPanel?.refresh()
     }
 
     /**

@@ -16,6 +16,9 @@ class FlrToolWindowService {
 
     var consoleView: ConsoleView? = null
 
+    /** 工具窗顶部状态面板；Monitor 启停后由 action 调用 [FlrStatusPanel.refresh] 同步显示。 */
+    var statusPanel: FlrStatusPanel? = null
+
     companion object {
         @JvmStatic
         fun getInstance(project: Project): FlrToolWindowService = project.getService(FlrToolWindowService::class.java)
