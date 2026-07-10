@@ -1,0 +1,68 @@
+name: CI
+
+# 触发：推送到 master / 243-* 分支，以及所有 PR。
+on:
+  push:
+    branches: [ master, "243-*" ]
+  pull_request:
+
+# 同一分支/PR 的旧运行在有新提交时取消，节省额度。
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 构建工具链需 JDK 21（IntelliJ Platform Gradle Plugin 2.x + 平台 2024.3）。
+      # 提供 JDK 21 后，settings.gradle 的 foojay 解析器无需再下载 JDK。
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # 缓存 ~/.gradle（含首次下载的 IntelliJ 平台、Dart/io.flutter 插件、Kotlin 2.2.21 编译器链、JBR 等）。
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      # test：编译 + 运行单测（RDartGeneratorTest / PubspecPsiWriterTest 会真跑；
+      #       GenerateGoldenTest / GenerateHeadlessTest 因 CI 无基准工程 flutter_r_demo 与 dart 而自动 skip）。
+      # buildPlugin：打包插件 zip（校验 plugin.xml）。
+      # 注：首次运行需联网下载平台与 Kotlin 编译器链，耗时较长；后续走缓存。
+      - name: Build & test
+        run: ./gradlew --no-daemon --stacktrace test buildPlugin
+
+      - name: Upload plugin artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flr-as-plugin-zip
+          path: build/distributions/*.zip
+          if-no-files-found: error
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            build/reports/tests/
+            build/test-results/
+
+# 后续可选：增加 verifyPlugin（Plugin Verifier）作业——需先在 build.gradle 配置
+#   intellijPlatform { pluginVerification { ides { recommended() } } }
+# 并接受其下载多个 IDE 版本进行二进制兼容校验（较慢）。
+#
+# 完整黄金回归（GenerateGoldenTest / GenerateHeadlessTest 的标准1/2）需在 CI 提供基准工程
+# flutter_r_demo 与 Dart SDK，并以 -Pflr.demo.path / -Pflr.dart.path 注入；当前默认跳过，靠本地/真机验证。

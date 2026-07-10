@@ -25,7 +25,10 @@ Generate 不会误伤）；其余注释均保留。可接受。
 ## 3. 测试 / CI（开放）
 
 - **`FlrConfigIO` 往返单测**：读→改→写→复读断言（`BasePlatformTestCase` + 临时 pubspec），为设置/对话框的读写加自动覆盖。
-- **P4 CI**：GitHub Actions 跑 `test` + `buildPlugin`；注意首次构建需**联网**拉取 Kotlin 2.2.21 编译器链（此后可 `--offline`）。
+- **P4 CI**：✅ 已加基础 CI（`.github/workflows/ci.yml`：`test` + `buildPlugin` + 产物上传，JDK21、Gradle 缓存）。
+  **仍开放**：(a) `verifyPlugin`（需先在 build.gradle 配 `pluginVerification { ides { recommended() } }`）；
+  (b) **CI 内完整黄金回归**（需在 CI 提供基准工程 flutter_r_demo + Dart SDK，注入 `-Pflr.demo.path`/`-Pflr.dart.path`；
+  当前这两个 golden 测试在 CI 无夹具时自动 skip）。
 - **P4 i18n**：用户可见文案抽到 `messages/FlrBundle.properties`（`DynamicBundle`）——尚未做。
 
 ## 4. 验证约定（备忘）
