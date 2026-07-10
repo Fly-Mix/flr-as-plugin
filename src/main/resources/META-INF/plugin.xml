@@ -31,15 +31,21 @@
         <!-- Add your actions here -->
         <group id="flr.group" text="Flr" description="Flutter Resource Manager Android Studio Plugin" icon="/icons/flr_16.png" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <action id="flr.init" class="com.flr.actions.FlrInitAction" text="Init" description="Init flutter project"/>
+            <action id="flr.init" class="com.flr.actions.FlrInitAction" text="Init" description="Init flutter project"
+                    icon="AllIcons.General.Add"/>
             <action id="flr.generate" class="com.flr.actions.FlrGenerateAction" text="Generate"
-                    description="Scan assets, specify scanned assets in pubspec.yaml, generate r.g.dart"/>
+                    description="Scan assets, specify scanned assets in pubspec.yaml, generate r.g.dart"
+                    icon="AllIcons.Actions.Compile"/>
+            <!-- monitor 的图标随启停状态在 FlrMonitorAction.update() 中切换（Execute/Suspend）；此处为默认（未启动）图标 -->
             <action id="flr.monitor" class="com.flr.actions.FlrMonitorAction" text="Start Monitor"
-                    description="start a monitoring service"/>
+                    description="start a monitoring service"
+                    icon="AllIcons.Actions.Execute"/>
             <action id="flr.version" class="com.flr.actions.FlrVersionAction" text="Version"
-                    description="Display the version of Flr."/>
+                    description="Display the version of Flr."
+                    icon="AllIcons.General.Information"/>
             <action id="flr.recommend" class="com.flr.actions.FlrRecommendAction" text="Recommend"
-                    description="Display the recommended flutter resource structure"/>
+                    description="Display the recommended flutter resource structure"
+                    icon="AllIcons.Actions.IntentionBulb"/>
         </group>
 
         <!-- 工具窗顶部工具栏用的动作组：复用上面已定义的 5 个 action（不加入任何菜单，仅供 FlrToolWindowFactory 构建 ActionToolbar） -->

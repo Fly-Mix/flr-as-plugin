@@ -3,6 +3,7 @@ package com.flr.actions
 import com.flr.FlrApp
 import com.flr.toolWindow.FlrToolWindowFactory
 import com.flr.toolWindow.FlrToolWindowService
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -45,9 +46,11 @@ class FlrMonitorAction : AnAction() {
         if (isMonitoring) {
             presentation.setText("Stop Monitor")
             presentation.description = "terminate the monitoring service"
+            presentation.icon = AllIcons.Actions.Suspend
         } else {
             presentation.setText("Start Monitor")
             presentation.description = "launch a monitoring service"
+            presentation.icon = AllIcons.Actions.Execute
         }
     }
 
