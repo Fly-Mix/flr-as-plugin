@@ -13,6 +13,8 @@
     <depends>com.intellij.modules.java</depends>
     <depends>Dart</depends>
     <depends>io.flutter</depends>
+    <!-- YAML PSI：用于 pubspec.yaml 的注释保留写入（PubspecPsiWriter）；平台/AS 均捆绑 -->
+    <depends>org.jetbrains.plugins.yaml</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
