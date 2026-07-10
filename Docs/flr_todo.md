@@ -2,6 +2,8 @@
 
 ## 1. pubspec.yaml 写回会丢失注释 / 重排格式
 
+> 方案研究见 [`flr_pubspec_comment_preservation.md`](./flr_pubspec_comment_preservation.md)（推荐方案 B：YAML PSI 定点编辑）。**实施中**。
+
 **现象**：所有写 `pubspec.yaml` 的路径（Init / Generate / 设置页 Apply）都经 `FlrFileUtil.dumpPubspecConfigToFile`
 → snakeyaml **全量 dump** 整个文档。snakeyaml 的 dump 不保留原文件的注释，也可能重排键顺序 / 调整格式。
 
