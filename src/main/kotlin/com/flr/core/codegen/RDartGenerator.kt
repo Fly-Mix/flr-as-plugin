@@ -23,9 +23,7 @@ object RDartGenerator {
         val nonSvgImageAssetArray = scan.nonSvgImageAssets
         val svgImageAssetArray = scan.svgImageAssets
         val textAssetArray = scan.textAssets
-        // ResourceScanResult 仍为 Java（原始 List<Map>）；运行时元素均为 String 键的 map，显式转换以对齐 Kotlin 类型
-        @Suppress("UNCHECKED_CAST")
-        val fontFamilyConfigArray = scan.fontFamilyConfigs as List<Map<String, Any>>
+        val fontFamilyConfigArray = scan.fontFamilyConfigs
 
         // ----- Step-9：生成 non_svg / svg / text 的 asset_id 字典（key=asset, value=asset_id）-----
         val nonSvgImageAssetIdDict = HashMap<String, String>()

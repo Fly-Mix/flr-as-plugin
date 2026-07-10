@@ -128,15 +128,12 @@ object AssetScanner {
         illegalResourceFileArray.addAll(illegalTextFileArray)
         illegalResourceFileArray.addAll(illegalFontFileArray)
 
-        // ResourceScanResult 仍为 Java（其构造参数为原始 List<Map>，位于 Java 测试互操作边界，故保留 Java）；
-        // 此处显式向 List<Map<*, *>> 上转以匹配该原始类型参数。
-        @Suppress("UNCHECKED_CAST")
         return ResourceScanResult(
             imageAssetArray,
             nonSvgImageAssetArray,
             svgImageAssetArray,
             textAssetArray,
-            fontFamilyConfigArray as List<Map<*, *>>,
+            fontFamilyConfigArray,
             illegalResourceFileArray
         )
     }
