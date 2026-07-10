@@ -1,6 +1,6 @@
 # flr-as-plugin：Java → Kotlin 迁移可行性评估
 
-> 状态：评估通过，待启动。
+> 状态：**已完成落地**（Phase 0–5，2026-07-10），全工程 100% Kotlin。实施结果见文末「§8 实施结果」。
 > 关联：第一阶段重构见 [`flr_refactor_plan.md`](./flr_refactor_plan.md)（P0~P3 + VFS 写入 + 常量集中，均已落地）。
 > 决策记录：**UI 部分采纳「用 Kotlin 重写」方案**（2026-07-09 用户确认）。
 
@@ -89,3 +89,59 @@ Kotlin 与 Java 在同一模块共存，Gradle 一起编译，故可逐文件、
 
 **推荐启动动作**：先做一个 spike——接通 Kotlin 构建（5.1）+ 迁 1 个叶子文件（如 `FlrPaths`）跑通
 `compileKotlin`/`compileJava`/`test`，作为构建配置的可行性实证；随后按 A 轨铺开，B 轨随 UI 升级节奏进行。
+
+## 8. 实施结果（2026-07-10 完成）
+
+按上述策略分 Phase 0–4 落地，每 Phase 编译/测试/打包全绿后单独提交；UI（Phase 4）经真机 E2E 验收。
+
+### 8.1 最终状态
+
+- **Kotlin 40 个 / Java 0 个 / `.form` 0 个** —— 生产 + 测试**全工程 100% Kotlin**（生产 36 + 测试 4）。
+- UI 彻底脱离 GUI Designer；`instrumentCode` 的 `.form` 绑定告警消失。
+- 测试代码最初按决策保留 Java 作安全网；Phase 0–4 完成后（应用户要求）连同 `ResourceScanResult` 一并迁 Kotlin，见 §8.4。
+
+### 8.2 构建配置（实测确定）
+
+- 平台 IC-243（2024.3.1）内置 Kotlin 编译器 **2.0.21**（仅作运行时）。
+- Kotlin Gradle 插件选 **2.2.21**（兼容 Gradle 9.6；编译器可较新，`api/languageVersion` pin 到 2.0 不超过运行时）。
+- `gradle.properties`：`kotlin.stdlib.default.dependency=false`（不打包 stdlib，依赖平台内置，避免类加载器冲突）。
+- **CI 提示**：本地缓存中 2.2.21 只有插件 marker、缺编译器实体 jar，2.0.21 缺 marker——首次构建需**联网**从 Maven Central 拉取 Kotlin 2.2.21 编译器链，此后可 `--offline`。
+
+### 8.3 Kotlin↔Java 互操作范式（迁移中固化，供后续维护复用）
+
+| 场景 | 做法 |
+|---|---|
+| 常量类 | `object` + `const val`（基本类型/字符串）/ `@JvmField val`（List）——Java 端无 `.INSTANCE` |
+| 静态工具类 | `object` + `@JvmStatic fun` |
+| 抛受检异常的方法 | `@Throws(FlrException::class)`（否则 Java `catch(FlrException)` 编译不过） |
+| 返回嵌套泛型给 Java | `@JvmSuppressWildcards`（消除 `? extends`，保 Java 赋值不变） |
+| 供 Kotlin SAM 的回调接口 | `fun interface` |
+| Dart 代码模板中的字面 `$` | 转义为 `\$`（避免 Kotlin 插值）；正则字符类、`￥` 前的 `$` 同理 |
+| `Map<*,*>` 不能按具体键 get | 统一 `as? Map<String, Any?>` |
+| `Exception.getMessage()` 可空 | 相关接口参数放宽为 `String?`（如 `FlrReporter.failure`） |
+
+### 8.4 决策与例外
+
+- **`ResourceScanResult` 与测试的收尾迁移（Phase 5）**：Phase 0–4 完成时曾保留 `ResourceScanResult.java`——
+  因它被 2 个 Java 测试以原始 `List<Map>` 构造，Kotlin 化会撞上 `List` 泛型不变性（Java raw `List<Map>` 无法传入
+  Kotlin 参数化构造器）。随后（应用户要求）采「测试也迁 Kotlin」方案：一旦构造/读取它的测试也是 Kotlin，
+  该 Java↔Kotlin 泛型边界即消失。于是：
+  - 3 个测试类 + `FakeFlutterEnvironment` 全部改写为 Kotlin（`src/test/kotlin`，逻辑与断言逐字等价；`GenerateHeadlessTest`
+    仍继承 `BasePlatformTestCase`，`testXxx` JUnit3 风格）；
+  - `ResourceScanResult` 改为 **Kotlin `data class`**，`fontFamilyConfigs: List<Map<String, Any>>`，
+    **无需 `@JvmSuppressWildcards`**（全部消费方皆 Kotlin）；
+  - 顺带**删除** `AssetScanner` / `RDartGenerator` 中与原 `List<Map>` 交界的 2 处显式转换。
+  - 附带发现并修正：旧 `FakeFlutterEnvironment.java` 第 30 行有一个游离汉字（`@Override我`），且该类无人使用。
+- **UI 采 `OnePixelSplitter` 而非 UI DSL v2**：本工具窗是「分栏 + 树 + console」复合布局，其现代等价物是
+  `OnePixelSplitter`（1px 分隔，等价旧 `JSplitPane dividerSize=1`）。UI DSL v2 面向表单/对话框，留待后续 UI 功能升级的新面板使用。
+- **`getComponent(index)` 脆弱取法已消除**：新增工程级服务 `FlrToolWindowService` 持有 `ConsoleView` 引用。
+
+### 8.5 提交记录
+
+Phase 0 `1f36d0f` → Phase 1 `74239e5` → Phase 2a `22bd840` → Phase 2b `b5e5327`
+→ Phase 3a `3fff19f` → Phase 3c `8eaa0ef` → Phase 3d–f `50bbac2` → Phase 4 `6f7f085`。
+
+### 8.6 后续
+
+- 生产 + 测试均已 Kotlin，全工程统一语言，无 Java 残留。
+- UI 功能升级在此 Kotlin 基座上用 **UI DSL v2** 展开；`OnePixelSplitter` 的 proportion(0.3) 等布局细节可随之调整。
