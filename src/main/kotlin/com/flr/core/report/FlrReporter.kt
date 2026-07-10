@@ -22,6 +22,6 @@ interface FlrReporter {
     /** 成功通知（hasWarning 为 true 时以 warning 样式展示）。 */
     fun success(title: String, message: String, hasWarning: Boolean)
 
-    /** 失败通知。 */
-    fun failure(title: String, message: String)
+    /** 失败通知（message 可空，与 Java Exception.getMessage() 一致）。 */
+    fun failure(title: String, message: String?)
 }

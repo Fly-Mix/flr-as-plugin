@@ -33,7 +33,7 @@ class FlrConsoleReporter(
         }
     }
 
-    override fun failure(title: String, message: String) {
+    override fun failure(title: String, message: String?) {
         val content = "<p>$title</p><p>$message</p>"
         FlrMessageBox.showError(project, MESSAGE_BOX_TITLE, content)
     }
