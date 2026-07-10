@@ -20,6 +20,11 @@
         <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.toolWindow.FlrToolWindowFactory"/>
         <!-- id 须与 com.flr.FlrIds.NOTIFICATION_GROUP 保持一致（FlrMessageBox 以该 id 构造 Notification 弹出通知） -->
         <notificationGroup id="Flr" displayType="BALLOON"/>
+        <!-- Flr 设置页（Settings→Tools→Flr）：UI DSL v2 表单编辑当前工程 pubspec.yaml 的 flr 配置 -->
+        <projectConfigurable parentId="tools"
+                             id="com.flr.settings.FlrConfigurable"
+                             displayName="Flr"
+                             instance="com.flr.settings.FlrConfigurable"/>
     </extensions>
 
     <actions>
