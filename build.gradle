@@ -72,7 +72,7 @@ enum PlatformType {
 }
 
 // flr-plugin-engine 的版本号（完成一个新版本的 flr-plugin-engine 开发后手动更新）
-String pluginEngineVersion = '3.4.0'
+String pluginEngineVersion = '3.4.1'
 
 // 用于开发 flr-plugin-engine 时使用平台版本（一般使用最新平台版本）
 PlatformType pluginEnginePlatform = PlatformType.IC_243
@@ -281,9 +281,13 @@ intellijPlatform {
         changeNotes = """
 <h2>Flr Plugin Change Notes</h2>
 <i><b>Attention:</b> Flr v243.* is built for Android Studio Meerkat | 2024.3.1</i>
-<h3>243.3.4.0</h3>
+<h3>243.3.4.1</h3>
 <br/>
 <h2>Flr Plugin Engine Change Notes</h2>
+<h3>3.4.1</h3>
+<ul>
+  <li>Refactor and fix some bugs</li>
+</ul>
 <h3>3.4.0</h3>
 <ul>
   <li>Migrate existing code from Components to modern APIs</li>
