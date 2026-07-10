@@ -366,3 +366,24 @@ scripts/verify_flr_baseline.sh
 - Components（已弃用，需迁移）— https://plugins.jetbrains.com/docs/intellij/plugin-components.html
 - Notable Changes 2025.* — https://plugins.jetbrains.com/docs/intellij/api-notable-list-2025.html
 - IntelliJ Platform Gradle Plugin 2.x — https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
+
+---
+
+## 9. 收官状态（截至 2026-07-10）
+
+本文档「实施进展」§7/§8 记录到 P1 为止；此后各阶段均已完成，汇总如下（本文正文的问题清单 §2 除 P4 项外均已消除）。
+
+**已完成：**
+- **P0 正确性**（`9d9c331`/`cbfa221`/`5f0e9b8`/`5502bb8`/`69eb587` 一带）：FlrApp 去 static 单例改工程级服务+Disposable；VFS 读加 `ReadAction`；FlrListener 改工程级 messageBus + `event.getPath()` + 精确匹配 + `Alarm` 防抖；FlrLogConsole 去 `WriteCommandAction`。（§2.1/2.2/2.3/2.4 已解）
+- **P1 工程化**：迁 IntelliJ Platform Gradle Plugin 2.x、Gradle 9.6、JDK21、wrapper 入库、plugin.xml 声明 `<notificationGroup>`（`996808b`）。
+- **§2.5 文件写绕过 VFS → 已修**：改 `WriteCommandAction`+VFS（`699b714`），并进一步用 YAML PSI 定点写入以保留注释（`d19561a`，见 [`flr_pubspec_comment_preservation.md`](./flr_pubspec_comment_preservation.md)）。
+- **P2 架构分层**：三接缝 + `AssetScanner`/`RDartGenerator`/`ResourceScanResult` + `Generate/Init/MonitorUseCase`，`FlrCommand` 收敛为薄门面。
+- **§2.6 getComponent(index) 脆弱 → 已修**：引入工程级 `FlrToolWindowService` 持有 `ConsoleView`（Phase 4 UI 重写，`6f7f085`）。
+- **P3 代码质量**（`4a0dff9`）：清调试输出/死代码、`printStackTrace→Logger`、注解统一、`getActionUpdateThread`；**常量集中**分三批（`886ebe8` PubspecKeys / `a94a5e5` FlrPaths / `203b0a1` FlrIds）。
+- **额外（超出原计划）**：**Java→Kotlin 全量迁移**（全工程 100% Kotlin，见 [`flr_kotlin_migration_assessment.md`](./flr_kotlin_migration_assessment.md)）；**UI 功能升级**（Kotlin UI DSL v2 设置页/工具栏/对话框，见 [`flr_ui_upgrade_summary.md`](./flr_ui_upgrade_summary.md)）。
+
+**仍开放：**
+- **P4 的 CI（GitHub Actions）与 i18n（FlrBundle）尚未做**；测试已从零补齐并随迁移改为 Kotlin（`RDartGeneratorTest`/`GenerateGoldenTest`/`GenerateHeadlessTest`/`PubspecPsiWriterTest`）。开放小项集中登记于 [`flr_todo.md`](./flr_todo.md)。
+- **可取消的 `Task.Backgroundable`**（§2.2 末）未做（用户当时选择暂缓）。
+
+**与 §3「目标架构」的偏差说明**：实际落地为务实演进而非照搬 §3 命名——`FlrApp` 保留原名（未改叫 `FlrProjectService`）、基础设施为 `infra/Ide*` + `PubspecPsiWriter`（无 `PubspecReaderWriter`/`FlrNotifier`，通知沿用 `FlrMessageBox`）、包结构保持 `toolWindow/logConsole/messageBox/command/util` 未按 §3 重排为 `ui/util/`。§3 作为方向性蓝图，细节以各专题文档与代码为准。

@@ -96,7 +96,9 @@ Kotlin 与 Java 在同一模块共存，Gradle 一起编译，故可逐文件、
 
 ### 8.1 最终状态
 
-- **Kotlin 40 个 / Java 0 个 / `.form` 0 个** —— 生产 + 测试**全工程 100% Kotlin**（生产 36 + 测试 4）。
+- **Kotlin 40 个 / Java 0 个 / `.form` 0 个** —— 生产 + 测试**全工程 100% Kotlin**（迁移收官时：生产 36 + 测试 4）。
+  > 注：40 为**迁移收官计数**；其后的 UI 功能升级（UI DSL v2）与 pubspec 注释保留写入又新增了若干 Kotlin 文件，
+  > 故当前工程文件数已多于 40（均为纯 Kotlin，无 Java 回流）。
 - UI 彻底脱离 GUI Designer；`instrumentCode` 的 `.form` 绑定告警消失。
 - 测试代码最初按决策保留 Java 作安全网；Phase 0–4 完成后（应用户要求）连同 `ResourceScanResult` 一并迁 Kotlin，见 §8.4。
 
@@ -139,7 +141,8 @@ Kotlin 与 Java 在同一模块共存，Gradle 一起编译，故可逐文件、
 ### 8.5 提交记录
 
 Phase 0 `1f36d0f` → Phase 1 `74239e5` → Phase 2a `22bd840` → Phase 2b `b5e5327`
-→ Phase 3a `3fff19f` → Phase 3c `8eaa0ef` → Phase 3d–f `50bbac2` → Phase 4 `6f7f085`。
+→ Phase 3a `3fff19f` → Phase 3c `8eaa0ef` → Phase 3d–f `50bbac2` → Phase 4 `6f7f085`
+→ Phase 5 `34e6dec`（+ 文档 `88fd835`）。
 
 ### 8.6 后续
 

@@ -36,6 +36,9 @@
 - `toolWindow/FlrStatusPanel`（UI DSL v2）：工程名 / 监控状态 / "打开 Flr 设置"链接（`ShowSettingsUtil` 跳 U1）；`refresh()` 同步监控状态。
 - `toolWindow/FlrToolWindowFactory` 布局：**NORTH** = `ActionToolbar(flr.toolbar)` + 状态面板；**CENTER** = `OnePixelSplitter`（左 pubspec 树 / 右 console）。
 - `toolWindow/FlrToolWindowService`：增持 `statusPanel` 引用；`actions/FlrMonitorAction` 启停后调 `statusPanel?.refresh()`。
+- **工具栏图标**（后续 `13670dc`）：按 IntelliJ 惯例给 5 个动作配平台 `AllIcons`（同时作用于 Tools 菜单）——
+  Init `General.Add` / Generate `Actions.Compile` / Version `General.Information` / Recommend `Actions.IntentionBulb`；
+  Monitor 在 `FlrMonitorAction.update()` 中随状态切换 `Actions.Execute`（未启动）↔ `Actions.Suspend`（运行中）。
 
 ### U3 — Init 运行前配置对话框
 - `settings/FlrConfigDialog`（`DialogWrapper`）：`createCenterPanel()` 用共享 `flrConfigRows`；OK 时 `panel.apply()` 回写 model。
@@ -52,7 +55,7 @@
 
 ## 4. 提交记录
 
-U1 `c64d1bb` → U2 `a2b77f6` → U3 `6266f2f`。
+U1 `c64d1bb` → U2 `a2b77f6` → U3 `6266f2f` → 工具栏图标 `13670dc`。
 
 ## 5. 验证
 
@@ -63,7 +66,7 @@ U1 `c64d1bb` → U2 `a2b77f6` → U3 `6266f2f`。
 
 ## 6. 已知限制 / 后续
 
-- **pubspec.yaml 写回丢注释/重排**：见 [`flr_todo.md`](./flr_todo.md)（既有行为，专项待办）。设置页 Apply / Init 对话框 OK 都会触发。
+- **pubspec.yaml 写回丢注释/重排**：✅ **已解决**（改用 YAML PSI 定点编辑，见 [`flr_pubspec_comment_preservation.md`](./flr_pubspec_comment_preservation.md) / [`flr_todo.md`](./flr_todo.md) §1）。
 - **状态面板刷新时机**：仅在工具窗创建时 + Monitor 启停后刷新，未挂 `ToolWindowManagerListener`（切走再切回不实时刷新）。
 - **分栏比例**：`OnePixelSplitter` proportion 固定 `0.3f`，未持久化用户调整。
 - **目录列表编辑器**：首版仅增/删，无拖拽排序等高级交互。
