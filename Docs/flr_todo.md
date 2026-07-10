@@ -14,3 +14,22 @@
 
 **残留**：被替换的**受管键值本身**内的行内注释（如 `r_dart_library: x  # 注`）在值变更时仍会丢（已加"值未变则不动"守卫，
 Generate 不会误伤）；其余注释均保留。可接受。
+
+## 2. UI 打磨（开放，低优先）
+
+- **工具窗状态面板刷新时机**：目前仅在工具窗创建时 + Monitor 启停后刷新（`FlrStatusPanel.refresh()`），未挂
+  `ToolWindowManagerListener`；切走再切回不实时刷新。可加监听器实现随激活刷新。
+- **分栏比例未持久化**：`FlrToolWindowFactory` 的 `OnePixelSplitter` proportion 固定 `0.3f`，用户拖动不记忆。
+- **目录列表编辑器**：`DirListEditor` 仅支持增/删，无拖拽排序等高级交互。
+
+## 3. 测试 / CI（开放）
+
+- **`FlrConfigIO` 往返单测**：读→改→写→复读断言（`BasePlatformTestCase` + 临时 pubspec），为设置/对话框的读写加自动覆盖。
+- **P4 CI**：GitHub Actions 跑 `test` + `buildPlugin`；注意首次构建需**联网**拉取 Kotlin 2.2.21 编译器链（此后可 `--offline`）。
+- **P4 i18n**：用户可见文案抽到 `messages/FlrBundle.properties`（`DynamicBundle`）——尚未做。
+
+## 4. 验证约定（备忘）
+
+- **真机 E2E 会写脏基准工程 `flutter_r_demo`**（Init/Generate/设置页 Apply 写 `pubspec.yaml`、`lib/r.g.dart`、`pubspec.lock`），
+  会使黄金测试（对比 git HEAD）失配。**验完需还原**：
+  `git -C <…>/flutter_r_demo checkout -- pubspec.yaml lib/r.g.dart pubspec.lock`。

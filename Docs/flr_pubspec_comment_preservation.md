@@ -1,7 +1,9 @@
 # 方案研究：pubspec.yaml 写回保留注释
 
-> 关联待办：[`flr_todo.md`](./flr_todo.md) §1。
-> 状态：方案研究（未实施）。**推荐方案 B（YAML PSI 定点编辑）**。
+> 关联待办：[`flr_todo.md`](./flr_todo.md) §1（已解决）。
+> 状态：**已实施**（方案 B，2026-07-10，提交 `d19561a`）。实现见 `command/util/PubspecPsiWriter`（YAML PSI 定点编辑）
+> + `PubspecPsiWriterTest`（headless 单测）；`FlrFileUtil.dumpPubspecConfigToFile` 改为"先 PSI 定点写、失败回退全量 dump"。
+> 落地细节与残留见 §6/§7 与 `flr_todo.md` §1。
 
 ## 1. 问题与根因
 
@@ -86,10 +88,18 @@ Android Studio 亦捆绑 YAML 插件，兼容性无忧。
 若暂不引入 YAML 平台依赖：可先做 **方案 A**（snakeyaml 2.x + processComments Node API）作过渡，接受其注释保留不完美；
 但鉴于平台 YAML 自带且 B 可单测、保留度最佳，**建议直接上 B**。
 
-## 6. 落地顺序（建议）
+## 6. 落地顺序（已完成，2026-07-10，提交 `d19561a`）
 
-1. build.gradle + plugin.xml 加 YAML 依赖；
-2. 实现 `PubspecPsiWriter`（含各边界）；
-3. 加 headless 单测（注释保留 + 各键更新 + 首次 init 场景）；
-4. 3 处落盘调用切到 Writer；`compileKotlin/test/buildPlugin` 全绿；
-5. 真机 E2E：手写带注释的 pubspec，跑 Init/Generate/设置页 Apply，`git diff` 确认仅受管键变化、注释保留；黄金基线仍通过。
+1. ✅ build.gradle `bundledPlugin('org.jetbrains.plugins.yaml')` + plugin.xml `<depends>org.jetbrains.plugins.yaml</depends>`；
+2. ✅ 实现 `command/util/PubspecPsiWriter`（含各边界）；
+3. ✅ `PubspecPsiWriterTest`（headless）：注释/无关键/键序保留 + 受管键更新 + 幂等 + 首次 init；
+4. ✅ **接线方式与原方案略有优化**——未逐个改 3 处调用，而是让 `FlrFileUtil.dumpPubspecConfigToFile` 本体
+   "先 PSI 定点写、失败回退旧全量 dump"，3 处落盘（Init/Generate/设置页）零改动全部受益；`compileKotlin/test/buildPlugin` 全绿；
+5. ✅ 真机 E2E：带注释的 pubspec 跑 Init/Generate/设置页 Apply，确认仅受管键变化、注释保留，黄金基线通过。
+
+## 7. 实施结果与残留
+
+- **接线优化**（相较 §4.1）：`dumpPubspecConfigToFile` 内部先试 `PubspecPsiWriter.applyManagedKeys`（成功即返回），
+  失败才回退全量 dump——因此调用方无需改动、且天然带兜底。
+- **`r_dart_library` 守卫**：值未变则不重写该键，避免 Generate 每次触碰、误伤其行内注释。
+- **残留**：被替换的**受管键值自身**内的行内注释（如 `r_dart_library: x  # 注`）在值变更时仍会丢；其余注释均保留（可接受，见 `flr_todo.md` §1）。
