@@ -20,21 +20,41 @@
         <toolWindow id="Flr" anchor="bottom" icon="/icons/flr_13.png" factoryClass="com.flr.toolWindow.FlrToolWindowFactory"/>
         <!-- id 须与 com.flr.FlrIds.NOTIFICATION_GROUP 保持一致（FlrMessageBox 以该 id 构造 Notification 弹出通知） -->
         <notificationGroup id="Flr" displayType="BALLOON"/>
+        <!-- Flr 设置页（Settings→Tools→Flr）：UI DSL v2 表单编辑当前工程 pubspec.yaml 的 flr 配置 -->
+        <projectConfigurable parentId="tools"
+                             id="com.flr.settings.FlrConfigurable"
+                             displayName="Flr"
+                             instance="com.flr.settings.FlrConfigurable"/>
     </extensions>
 
     <actions>
         <!-- Add your actions here -->
         <group id="flr.group" text="Flr" description="Flutter Resource Manager Android Studio Plugin" icon="/icons/flr_16.png" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <action id="flr.init" class="com.flr.actions.FlrInitAction" text="Init" description="Init flutter project"/>
+            <action id="flr.init" class="com.flr.actions.FlrInitAction" text="Init" description="Init flutter project"
+                    icon="AllIcons.General.Add"/>
             <action id="flr.generate" class="com.flr.actions.FlrGenerateAction" text="Generate"
-                    description="Scan assets, specify scanned assets in pubspec.yaml, generate r.g.dart"/>
+                    description="Scan assets, specify scanned assets in pubspec.yaml, generate r.g.dart"
+                    icon="AllIcons.Actions.Compile"/>
+            <!-- monitor 的图标随启停状态在 FlrMonitorAction.update() 中切换（Execute/Suspend）；此处为默认（未启动）图标 -->
             <action id="flr.monitor" class="com.flr.actions.FlrMonitorAction" text="Start Monitor"
-                    description="start a monitoring service"/>
+                    description="start a monitoring service"
+                    icon="AllIcons.Actions.Execute"/>
             <action id="flr.version" class="com.flr.actions.FlrVersionAction" text="Version"
-                    description="Display the version of Flr."/>
+                    description="Display the version of Flr."
+                    icon="AllIcons.General.Information"/>
             <action id="flr.recommend" class="com.flr.actions.FlrRecommendAction" text="Recommend"
-                    description="Display the recommended flutter resource structure"/>
+                    description="Display the recommended flutter resource structure"
+                    icon="AllIcons.Actions.IntentionBulb"/>
+        </group>
+
+        <!-- 工具窗顶部工具栏用的动作组：复用上面已定义的 5 个 action（不加入任何菜单，仅供 FlrToolWindowFactory 构建 ActionToolbar） -->
+        <group id="flr.toolbar">
+            <reference ref="flr.init"/>
+            <reference ref="flr.generate"/>
+            <reference ref="flr.monitor"/>
+            <reference ref="flr.version"/>
+            <reference ref="flr.recommend"/>
         </group>
     </actions>
 </idea-plugin>

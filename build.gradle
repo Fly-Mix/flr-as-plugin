@@ -1,8 +1,18 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 // 构建环境：Gradle 8.13+（IntelliJ Platform Gradle Plugin 2.x 最低要求）、JDK 17
 plugins {
     id 'java'
+
+    /*
+    Kotlin JVM 插件（Java→Kotlin 迁移用）：
+    - 版本 2.2.21：与 Gradle 9.6 兼容（平台内置 Kotlin 编译器为 2.0.21，仅作运行时；编译器可较新）
+    - 不打包 kotlin-stdlib（见 gradle.properties: kotlin.stdlib.default.dependency=false），依赖平台内置运行时
+    - api/languageVersion pin 到 2.0，对齐平台内置 kotlin 2.0.21（见下方 kotlin{} 块）
+    */
+    id 'org.jetbrains.kotlin.jvm' version '2.2.21'
 
     /*
     构建 IntelliJ 插件用的 Gradle 插件：
@@ -100,6 +110,16 @@ switch (pluginProductPlatform) {
 java {
     sourceCompatibility = JavaVersion.toVersion(javaVersion)
     targetCompatibility = JavaVersion.toVersion(javaVersion)
+}
+
+// Kotlin 编译配置：jvmTarget 与 Java targetCompatibility(17) 对齐；
+// api/languageVersion pin 到 2.0，不超过平台内置 kotlin(2.0.21)，避免引用运行时不存在的新 stdlib API。
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+        apiVersion = KotlinVersion.KOTLIN_2_0
+        languageVersion = KotlinVersion.KOTLIN_2_0
+    }
 }
 
 // flr-plugin 的版本号：plugin_product_version = #{IC_branch_number}.#{plugin_engine_version}
