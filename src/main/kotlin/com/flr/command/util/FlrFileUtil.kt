@@ -243,10 +243,22 @@ object FlrFileUtil {
         }
     }
 
-    /** 保存 pubspecConfig 到 pubspec.yaml（经 VFS，走 WriteCommandAction） */
+    /**
+     * 保存 pubspecConfig 到 pubspec.yaml。
+     *
+     * 优先用 [PubspecPsiWriter] 经 YAML PSI **定点写入受管键**（保留注释/格式/键序）；若 PSI 不可用则**回退**到
+     * 全量 snakeyaml dump（旧行为，会丢注释）作兜底。两条路径都经 VFS/WriteCommandAction。
+     */
     @JvmStatic
     fun dumpPubspecConfigToFile(project: Project, pubspecConfig: Map<String, Any>, pubspecFile: File) {
         try {
+            // 优先：YAML PSI 定点写入（保留注释）
+            val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(pubspecFile)
+            if (vFile != null && PubspecPsiWriter.applyManagedKeys(project, vFile, pubspecConfig)) {
+                return
+            }
+
+            // 回退：全量 dump（旧行为）
             val dumperOptions = DumperOptions()
             dumperOptions.defaultFlowStyle = DumperOptions.FlowStyle.BLOCK
             dumperOptions.indent = 2

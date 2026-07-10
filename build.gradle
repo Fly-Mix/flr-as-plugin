@@ -227,6 +227,9 @@ dependencies {
             }
         }
 
+        // 平台自带 YAML 插件：pubspec.yaml 的注释保留写入（PubspecPsiWriter）用其 YAML PSI（各目标平台均捆绑）
+        bundledPlugin 'org.jetbrains.plugins.yaml'
+
         // 平台测试框架（BasePlatformTestCase 等所需；2.x 必须显式声明）
         testFramework TestFrameworkType.Platform.INSTANCE
 

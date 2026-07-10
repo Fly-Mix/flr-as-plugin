@@ -1,17 +1,16 @@
 # Flr 待办 / 已知问题（后续专项处理）
 
-## 1. pubspec.yaml 写回会丢失注释 / 重排格式
+## 1. pubspec.yaml 写回会丢失注释 / 重排格式 — ✅ 已解决（2026-07-10）
 
-**现象**：所有写 `pubspec.yaml` 的路径（Init / Generate / 设置页 Apply）都经 `FlrFileUtil.dumpPubspecConfigToFile`
-→ snakeyaml **全量 dump** 整个文档。snakeyaml 的 dump 不保留原文件的注释，也可能重排键顺序 / 调整格式。
+> 方案研究见 [`flr_pubspec_comment_preservation.md`](./flr_pubspec_comment_preservation.md)（方案 B：YAML PSI 定点编辑）。
 
-**影响**：用户手写在 `pubspec.yaml` 里的注释、以及非 flr 相关的格式，在任一写操作后可能丢失/变化。
+**原现象**：所有写 `pubspec.yaml` 的路径（Init / Generate / 设置页 Apply）都经 `FlrFileUtil.dumpPubspecConfigToFile`
+→ snakeyaml **全量 dump** 整个文档，不保留注释、可能重排键顺序 / 调整格式（既有行为，非某次重构引入）。
 
-**现状**：这是**既有行为**（Java 版即如此），并非某次重构引入；设置页（U1）只是新增了又一个触发点。
+**解决**：新增 `command/util/PubspecPsiWriter`，用平台自带 YAML PSI（`org.jetbrains.plugins.yaml`）**定点写入受管键**
+（`flr` 整节点、`flutter.assets/fonts`、`dependencies.r_dart_library`），其余文本逐字保留；`dumpPubspecConfigToFile`
+改为**先 PSI 定点写、失败回退旧全量 dump**，三处落盘零改动全部受益。`PubspecPsiWriterTest` 覆盖注释保留/受管键更新/
+幂等/首次 init；真机 E2E 确认注释与非受管键在 Init/Generate/设置页 Apply 后均保留。
 
-**方向（专项）**：改为「保留注释的最小化写入」，可选方案——
-- 用保留注释的 YAML 库（如 SnakeYAML Engine + 自定义，或改用能 round-trip 注释的方案）；
-- 或只对 `flr` / `flutter` 节点做**局部文本编辑**（定位节点范围后就地替换，不整篇重序列化）；
-- 或引入 pubspec 的结构化编辑（PSI / YAML 插件 API）做定点修改。
-
-**决策**：2026-07-10 记为 TODO，暂不在 UI 升级阶段处理，后续单独立项。
+**残留**：被替换的**受管键值本身**内的行内注释（如 `r_dart_library: x  # 注`）在值变更时仍会丢（已加"值未变则不动"守卫，
+Generate 不会误伤）；其余注释均保留。可接受。
