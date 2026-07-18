@@ -60,8 +60,6 @@ class IdeFlutterEnvironment(private val project: Project) : FlutterEnvironment {
     }
 
     override fun getRDartLibraryVersion(): String {
-        var rDartLibraryVersion = "0.1.1"
-
         val flutterSdkHome = FlutterSdk.getFlutterSdk(project)!!.home
         val flutterSdkVersion = FlutterSdkVersion.readFromSdk(flutterSdkHome)
         val flutterVersionWithoutHotfixStr = flutterSdkVersion.toString()
@@ -69,16 +67,32 @@ class IdeFlutterEnvironment(private val project: Project) : FlutterEnvironment {
         val dartSdk = DartSdk.getDartSdk(project)
         val dartSdkVersionStr = dartSdk?.version ?: "0.0.0"
 
-        var compareResult = FlrUtil.versionCompare(flutterVersionWithoutHotfixStr, "1.10.15")
+        // Check from highest version requirements to lowest
+        var compareResult = FlrUtil.versionCompare(flutterVersionWithoutHotfixStr, "3.0.0")
         if (compareResult == 0 || compareResult == 1) {
-            rDartLibraryVersion = "0.2.1"
-
-            compareResult = FlrUtil.versionCompare(dartSdkVersionStr, "2.12.0")
+            compareResult = FlrUtil.versionCompare(dartSdkVersionStr, "3.0.0")
             if (compareResult == 0 || compareResult == 1) {
-                rDartLibraryVersion = "0.4.0-nullsafety.0"
+                return "1.0.2"
             }
         }
 
-        return rDartLibraryVersion
+        compareResult = FlrUtil.versionCompare(flutterVersionWithoutHotfixStr, "2.0.0")
+        if (compareResult == 0 || compareResult == 1) {
+            compareResult = FlrUtil.versionCompare(dartSdkVersionStr, "2.15.0")
+            if (compareResult == 0 || compareResult == 1) {
+                return "0.4.1"
+            }
+        }
+
+        compareResult = FlrUtil.versionCompare(flutterVersionWithoutHotfixStr, "1.10.15")
+        if (compareResult == 0 || compareResult == 1) {
+            compareResult = FlrUtil.versionCompare(dartSdkVersionStr, "2.12.0")
+            if (compareResult == 0 || compareResult == 1) {
+                return "0.4.0-nullsafety.0"
+            }
+            return "0.2.1"
+        }
+
+        return "0.1.1"
     }
 }
