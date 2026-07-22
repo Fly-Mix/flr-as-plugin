@@ -32,19 +32,31 @@ object RDartGenerator {
 
         for (asset in nonSvgImageAssetArray) {
             val usedAssetIdArray = ArrayList(nonSvgImageAssetIdDict.values)
-            val assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE)
+            val assetId = if (FlrCodeUtil.isFlrAssetsAsset(asset)) {
+                FlrCodeUtil.generateFlrAssetsAssetId(asset, usedAssetIdArray)
+            } else {
+                FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_NON_SVG_IMAGE_FILE_TYPE)
+            }
             nonSvgImageAssetIdDict[asset] = assetId
         }
 
         for (asset in svgImageAssetArray) {
             val usedAssetIdArray = ArrayList(svgImageAssetIdDict.values)
-            val assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE)
+            val assetId = if (FlrCodeUtil.isFlrAssetsAsset(asset)) {
+                FlrCodeUtil.generateFlrAssetsAssetId(asset, usedAssetIdArray)
+            } else {
+                FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_SVG_IMAGE_FILE_TYPE)
+            }
             svgImageAssetIdDict[asset] = assetId
         }
 
         for (asset in textAssetArray) {
             val usedAssetIdArray = ArrayList(textAssetIdDict.values)
-            val assetId = FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_TEXT_FILE_TYPE)
+            val assetId = if (FlrCodeUtil.isFlrAssetsAsset(asset)) {
+                FlrCodeUtil.generateFlrAssetsAssetId(asset, usedAssetIdArray)
+            } else {
+                FlrCodeUtil.generateAssetId(asset, usedAssetIdArray, FlrConstant.PRIOR_TEXT_FILE_TYPE)
+            }
             textAssetIdDict[asset] = assetId
         }
 

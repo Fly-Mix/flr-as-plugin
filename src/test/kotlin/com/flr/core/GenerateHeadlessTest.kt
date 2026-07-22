@@ -57,8 +57,12 @@ class GenerateHeadlessTest : BasePlatformTestCase() {
         refreshVfs(assetsLegalDirs)
         refreshVfs(fontsLegalDirs)
 
-        // 真实扫描 + 生成（内存）
-        val scan = AssetScanner.scan(root, packageName, assetsLegalDirs, fontsLegalDirs)
+        // 真实扫描（主扫描 + flr.assets 自动检测）
+        var scan = AssetScanner.scan(root, packageName, assetsLegalDirs, fontsLegalDirs)
+        val flrAssetsScan = AssetScanner.scanFlrAssets(root, packageName)
+        if (flrAssetsScan != null) {
+            scan = scan.merge(flrAssetsScan)
+        }
         val rDart = RDartGenerator.generate(scan, packageName, isPackageProjectType, shouldSupportNullsafety)
 
         // ---- 标准 1：r.g.dart 归一化比较（脱离 formatter 版本）----

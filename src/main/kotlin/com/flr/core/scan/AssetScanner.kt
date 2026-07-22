@@ -1,5 +1,6 @@
 package com.flr.core.scan
 
+import com.flr.FlrPaths
 import com.flr.PubspecKeys
 import com.flr.command.util.FlrAssetUtil
 import com.flr.command.util.FlrFileUtil
@@ -123,6 +124,131 @@ object AssetScanner {
         })
 
         // ----- Step-7（非法资源文件合并）：image + text + font -----
+        val illegalResourceFileArray = ArrayList<VirtualFile>()
+        illegalResourceFileArray.addAll(illegalImageFileArray)
+        illegalResourceFileArray.addAll(illegalTextFileArray)
+        illegalResourceFileArray.addAll(illegalFontFileArray)
+
+        return ResourceScanResult(
+            imageAssetArray,
+            nonSvgImageAssetArray,
+            svgImageAssetArray,
+            textAssetArray,
+            fontFamilyConfigArray,
+            illegalResourceFileArray
+        )
+    }
+
+    /**
+     * 扫描 flr.assets 特殊资源目录（位于 `lib/flr.assets/`），支持其下三种一级目录：
+     * - images/：每子目录为一个图片资源实例，含主图片与变体图片
+     * - rawfiles/：每子目录为一个 rawfile 资源实例
+     * - fonts/：每子目录为一个字体家族（与既有字体扫描一致）
+     *
+     * 若 `lib/flr.assets/` 目录不存在则返回 null。
+     * 返回的 [ResourceScanResult] 中，images/text 资产均标记为 flr.assets 资产（路径中包含 flr.assets 标识）。
+     */
+    @JvmStatic
+    fun scanFlrAssets(
+        flutterProjectRootDir: String,
+        packageName: String
+    ): ResourceScanResult? {
+        val libFlrAssetsDir = "$flutterProjectRootDir/lib/${FlrPaths.FLR_ASSETS}"
+        val flrAssetsDir = File(libFlrAssetsDir)
+        if (!flrAssetsDir.isDirectory) {
+            return null
+        }
+
+        val imagesDir = "$libFlrAssetsDir/images"
+        val rawfilesDir = "$libFlrAssetsDir/rawfiles"
+        val fontsDir = "$libFlrAssetsDir/fonts"
+
+        val illegalImageFileArray = ArrayList<VirtualFile>()
+        val illegalTextFileArray = ArrayList<VirtualFile>()
+        val illegalFontFileArray = ArrayList<VirtualFile>()
+
+        // ----- 扫描 flr.assets/images/ -----
+        var imageAssetArray = ArrayList<String>()
+        val imagesDirFile = File(imagesDir)
+        if (imagesDirFile.isDirectory) {
+            val imageFileResultTuple = FlrFileUtil.findImageFiles(imagesDir)
+            val legalImageFileSubArray = imageFileResultTuple[0]
+            val illegalImageFileSubArray = imageFileResultTuple[1]
+            illegalImageFileArray.addAll(illegalImageFileSubArray)
+            val imageAssetSubArray = FlrAssetUtil.generateImageAssets(flutterProjectRootDir, packageName, legalImageFileSubArray)
+            imageAssetArray.addAll(imageAssetSubArray)
+        }
+
+        // uniq & sort
+        imageAssetArray = ArrayList(HashSet(imageAssetArray))
+        imageAssetArray.sort()
+
+        val nonSvgImageAssetArray = ArrayList<String>()
+        val svgImageAssetArray = ArrayList<String>()
+        for (asset in imageAssetArray) {
+            val assetFile = File(asset)
+            if (FlrFileUtil.isSvgImageResourceFile(assetFile)) {
+                svgImageAssetArray.add(asset)
+            } else {
+                nonSvgImageAssetArray.add(asset)
+            }
+        }
+        nonSvgImageAssetArray.sort()
+        svgImageAssetArray.sort()
+
+        // ----- 扫描 flr.assets/rawfiles/ -----
+        var textAssetArray = ArrayList<String>()
+        val rawfilesDirFile = File(rawfilesDir)
+        if (rawfilesDirFile.isDirectory) {
+            val textFileResultTuple = FlrFileUtil.findTextFiles(rawfilesDir)
+            val legalTextFileSubArray = textFileResultTuple[0]
+            val illegalTextFileSubArray = textFileResultTuple[1]
+            illegalTextFileArray.addAll(illegalTextFileSubArray)
+            val textAssetSubArray = FlrAssetUtil.generateTextAssets(flutterProjectRootDir, packageName, legalTextFileSubArray)
+            textAssetArray.addAll(textAssetSubArray)
+        }
+
+        // uniq & sort
+        textAssetArray = ArrayList(HashSet(textAssetArray))
+        textAssetArray.sort()
+
+        // ----- 扫描 flr.assets/fonts/（与既有字体扫描一致）-----
+        val fontFamilyConfigArray = ArrayList<Map<String, Any>>()
+        val fontsDirFile = File(fontsDir)
+        if (fontsDirFile.isDirectory) {
+            val fontFamilyDirArray = FlrFileUtil.findTopChildDirs(fontsDir)
+            for (fontFamilyDirFile in fontFamilyDirArray) {
+                val fontFamilyName = fontFamilyDirFile.name
+                val fontFileResultTuple = FlrFileUtil.findFontFilesInFontFamilyDir(fontFamilyDirFile)
+                val legalFontFileArray = fontFileResultTuple[0]
+                val illegalFontFileSubArray = fontFileResultTuple[1]
+                illegalFontFileArray.addAll(illegalFontFileSubArray)
+                if (legalFontFileArray.isEmpty()) {
+                    continue
+                }
+                @Suppress("UNCHECKED_CAST")
+                val fontAssetConfigArray =
+                    FlrAssetUtil.generateFontAssetConfigs(flutterProjectRootDir, packageName, legalFontFileArray)
+                        as MutableList<MutableMap<String, Any>>
+                fontAssetConfigArray.sortWith(Comparator { o1, o2 ->
+                    val assetValue1 = o1["asset"] as String
+                    val assetValue2 = o2["asset"] as String
+                    assetValue1.compareTo(assetValue2)
+                })
+                val fontFamilyConfig = LinkedHashMap<String, Any>()
+                fontFamilyConfig["family"] = fontFamilyName
+                fontFamilyConfig[PubspecKeys.FONTS] = fontAssetConfigArray
+                fontFamilyConfigArray.add(fontFamilyConfig)
+            }
+        }
+
+        fontFamilyConfigArray.sortWith(Comparator { o1, o2 ->
+            val familyValue1 = o1["family"] as String
+            val familyValue2 = o2["family"] as String
+            familyValue1.compareTo(familyValue2)
+        })
+
+        // ----- 非法资源文件合并 -----
         val illegalResourceFileArray = ArrayList<VirtualFile>()
         illegalResourceFileArray.addAll(illegalImageFileArray)
         illegalResourceFileArray.addAll(illegalTextFileArray)

@@ -20,4 +20,7 @@ object FlrPaths {
 
     /** Flr 生成的资源引用文件名（位于 lib/ 下） */
     const val R_DART = "r.g.dart"
+
+    /** flr.assets 特殊资源目录名（位于 lib/ 下） */
+    const val FLR_ASSETS = "flr.assets"
 }

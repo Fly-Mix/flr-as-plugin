@@ -169,7 +169,15 @@ class GenerateUseCase(
         reporter.log(indicatorMessage, indicatorType)
 
         // ----- Step-4/5/6 Begin -----
-        val scanResult = com.flr.core.scan.AssetScanner.scan(flutterProjectRootDir, packageName, assetsLegalResourceDirArray, fontsLegalResourceDirArray)
+        var scanResult = com.flr.core.scan.AssetScanner.scan(flutterProjectRootDir, packageName, assetsLegalResourceDirArray, fontsLegalResourceDirArray)
+
+        // ----- Step-4a：扫描 flr.assets（自动检测 lib/flr.assets/）并合并结果 -----
+        val flrAssetsScanResult = com.flr.core.scan.AssetScanner.scanFlrAssets(flutterProjectRootDir, packageName)
+        if (flrAssetsScanResult != null) {
+            scanResult = scanResult.merge(flrAssetsScanResult)
+            reporter.log("flr.assets detected, merged its resources into scan result", indicatorType)
+        }
+
         val imageAssetArray = scanResult.imageAssets
         val textAssetArray = scanResult.textAssets
         val fontFamilyConfigArray = scanResult.fontFamilyConfigs

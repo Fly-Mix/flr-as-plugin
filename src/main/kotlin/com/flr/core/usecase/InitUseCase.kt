@@ -2,6 +2,7 @@ package com.flr.core.usecase
 
 import com.flr.FlrConstant
 import com.flr.FlrException
+import com.flr.FlrPaths
 import com.flr.PubspecKeys
 import com.flr.command.FlrChecker
 import com.flr.command.util.FlrFileUtil
@@ -105,8 +106,8 @@ class InitUseCase(
 
         // ----- Step-2：添加 flr_config 与 r_dart_library 依赖到 pubspec.yaml -----
         var dartfmtLineLength = FlrConstant.DARTFMT_LINE_LENGTH
-        var assetResourceDirArray: List<String> = ArrayList()
-        var fontResourceDirArray: List<String> = ArrayList()
+        var assetResourceDirArray: MutableList<String> = ArrayList()
+        var fontResourceDirArray: MutableList<String> = ArrayList()
         val flrConfig = LinkedHashMap<String, Any>()
 
         val usedFlrCoreLogicVersion = FlrConstant.CORE_VERSION
@@ -127,16 +128,36 @@ class InitUseCase(
             if (oldFlrConfig.containsKey(PubspecKeys.ASSETS)) {
                 val assets = oldFlrConfig[PubspecKeys.ASSETS]
                 if (assets is List<*>) {
-                    assetResourceDirArray = assets as List<String>
+                    assetResourceDirArray = assets as MutableList<String>
                 }
             }
 
             if (oldFlrConfig.containsKey(PubspecKeys.FONTS)) {
                 val fonts = oldFlrConfig[PubspecKeys.FONTS]
                 if (fonts is List<*>) {
-                    fontResourceDirArray = fonts as List<String>
+                    fontResourceDirArray = fonts as MutableList<String>
                 }
             }
+        }
+
+        // 自动检测 flr.assets 目录：若存在且尚未在配置中，自动添加其子目录
+        if (FlrFileUtil.isFlrAssetsDirExisted(flutterProjectRootDir)) {
+            val libDir = "lib/${FlrPaths.FLR_ASSETS}"
+            val imagesDir = "$libDir/images"
+            val rawfilesDir = "$libDir/rawfiles"
+            val fontsDir = "$libDir/fonts"
+
+            if (!assetResourceDirArray.contains(imagesDir)) {
+                assetResourceDirArray.add(imagesDir)
+            }
+            if (!assetResourceDirArray.contains(rawfilesDir)) {
+                assetResourceDirArray.add(rawfilesDir)
+            }
+            if (!fontResourceDirArray.contains(fontsDir)) {
+                fontResourceDirArray.add(fontsDir)
+            }
+
+            reporter.log("detected flr.assets directory at $libDir, auto-configured its subdirectories", indicatorType)
         }
 
         flrConfig["dartfmt_line_length"] = dartfmtLineLength

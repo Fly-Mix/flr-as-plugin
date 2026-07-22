@@ -428,7 +428,10 @@ object FlrFileUtil {
 
             val resourceDirFile = File(resourceDir)
             val resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile)
-            val resourceDirChildren = resourceDirVirtualFile!!.children
+            if (resourceDirVirtualFile == null) {
+                return@compute topChildDirArray
+            }
+            val resourceDirChildren = resourceDirVirtualFile.children
             for (resourceDirChild in resourceDirChildren) {
                 if (resourceDirChild.isDirectory) {
                     topChildDirArray.add(resourceDirChild)
@@ -436,6 +439,47 @@ object FlrFileUtil {
             }
             topChildDirArray
         }
+    }
+
+    /**
+     * 扫描 flr.assets 某类资源（images/rawfiles）下所有子目录，每个子目录代表一个资源实例。
+     * 返回每个子目录的内部文件列表（[resourceDirVirtualFile, fileList] 组成的 pair 列表）。
+     */
+    @JvmStatic
+    fun findFlrAssetsResourceDirs(resourceCategoryDir: String): List<Pair<VirtualFile, List<VirtualFile>>> {
+        return ReadAction.compute<List<Pair<VirtualFile, List<VirtualFile>>>, RuntimeException> {
+            val result = ArrayList<Pair<VirtualFile, List<VirtualFile>>>()
+
+            val resourceDirFile = File(resourceCategoryDir)
+            val resourceDirVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(resourceDirFile)
+            if (resourceDirVirtualFile == null) {
+                return@compute result
+            }
+
+            val subDirArray = resourceDirVirtualFile.children.filter { it.isDirectory }
+            for (subDir in subDirArray) {
+                val filesInSubDir = ArrayList<VirtualFile>()
+                VfsUtilCore.visitChildrenRecursively(subDir, object : VirtualFileVisitor<Any>() {
+                    override fun visitFile(file: VirtualFile): Boolean {
+                        if (!file.isDirectory) {
+                            filesInSubDir.add(file)
+                        }
+                        return true
+                    }
+                })
+                if (filesInSubDir.isNotEmpty()) {
+                    result.add(Pair(subDir, filesInSubDir))
+                }
+            }
+            result
+        }
+    }
+
+    /** 判断 flr.assets 目录是否存在（位于 lib/flr.assets/） */
+    @JvmStatic
+    fun isFlrAssetsDirExisted(flutterProjectRootDir: String): Boolean {
+        val flrAssetsDir = File("$flutterProjectRootDir/lib/${FlrPaths.FLR_ASSETS}")
+        return flrAssetsDir.isDirectory && flrAssetsDir.exists()
     }
 
     /**

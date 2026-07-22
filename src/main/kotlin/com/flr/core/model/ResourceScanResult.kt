@@ -21,4 +21,52 @@ data class ResourceScanResult(
     val textAssets: List<String>,
     val fontFamilyConfigs: List<Map<String, Any>>,
     val illegalResourceFiles: List<VirtualFile>,
-)
+) {
+    /**
+     * 合并另一个 [ResourceScanResult] 到当前结果。
+     * 各资产列表去重后排序，fontFamilyConfigs 去重合并后排序，非法资源文件合并。
+     */
+    fun merge(other: ResourceScanResult): ResourceScanResult {
+        val mergedImageAssets = ArrayList(imageAssets)
+        mergedImageAssets.addAll(other.imageAssets)
+        val dedupedImageAssets = ArrayList(HashSet(mergedImageAssets)).sorted()
+
+        val mergedNonSvg = ArrayList(nonSvgImageAssets)
+        mergedNonSvg.addAll(other.nonSvgImageAssets)
+        val dedupedNonSvg = ArrayList(HashSet(mergedNonSvg)).sorted()
+
+        val mergedSvg = ArrayList(svgImageAssets)
+        mergedSvg.addAll(other.svgImageAssets)
+        val dedupedSvg = ArrayList(HashSet(mergedSvg)).sorted()
+
+        val mergedText = ArrayList(textAssets)
+        mergedText.addAll(other.textAssets)
+        val dedupedText = ArrayList(HashSet(mergedText)).sorted()
+
+        // 合并 fontFamilyConfigs：按 family 去重，后入者覆盖前入者（同一 family 的 fonts 配置合并）
+        val familyMap = LinkedHashMap<String, Map<String, Any>>()
+        for (config in fontFamilyConfigs) {
+            val family = config["family"] as String
+            familyMap[family] = config
+        }
+        for (config in other.fontFamilyConfigs) {
+            val family = config["family"] as String
+            familyMap[family] = config
+        }
+        val mergedFonts = familyMap.values.toList().sortedWith(Comparator { o1, o2 ->
+            (o1["family"] as String).compareTo(o2["family"] as String)
+        })
+
+        val mergedIllegal = ArrayList(illegalResourceFiles)
+        mergedIllegal.addAll(other.illegalResourceFiles)
+
+        return ResourceScanResult(
+            dedupedImageAssets,
+            dedupedNonSvg,
+            dedupedSvg,
+            dedupedText,
+            mergedFonts,
+            mergedIllegal
+        )
+    }
+}

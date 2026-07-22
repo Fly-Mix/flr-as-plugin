@@ -1,6 +1,7 @@
 package com.flr.command.util
 
 import com.flr.FlrConstant
+import com.flr.FlrPaths
 import java.io.File
 import java.util.regex.Pattern
 import java.util.stream.Collectors
@@ -508,6 +509,63 @@ object FlrCodeUtil {
         }
 
         return fontFamilyId
+    }
+
+    /**
+     * 为 flr.assets 资源生成 assetId。
+     *
+     * flr.assets 的资源存放在 `lib/flr.assets/{images,rawfiles}/<subdir>/<file>` 下，其子目录名称与内部文件名称相同，
+     * 资源 ID 应源自**子目录名称**（而非文件 basename + 扩展名后缀），以避免 `test_gif.gif` 生成 `test_gif_gif` 等情况。
+     *
+     * @param asset 指定的资产路径（如 `packages/<pkg>/flr.assets/images/test_gif/test_gif.gif`）
+     * @param usedAssetIdArray 已使用的 assetId 数组
+     */
+    @JvmStatic
+    fun generateFlrAssetsAssetId(asset: String, usedAssetIdArray: List<String>?): String {
+        val assetFile = File(asset)
+        // flr.assets 的子目录名称 = 资源名称（该子目录内部文件与之同名）
+        val parentDirName = assetFile.parentFile?.name ?: assetFile.name
+        var assetId = parentDirName
+
+        // 过滤非法字符
+        assetId = assetId.replace("[^a-zA-Z0-9_\$]".toRegex(), "_")
+
+        // 检测首字符是不是字母；是大写字母则转小写；不是字母则加前缀 "a"
+        val firstChar = assetId[0]
+        if (Character.isLetter(firstChar)) {
+            if (Character.isUpperCase(firstChar)) {
+                val firstCharStr = firstChar.toString().lowercase()
+                assetId = firstCharStr + assetId.substring(1)
+            }
+        } else {
+            val firstCharStr = "a"
+            assetId = firstCharStr + assetId
+        }
+
+        // 处理 asset_id 重名的情况
+        if (usedAssetIdArray != null && usedAssetIdArray.isNotEmpty() && usedAssetIdArray.contains(assetId)) {
+            var repeatCount = 1
+
+            val idBrotherRegex = String.format("^%s\\\$[1-9][0-9]*\$", assetId)
+            val pattern = Pattern.compile(idBrotherRegex)
+            val curAssetIdBrothers = usedAssetIdArray.stream().filter(pattern.asPredicate()).collect(Collectors.toList())
+
+            if (curAssetIdBrothers != null && curAssetIdBrothers.isNotEmpty()) {
+                repeatCount += curAssetIdBrothers.size
+            }
+
+            assetId = String.format("%s\$%d", assetId, repeatCount)
+        }
+
+        return assetId
+    }
+
+    /**
+     * 判断指定资产是否属于 flr.assets 资源。
+     */
+    @JvmStatic
+    fun isFlrAssetsAsset(asset: String): Boolean {
+        return asset.contains(FlrPaths.FLR_ASSETS)
     }
 
     /** 根据模板，为 fontFamilyConfigArray 生成 _R_FontFamily class 的代码 */
